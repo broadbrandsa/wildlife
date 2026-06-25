@@ -15,3 +15,5 @@ export {
 export { ROUND, DEMO_DAY_OVERRIDE } from "./round";
 export { UNIT_COSTS, MILESTONES, CAMPAIGN_BASE_ZAR, COST_LINES } from "./costs";
 export type { Milestone, CostLine } from "./costs";
+export { UNIT_STATS, REAL_HANDLERS, REAL_DOGS } from "./real-team";
+export type { UnitStat, RealProfile } from "./real-team";

@@ -77,6 +77,34 @@ export default function ProfilePage() {
             </div>
 
             <div style={{ padding: "var(--space-6) var(--gutter)", display: "flex", flexDirection: "column", gap: "var(--space-6)" }}>
+                {/* your team: ranger then dog */}
+                <div>
+                    <Eyebrow>Your team</Eyebrow>
+                    <div style={{ marginTop: "var(--space-3)", background: "var(--surface-card)", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-lg)", boxShadow: "var(--shadow-xs)", overflow: "hidden" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "var(--space-4)", padding: "var(--space-4)" }}>
+                            <span style={{ position: "relative", flex: "none", width: 56, height: 56, borderRadius: "var(--radius-md)", overflow: "hidden", background: "var(--sand-100)" }}>
+                                {ranger && <Image src={ranger.photo} alt={player?.displayName ?? "Ranger"} fill sizes="56px" style={{ objectFit: "cover" }} />}
+                            </span>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.6rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-accent)" }}>Your ranger</div>
+                                <strong style={{ fontFamily: "var(--font-serif)", fontSize: "1.1rem", display: "block", marginTop: 2 }}>{player?.displayName}</strong>
+                                <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>You, on the team</span>
+                            </div>
+                        </div>
+                        <div style={{ height: 1, background: "var(--border-subtle)" }} />
+                        <div style={{ display: "flex", alignItems: "center", gap: "var(--space-4)", padding: "var(--space-4)" }}>
+                            <span style={{ position: "relative", flex: "none", width: 56, height: 56, borderRadius: "var(--radius-md)", overflow: "hidden", background: "var(--sand-100)" }}>
+                                {dog && <Image src={dog.photo} alt={dogName} fill sizes="56px" style={{ objectFit: "cover" }} />}
+                            </span>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.6rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-accent)" }}>Your dog</div>
+                                <strong style={{ fontFamily: "var(--font-serif)", fontSize: "1.1rem", display: "block", marginTop: 2 }}>{dogName}</strong>
+                                <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>{dog?.breed}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 {/* stats */}
                 <div style={{ display: "flex", gap: "var(--space-5)", background: "var(--surface-card)", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-lg)", padding: "var(--space-5)", boxShadow: "var(--shadow-xs)" }}>
                     <StatBlock value={zar(donationsTotal)} label="Donated" />
@@ -112,7 +140,9 @@ export default function ProfilePage() {
 
                 {/* links */}
                 <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
-                    <Row icon="hand-heart" label="Our allies" onClick={() => router.push("/allies")} />
+                    <Row icon="users-three" label="Meet the real K9 Unit" onClick={() => router.push("/team")} />
+                    <Row icon="hand-heart" label="Your impact" onClick={() => router.push("/impact")} />
+                    <Row icon="heart" label="Our allies" onClick={() => router.push("/allies")} />
                     <Row icon="radio" label="Intel Intercept (enter a code)" onClick={() => router.push("/codes")} />
                     <Row icon="scroll" label="Rules & privacy" onClick={() => router.push("/legal")} />
                 </div>
