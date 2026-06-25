@@ -1,0 +1,9 @@
+/* ============================================================
+   Kruger Wild — Webfonts
+   Loaded from Google Fonts. See readme.md → Visual Foundations.
+   - Spectral        : editorial serif (display, headings, pull quotes)
+   - Hanken Grotesk  : humanist grotesque (body, UI, labels)
+   - Space Mono      : field-guide data (coordinates, distances, meta)
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=Hanken+Grotesk:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');

@@ -1,0 +1,46 @@
+/* ============================================================
+   Kruger Wild — Radii, Elevation & Motion
+   Soft, organic corners. Low, warm-tinted shadows (never grey/black
+   haze). Calm, settled motion — gentle ease-out, no bounce.
+   ============================================================ */
+
+:root {
+  /* ---- Corner radii ---------------------------------------- */
+  --radius-xs:   4px;
+  --radius-sm:   8px;
+  --radius-md:   12px;
+  --radius-lg:   18px;
+  --radius-xl:   28px;
+  --radius-2xl:  40px;
+  --radius-pill: 999px;
+  --radius-card: var(--radius-lg);
+
+  /* ---- Elevation — warm, soft, sand-tinted ----------------- */
+  --shadow-xs:  0 1px 2px rgba(33, 28, 20, 0.06);
+  --shadow-sm:  0 2px 6px rgba(33, 28, 20, 0.07);
+  --shadow-md:  0 8px 22px -10px rgba(33, 28, 20, 0.18);
+  --shadow-lg:  0 20px 44px -18px rgba(33, 28, 20, 0.24);
+  --shadow-xl:  0 36px 70px -28px rgba(33, 28, 20, 0.30);
+  /* Inset hairline for crisp card edges over photography */
+  --ring-hairline: inset 0 0 0 1px rgba(33, 28, 20, 0.06); /* @kind shadow */
+
+  /* ---- Motion ---------------------------------------------- */
+  --ease-out:   cubic-bezier(0.22, 0.61, 0.36, 1);  /* @kind other */
+  --ease-soft:  cubic-bezier(0.4, 0.14, 0.18, 1);   /* @kind other */
+  --dur-fast:   140ms; /* @kind other */
+  --dur-base:   240ms; /* @kind other */
+  --dur-slow:   420ms; /* @kind other */
+  --dur-reveal: 720ms; /* @kind other */
+
+  /* ---- Focus ring ------------------------------------------ */
+  --focus-ring: 0 0 0 3px var(--surface-page), 0 0 0 5px var(--ring-focus); /* @kind shadow */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0ms;   /* @kind other */
+    --dur-base: 0ms;   /* @kind other */
+    --dur-slow: 0ms;   /* @kind other */
+    --dur-reveal: 0ms; /* @kind other */
+  }
+}

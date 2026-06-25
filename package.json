@@ -1,0 +1,23 @@
+{
+    "name": "sawc-k9-pin-drop-hunt",
+    "version": "0.1.0",
+    "private": true,
+    "scripts": {
+        "dev": "next dev",
+        "build": "next build",
+        "start": "next start"
+    },
+    "dependencies": {
+        "next": "^15.5.4",
+        "react": "^19.1.1",
+        "react-dom": "^19.1.1",
+        "react-zoom-pan-pinch": "^3.7.0",
+        "zustand": "^5.0.8"
+    },
+    "devDependencies": {
+        "@types/node": "^22.10.0",
+        "@types/react": "^19.1.1",
+        "@types/react-dom": "^19.1.1",
+        "typescript": "^5.7.3"
+    }
+}

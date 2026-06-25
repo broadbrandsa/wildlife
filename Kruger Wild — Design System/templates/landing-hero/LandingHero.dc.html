@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Landing Hero" description="Full-bleed bushveld hero with eyebrow, serif headline, CTAs and a park-fact stat strip" -->
+<helmet>
+  <script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+  <script src="./ds-base.js"></script>
+</helmet>
+
+<section style="position:relative;min-height:88vh;display:flex;align-items:flex-end;overflow:hidden;font-family:var(--font-sans)">
+  <div style="position:absolute;inset:0">
+    <x-import component-from-global-scope="KrugerWildDesignSystem_6ab219.PhotoPlate" wash="bushveld" icon="paw-print" hint-size="100%,100%"></x-import>
+  </div>
+  <div style="position:absolute;inset:0;background:linear-gradient(180deg, rgba(17,32,26,0.4) 0%, rgba(17,32,26,0.15) 38%, rgba(17,32,26,0.88) 100%)"></div>
+
+  <div style="position:relative;width:100%;max-width:1200px;margin:0 auto;padding:0 clamp(1.25rem,5vw,4rem) clamp(2.5rem,6vw,5rem);color:var(--sand-50)">
+    <x-import component-from-global-scope="KrugerWildDesignSystem_6ab219.Eyebrow" rule="true" color="var(--ochre-300)" hint-size="240px,16px">Field Guide to the Lowveld</x-import>
+
+    <h1 style="font-family:var(--font-serif);font-weight:600;color:#fff;font-size:clamp(2.75rem,1.6rem + 5.2vw,5.5rem);line-height:1.02;letter-spacing:-0.02em;margin:1rem 0 0;max-width:16ch">Where the wild still runs</h1>
+
+    <p style="font-size:var(--text-lead);line-height:1.6;color:rgba(245,239,226,0.9);max-width:48ch;margin:1.2rem 0 0">Nearly two million hectares of South African bushveld — home to the Big Five, 507 bird species, and a story written across two billion years of rock.</p>
+
+    <div style="display:flex;gap:0.9rem;margin-top:2rem;flex-wrap:wrap">
+      <x-import component-from-global-scope="KrugerWildDesignSystem_6ab219.Button" variant="accent" size="lg" hint-size="220px,54px">Explore the wildlife&nbsp;&rarr;</x-import>
+      <x-import component-from-global-scope="KrugerWildDesignSystem_6ab219.Button" variant="ondark" size="lg" hint-size="180px,54px">Plan your visit</x-import>
+    </div>
+
+    <div style="display:flex;gap:clamp(1.5rem,5vw,3.5rem);margin-top:2.8rem;flex-wrap:wrap">
+      <x-import component-from-global-scope="KrugerWildDesignSystem_6ab219.StatBlock" inverse="true" value="19,485" label="Park area (km²)" hint-size="120px,80px"></x-import>
+      <x-import component-from-global-scope="KrugerWildDesignSystem_6ab219.StatBlock" inverse="true" value="147" label="Mammal species" divider="true" hint-size="120px,80px"></x-import>
+      <x-import component-from-global-scope="KrugerWildDesignSystem_6ab219.StatBlock" inverse="true" value="507" label="Bird species" divider="true" hint-size="120px,80px"></x-import>
+    </div>
+  </div>
+</section>
+
+</x-dc>
+</body>
+</html>

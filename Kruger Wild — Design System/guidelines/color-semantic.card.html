@@ -1,0 +1,24 @@
+<!-- @dsCard group="Colors" viewport="700x180" name="Semantic Roles & Status" subtitle="Surfaces, text, borders & status tints in use" -->
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../styles.css">
+<style>
+  body{margin:0;background:var(--surface-page);padding:18px;font-family:var(--font-sans);display:flex;gap:14px;flex-wrap:wrap}
+  .chip{border-radius:var(--radius-md);padding:14px 16px;min-width:120px;font-size:0.8rem;box-shadow:var(--ring-hairline)}
+  .k{font-family:var(--font-mono);font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;opacity:0.7;display:block;margin-bottom:5px}
+  .status{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+  .pill{border-radius:var(--radius-pill);padding:5px 12px;font-size:0.74rem;font-weight:600}
+</style></head>
+<body>
+  <div class="chip" style="background:var(--surface-card);color:var(--text-primary)"><span class="k">surface-card</span>Primary text</div>
+  <div class="chip" style="background:var(--surface-sunken);color:var(--text-secondary)"><span class="k">surface-sunken</span>Secondary text</div>
+  <div class="chip" style="background:var(--surface-inverse);color:var(--text-inverse)"><span class="k">surface-inverse</span>Inverse text</div>
+  <div class="chip" style="background:var(--surface-accent);color:var(--text-accent)"><span class="k">surface-accent</span>Accent text</div>
+  <div class="chip" style="flex-basis:100%;background:transparent;box-shadow:none;padding:4px 0">
+    <span class="k" style="opacity:1">status</span>
+    <div class="status">
+      <span class="pill" style="background:var(--success-soft);color:var(--success)">Success</span>
+      <span class="pill" style="background:var(--warning-soft);color:var(--warning)">Warning</span>
+      <span class="pill" style="background:var(--danger-soft);color:var(--danger)">Danger</span>
+      <span class="pill" style="background:var(--info-soft);color:var(--info)">Info</span>
+    </div>
+  </div>
+</body></html>

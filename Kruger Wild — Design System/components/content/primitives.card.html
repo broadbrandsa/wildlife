@@ -1,0 +1,56 @@
+<!-- @dsCard group="Components" viewport="700x300" name="Content — Tags, Badges & Stats" subtitle="Eyebrow · Tag tones · IUCN Badge · StatBlock" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Content primitives — Kruger Wild</title>
+<link rel="stylesheet" href="../../styles.css" />
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>
+  body { margin: 0; background: var(--surface-page); padding: 28px; }
+  .row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 22px; }
+  .lbl { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); width: 100%; margin-bottom: 4px; }
+  .strip { display: flex; gap: 36px; padding-top: 8px; border-top: 1px solid var(--border-subtle); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+  const { Eyebrow, Tag, Badge, StatBlock } = window.KrugerWildDesignSystem_6ab219;
+  function Demo() {
+    return (
+      <div>
+        <div className="row"><span className="lbl">Eyebrow</span>
+          <Eyebrow rule>Field Guide</Eyebrow>
+          <Eyebrow color="var(--text-brand)">Conservation</Eyebrow>
+        </div>
+        <div className="row"><span className="lbl">Tags</span>
+          <Tag tone="green" icon={<i className="ph ph-tree" />}>Riverine forest</Tag>
+          <Tag tone="ochre" icon={<i className="ph ph-sun-horizon" />}>Open savanna</Tag>
+          <Tag tone="clay">Rocky koppies</Tag>
+          <Tag tone="teal" icon={<i className="ph ph-drop" />}>Wetland</Tag>
+          <Tag tone="neutral" interactive selected>Big Five</Tag>
+        </div>
+        <div className="row"><span className="lbl">Conservation status (IUCN)</span>
+          <Badge status="lc" /><Badge status="nt" /><Badge status="vu" /><Badge status="en" /><Badge status="cr" />
+        </div>
+        <div className="row"><span className="lbl">Stat strip</span>
+          <div className="strip">
+            <StatBlock value="19,485" label="Park area (km²)" />
+            <StatBlock value="147" label="Mammal species" divider />
+            <StatBlock value="507" label="Bird species" divider />
+            <StatBlock value="1898" label="Established" divider />
+          </div>
+        </div>
+      </div>
+    );
+  }
+  ReactDOM.createRoot(document.getElementById("root")).render(<Demo />);
+</script>
+</body>
+</html>

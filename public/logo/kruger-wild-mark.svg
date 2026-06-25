@@ -1,0 +1,30 @@
+<svg width="240" height="240" viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Kruger Wild emblem">
+  <circle cx="120" cy="120" r="116" fill="#182D23"></circle>
+  <circle cx="120" cy="120" r="116" fill="none" stroke="#C58A3D" stroke-width="2.5"></circle>
+  <circle cx="120" cy="120" r="103" fill="none" stroke="#C58A3D" stroke-width="1" opacity="0.45"></circle>
+
+  
+  <clipPath id="ring"><circle cx="120" cy="120" r="103"></circle></clipPath>
+  <g clip-path="url(#ring)">
+    <circle cx="120" cy="158" r="44" fill="#C58A3D"></circle>
+    <rect x="12" y="160" width="216" height="80" fill="#182D23"></rect>
+    <g stroke="#C58A3D" stroke-width="3.5" stroke-linecap="round" opacity="0.8">
+      <line x1="120" y1="184" x2="120" y2="196"></line>
+      <line x1="92" y1="186" x2="88" y2="198"></line>
+      <line x1="148" y1="186" x2="152" y2="198"></line>
+      <line x1="66" y1="192" x2="60" y2="204"></line>
+      <line x1="174" y1="192" x2="180" y2="204"></line>
+    </g>
+  </g>
+
+  
+  <g fill="none" stroke="#F5EFE2" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M120 158 L120 96"></path>
+    <path d="M120 100 C113 92 104 90 96 88"></path>
+    <path d="M120 100 C127 92 136 90 144 88"></path>
+    <path d="M120 116 C112 110 106 108 99 107"></path>
+    <path d="M120 116 C128 110 134 108 141 107"></path>
+  </g>
+  <path d="M62 90 C76 70 102 64 120 64 C138 64 164 70 178 90 C158 82 142 80 120 80 C98 80 82 82 62 90 Z" fill="#F5EFE2"></path>
+  <ellipse cx="120" cy="84" rx="62" ry="9" fill="#F5EFE2"></ellipse>
+</svg>

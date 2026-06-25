@@ -1,0 +1,107 @@
+/* ============================================================
+   Kruger Wild — Color
+   Bushveld palette: deep acacia green, savanna ochre, clay,
+   warm sand neutrals, ironwood ink. Base ramps first, then
+   semantic aliases. Always reference semantics in components.
+   ============================================================ */
+
+:root {
+  /* ---- Bushveld green (primary / brand) -------------------- */
+  --green-950: #11201A;
+  --green-900: #182D23;
+  --green-800: #21392C;
+  --green-700: #2C4A39;
+  --green-600: #395C47;
+  --green-500: #4A6F58;
+  --green-400: #6B8B73;
+  --green-300: #97B19A;
+  --green-200: #C2D2C2;
+  --green-100: #E2EBE1;
+  --green-50:  #F1F6EF;
+
+  /* ---- Savanna ochre / gold (accent) ----------------------- */
+  --ochre-900: #5E3F12;
+  --ochre-700: #8C611C;
+  --ochre-600: #A87727;
+  --ochre-500: #C58A3D;   /* signature gold */
+  --ochre-400: #D6A25A;
+  --ochre-300: #E4BE85;
+  --ochre-200: #EFD8B2;
+  --ochre-100: #F8EDD8;
+
+  /* ---- Clay / terracotta (secondary) ----------------------- */
+  --clay-900: #562414;
+  --clay-700: #813620;
+  --clay-600: #9A3F26;
+  --clay-500: #B14C2E;   /* sunset clay */
+  --clay-400: #C66A47;
+  --clay-300: #DA9277;
+  --clay-200: #EBBEAA;
+  --clay-100: #F6DFD3;
+
+  /* ---- Weathered teal (cool accent: water, dawn sky) ------- */
+  --teal-700: #2C4C4A;
+  --teal-500: #4C7572;
+  --teal-300: #8AAEAB;
+  --teal-100: #DCE9E7;
+
+  /* ---- Warm neutrals (sand / stone / ironwood) ------------- */
+  --sand-950: #16110A;
+  --sand-900: #211C14;   /* ironwood ink */
+  --sand-800: #322B20;
+  --sand-700: #4A4133;
+  --sand-600: #6B6050;
+  --sand-500: #8C816E;
+  --sand-400: #ABA08B;
+  --sand-300: #CCC2AE;
+  --sand-200: #E4DBC8;
+  --sand-150: #EEE7D7;
+  --sand-100: #F5EFE2;
+  --sand-50:  #FAF6EC;   /* bone — default page */
+  --white:    #FFFFFF;
+
+  /* ---- Semantic surfaces ----------------------------------- */
+  --surface-page:     var(--sand-50);
+  --surface-card:     var(--white);
+  --surface-sunken:   var(--sand-100);
+  --surface-raised:   var(--white);
+  --surface-inverse:  var(--green-900);
+  --surface-brand:    var(--green-800);
+  --surface-accent:   var(--ochre-100);
+
+  /* ---- Semantic text --------------------------------------- */
+  --text-primary:   var(--sand-900);
+  --text-secondary: var(--sand-700);
+  --text-muted:     var(--sand-500);
+  --text-inverse:   var(--sand-50);
+  --text-brand:     var(--green-700);
+  --text-accent:    var(--ochre-700);
+  --text-link:      var(--clay-600);
+
+  /* ---- Borders & lines ------------------------------------- */
+  --border-subtle:  var(--sand-200);
+  --border-default: var(--sand-300);
+  --border-strong:  var(--sand-400);
+  --border-inverse: rgba(255,255,255,0.16);
+  --ring-focus:     var(--ochre-500);
+
+  /* ---- Brand roles ----------------------------------------- */
+  --brand:          var(--green-800);
+  --brand-hover:    var(--green-700);
+  --brand-active:   var(--green-900);
+  --accent:         var(--ochre-500);
+  --accent-hover:   var(--ochre-600);
+  --accent-soft:    var(--ochre-100);
+  --secondary:      var(--clay-500);
+  --secondary-soft: var(--clay-100);
+
+  /* ---- Status ---------------------------------------------- */
+  --success:      #3C7A4E;
+  --success-soft: var(--green-100);
+  --warning:      var(--ochre-600);
+  --warning-soft: var(--ochre-100);
+  --danger:       #A23A2A;
+  --danger-soft:  var(--clay-100);
+  --info:         var(--teal-500);
+  --info-soft:    var(--teal-100);
+}

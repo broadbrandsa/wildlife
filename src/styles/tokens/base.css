@@ -1,0 +1,48 @@
+/* ============================================================
+   Kruger Wild — Base / Reset
+   Light, opinionated resets so raw HTML inherits brand defaults.
+   ============================================================ */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--surface-page);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4, h5 {
+  font-family: var(--font-serif);
+  font-weight: var(--fw-semibold);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--text-primary);
+  margin: 0 0 0.5em;
+  text-wrap: balance;
+}
+
+p { margin: 0 0 1em; text-wrap: pretty; }
+
+a { color: var(--text-link); text-decoration-thickness: 1px; text-underline-offset: 0.18em; }
+a:hover { color: var(--clay-700); }
+
+img, svg, video { display: block; max-width: 100%; }
+
+strong, b { font-weight: var(--fw-semibold); }
+
+::selection { background: var(--ochre-200); color: var(--sand-900); }
+
+:focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: var(--radius-xs); }
+
+hr { border: none; border-top: 1px solid var(--border-subtle); margin: var(--space-6) 0; }
+
+small { font-size: var(--text-sm); }
+
+code, kbd, samp { font-family: var(--font-mono); font-size: 0.9em; }
