@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 import { Button, Eyebrow, StatBlock } from "@/components/ds";
-import { ImpactCard } from "@/components/game/impact";
+import { ImpactCard, useCampaignTotal } from "@/components/game/impact";
 import { DOG_BY_ID, EQUIPMENT_BY_ID, RANGER_BY_ID, ROUND } from "@/data";
 import { currentDay } from "@/lib/game";
 import { zar } from "@/lib/format";
@@ -41,6 +41,7 @@ export default function ProfilePage() {
     const dog = player ? DOG_BY_ID[player.dogId] : null;
     const ranger = player ? RANGER_BY_ID[player.rangerId] : null;
     const dogName = player?.dogName ?? dog?.name ?? "your dog";
+    const campaignTotal = useCampaignTotal();
     const donations = useGameStore((s) => s.donations);
     const donationsTotal = useGameStore((s) => s.donationsTotal);
     const redeemedCodes = useGameStore((s) => s.redeemedCodes);
@@ -83,8 +84,8 @@ export default function ProfilePage() {
                     <StatBlock value={`${currentDay()}/${ROUND.durationDays}`} label="Round day" divider />
                 </div>
 
-                {/* impact */}
-                <ImpactCard amount={donationsTotal} onOpen={() => router.push("/impact")} />
+                {/* impact (community total) */}
+                <ImpactCard amount={campaignTotal} onOpen={() => router.push("/impact")} />
 
                 {/* donation history */}
                 <div>

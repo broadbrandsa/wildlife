@@ -10,9 +10,35 @@ export const UNIT_COSTS = {
     healthcarePerDogYear: 6000, // R500/dog/month x 12 (SAWC published)
     rangerGps: 2400, // SAWC published
     rangerTraining: 52000, // 6-week anti-poaching field-ranger course
-    packFoodPerYear: 240000, // ~R20,000/month for the whole pack x 12
+    packFoodPerMonth: 20000, // ~R20,000/month for the whole pack
+    packFoodPerYear: 240000, // x 12
     annualHealthcareGoal: 175000, // SAWC's published 2025 healthcare fund goal
 };
+
+/**
+ * Campaign total raised to date by the whole community. The impact ladder runs
+ * off THIS total (everyone's donations), not a single player's. In v1 it is a
+ * seeded baseline plus this device's simulated donations; in v2 it is replaced
+ * by the real aggregate from the backend.
+ */
+export const CAMPAIGN_BASE_ZAR = 168000;
+
+export interface CostLine {
+    label: string;
+    amount: number;
+    icon: string;
+    note?: string;
+}
+
+/** The unit's real running costs, shown as supporting detail on the impact page. */
+export const COST_LINES: CostLine[] = [
+    { label: "Food for one dog, a year", amount: 7800, icon: "bowl-food", note: "~R150 a week" },
+    { label: "Vet care for one dog, a year", amount: 6000, icon: "first-aid-kit", note: "R500 a month" },
+    { label: "Feeding the whole pack, a month", amount: 20000, icon: "paw-print", note: "~21 dogs" },
+    { label: "A ranger's handheld GPS", amount: 2400, icon: "compass" },
+    { label: "Training one anti-poaching ranger", amount: 52000, icon: "graduation-cap", note: "6-week course" },
+    { label: "The unit's healthcare, a full year", amount: 175000, icon: "heartbeat" },
+];
 
 export interface Milestone {
     /** Cumulative rand raised at which this outcome is funded. */

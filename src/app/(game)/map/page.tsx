@@ -6,10 +6,10 @@ import { Suspense, useMemo, useState } from "react";
 
 import { Button, IconButton, Tag } from "@/components/ds";
 import { ClueCard } from "@/components/game/ClueCard";
+import { ImpactHighlight, useCampaignTotal } from "@/components/game/impact";
 import { KrugerMap } from "@/components/game/KrugerMap";
 import { CLUE_BY_ID, CLUES, DOG_BY_ID, RANGER_BY_ID, ROUND } from "@/data";
 import { availableClueIds, currentDay, daysRemaining } from "@/lib/game";
-import { zar } from "@/lib/format";
 import { useGameStore } from "@/store/game";
 
 function MapInner() {
@@ -22,7 +22,7 @@ function MapInner() {
     const setPin = useGameStore((s) => s.setPin);
     const lockPin = useGameStore((s) => s.lockPin);
     const cluesUnlocked = useGameStore((s) => s.cluesUnlocked);
-    const donationsTotal = useGameStore((s) => s.donationsTotal);
+    const campaignTotal = useCampaignTotal();
 
     const [dismissed, setDismissed] = useState(false);
     const day = currentDay();
@@ -77,12 +77,9 @@ function MapInner() {
                     <span>
                         <i className="ph ph-hourglass-medium" /> {daysRemaining()} DAYS LEFT
                     </span>
-                    <button
-                        onClick={() => router.push("/impact")}
-                        style={{ background: "none", border: "none", cursor: "pointer", padding: 0, font: "inherit", color: "var(--ochre-300)", display: "inline-flex", alignItems: "center", gap: 4 }}
-                    >
-                        <i className="ph ph-hand-heart" /> {zar(donationsTotal)} RAISED <i className="ph ph-caret-right" style={{ fontSize: "0.8em" }} />
-                    </button>
+                    <span>
+                        <i className="ph ph-crosshair" /> 1 SUSPECT AT LARGE
+                    </span>
                 </div>
             </header>
 
@@ -160,6 +157,8 @@ function MapInner() {
                         </Button>
                     )}
                 </div>
+
+                <ImpactHighlight amount={campaignTotal} onOpen={() => router.push("/impact")} />
 
                 {latest && (
                     <div>
