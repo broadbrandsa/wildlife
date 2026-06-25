@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 import { Button, Eyebrow, StatBlock } from "@/components/ds";
+import { ImpactCard } from "@/components/game/impact";
 import { DOG_BY_ID, EQUIPMENT_BY_ID, RANGER_BY_ID, ROUND } from "@/data";
 import { currentDay } from "@/lib/game";
 import { zar } from "@/lib/format";
@@ -39,6 +40,7 @@ export default function ProfilePage() {
     const player = useGameStore((s) => s.player);
     const dog = player ? DOG_BY_ID[player.dogId] : null;
     const ranger = player ? RANGER_BY_ID[player.rangerId] : null;
+    const dogName = player?.dogName ?? dog?.name ?? "your dog";
     const donations = useGameStore((s) => s.donations);
     const donationsTotal = useGameStore((s) => s.donationsTotal);
     const redeemedCodes = useGameStore((s) => s.redeemedCodes);
@@ -69,7 +71,7 @@ export default function ProfilePage() {
                 </div>
                 <h1 style={{ color: "#fff", fontSize: "var(--text-h3)", margin: 0 }}>{player?.displayName}</h1>
                 <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.68rem", letterSpacing: "0.12em", color: "var(--ochre-300)", marginTop: 6 }}>
-                    {ranger ? `RANGER ${ranger.name.toUpperCase()} · WITH ${dog?.name?.toUpperCase()}` : "HANDLER"}
+                    {`FIELD RANGER · WITH ${dogName.toUpperCase()}`}
                 </div>
             </div>
 
@@ -80,6 +82,9 @@ export default function ProfilePage() {
                     <StatBlock value={donations.length} label="Gifts" divider />
                     <StatBlock value={`${currentDay()}/${ROUND.durationDays}`} label="Round day" divider />
                 </div>
+
+                {/* impact */}
+                <ImpactCard amount={donationsTotal} onOpen={() => router.push("/impact")} />
 
                 {/* donation history */}
                 <div>

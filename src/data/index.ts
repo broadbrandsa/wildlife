@@ -13,3 +13,5 @@ export {
     CODE_BY_VALUE,
 } from "./sponsors";
 export { ROUND, DEMO_DAY_OVERRIDE } from "./round";
+export { UNIT_COSTS, MILESTONES } from "./costs";
+export type { Milestone } from "./costs";

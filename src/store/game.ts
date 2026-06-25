@@ -8,10 +8,13 @@ import { receiptNumber } from "@/lib/format";
 
 export interface Player {
     id: string;
+    /** The player's chosen name. They are the ranger, so this is the ranger's name. */
     displayName: string;
     birthYear: number;
     rangerId: string;
     dogId: string;
+    /** Player-chosen name for their dog (defaults to the reference name). */
+    dogName: string;
     parentEmail?: string;
 }
 

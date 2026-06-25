@@ -40,6 +40,8 @@ function MapInner() {
 
     const dog = player ? DOG_BY_ID[player.dogId] : null;
     const ranger = player ? RANGER_BY_ID[player.rangerId] : null;
+    const rangerName = player?.displayName ?? "Ranger";
+    const dogName = player?.dogName ?? dog?.name ?? "your dog";
 
     const closeWelcome = () => {
         setDismissed(true);
@@ -75,9 +77,12 @@ function MapInner() {
                     <span>
                         <i className="ph ph-hourglass-medium" /> {daysRemaining()} DAYS LEFT
                     </span>
-                    <span>
-                        <i className="ph ph-hand-heart" /> {zar(donationsTotal)} RAISED
-                    </span>
+                    <button
+                        onClick={() => router.push("/impact")}
+                        style={{ background: "none", border: "none", cursor: "pointer", padding: 0, font: "inherit", color: "var(--ochre-300)", display: "inline-flex", alignItems: "center", gap: 4 }}
+                    >
+                        <i className="ph ph-hand-heart" /> {zar(donationsTotal)} RAISED <i className="ph ph-caret-right" style={{ fontSize: "0.8em" }} />
+                    </button>
                 </div>
             </header>
 
@@ -117,8 +122,8 @@ function MapInner() {
                             )}
                         </span>
                         <span style={{ textAlign: "left", lineHeight: 1.1 }}>
-                            <span style={{ display: "block", fontSize: "0.8rem", fontWeight: 700, color: "var(--text-primary)" }}>{ranger?.name}</span>
-                            <span style={{ display: "block", fontSize: "0.66rem", color: "var(--text-muted)" }}>with {dog?.name}</span>
+                            <span style={{ display: "block", fontSize: "0.8rem", fontWeight: 700, color: "var(--text-primary)" }}>{rangerName}</span>
+                            <span style={{ display: "block", fontSize: "0.66rem", color: "var(--text-muted)" }}>with {dogName}</span>
                         </span>
                     </button>
                 )}
@@ -200,7 +205,7 @@ function MapInner() {
                             )}
                             <Tag tone="green">
                                 <i className="ph-fill ph-paw-print" style={{ marginRight: 4 }} />
-                                {ranger?.name} and {dog?.name} are ready
+                                {rangerName} and {dogName} are ready
                             </Tag>
                             <h2 style={{ fontSize: "var(--text-h3)", margin: "var(--space-3) 0 0" }}>Your first clue</h2>
                         </div>

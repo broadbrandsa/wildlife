@@ -52,7 +52,15 @@ export default function OnboardingPage() {
     const [originSeen, setOriginSeen] = useState(1);
     const [rangerId, setRangerId] = useState<string | null>(null);
     const [dogId, setDogId] = useState<string | null>(null);
+    const [dogName, setDogName] = useState("");
     const [error, setError] = useState("");
+
+    // Selecting a dog suggests its reference name, but keeps a custom one if typed.
+    const isReferenceName = (v: string) => DOGS.some((d) => d.name === v);
+    const pickDog = (id: string, refName: string) => {
+        setDogId(id);
+        setDogName((curr) => (curr.trim() === "" || isReferenceName(curr.trim()) ? refName : curr));
+    };
 
     const age = birthYear ? THIS_YEAR - Number(birthYear) : null;
     const isMinor = age != null && age < 18;
@@ -91,12 +99,14 @@ export default function OnboardingPage() {
 
     const finish = () => {
         if (!rangerId || !dogId) return;
+        const dogFallback = DOGS.find((d) => d.id === dogId)?.name ?? "Your dog";
         setPlayer({
             id: crypto.randomUUID(),
             displayName: name.trim(),
             birthYear: Number(birthYear),
             rangerId,
             dogId,
+            dogName: dogName.trim() || dogFallback,
             parentEmail: isMinor ? parentEmail : undefined,
         });
         router.replace("/map?welcome=1");
@@ -169,13 +179,13 @@ export default function OnboardingPage() {
                     <div className="kw-rise" style={{ display: "flex", flexDirection: "column", gap: "var(--space-5)" }}>
                         <div>
                             <Eyebrow>Sign-on</Eyebrow>
-                            <h1 style={{ fontSize: "var(--text-h2)", margin: "var(--space-3) 0 0" }}>What should we call you?</h1>
-                            <p style={{ color: "var(--text-secondary)", marginTop: "var(--space-2)" }}>This is your ranger name on the leaderboard.</p>
+                            <h1 style={{ fontSize: "var(--text-h2)", margin: "var(--space-3) 0 0" }}>Name your ranger</h1>
+                            <p style={{ color: "var(--text-secondary)", marginTop: "var(--space-2)" }}>You are the ranger. This is your name on the team and on the leaderboard.</p>
                         </div>
                         <Field
                             label="Ranger name"
                             icon={<i className="ph ph-identification-badge" />}
-                            placeholder="Ranger Kgosi"
+                            placeholder="e.g. Ranger Kgosi"
                             value={name}
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
                             error={error || undefined}
@@ -233,9 +243,9 @@ export default function OnboardingPage() {
                     <div className="kw-rise" style={{ display: "flex", flexDirection: "column", gap: "var(--space-5)" }}>
                         <div>
                             <Eyebrow>Your ranger</Eyebrow>
-                            <h1 style={{ fontSize: "var(--text-h2)", margin: "var(--space-3) 0 0" }}>Who do you play as?</h1>
+                            <h1 style={{ fontSize: "var(--text-h2)", margin: "var(--space-3) 0 0" }}>Pick your look, {name.trim() || "ranger"}</h1>
                             <p style={{ color: "var(--text-secondary)", marginTop: "var(--space-2)" }}>
-                                This is you on the team. The lineup reflects the real rangers of the Greater Kruger.
+                                This is you on the team. The lineup reflects the real rangers of the Greater Kruger. The names below are just ours; you play as {name.trim() || "yourself"}.
                             </p>
                         </div>
 
@@ -293,7 +303,7 @@ export default function OnboardingPage() {
                             <Eyebrow>Your partner</Eyebrow>
                             <h1 style={{ fontSize: "var(--text-h2)", margin: "var(--space-3) 0 0" }}>Pick your dog</h1>
                             <p style={{ color: "var(--text-secondary)", marginTop: "var(--space-2)" }}>
-                                Each is based on a real SAWC K9 role and gives a small edge on the hunt.
+                                Each is based on a real SAWC K9 role and gives a small edge on the hunt. You can name your dog below.
                             </p>
                         </div>
                         <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
@@ -302,7 +312,7 @@ export default function OnboardingPage() {
                                 return (
                                     <button
                                         key={d.id}
-                                        onClick={() => setDogId(d.id)}
+                                        onClick={() => pickDog(d.id, d.name)}
                                         style={{
                                             textAlign: "left",
                                             cursor: "pointer",
@@ -337,7 +347,17 @@ export default function OnboardingPage() {
                                 );
                             })}
                         </div>
-                        <Button size="lg" fullWidth disabled={!dogId} onClick={finish} iconRight={<i className="ph ph-paw-print" />}>
+                        {dogId && (
+                            <Field
+                                label="Name your dog"
+                                icon={<i className="ph ph-paw-print" />}
+                                placeholder="e.g. Storm"
+                                value={dogName}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDogName(e.target.value)}
+                                hint="This is what we'll call your dog in the game. Keep the suggestion or make it your own."
+                            />
+                        )}
+                        <Button size="lg" fullWidth disabled={!dogId || !dogName.trim()} onClick={finish} iconRight={<i className="ph ph-paw-print" />}>
                             Begin the hunt
                         </Button>
                     </div>
