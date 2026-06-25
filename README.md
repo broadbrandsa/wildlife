@@ -7,7 +7,7 @@ Built on the **Kruger Wild** design system. This is the v1 prototype: a real, wo
 ## Stack
 
 - **Next.js 15** (App Router) + **TypeScript**
-- **Kruger Wild design system** — CSS-variable tokens + ported React components (`src/components/ds`)
+- **Kruger Wild design system**: CSS-variable tokens + ported React components (`src/components/ds`)
 - Fonts: **Spectral** (serif), **Hanken Grotesk** (UI), **Space Mono** (data) via Google Fonts
 - Icons: **Phosphor** (web font, loaded in `layout.tsx`)
 - State: **Zustand** + `persist` (localStorage = the v1 mock backend)
@@ -29,7 +29,7 @@ src/
 ├── app/
 │   ├── page.tsx            # splash
 │   ├── welcome/            # how-it-works intro
-│   ├── onboarding/         # age → parent gate → name → origin → dog (one stepper)
+│   ├── onboarding/         # age → parent gate → name → origin → ranger → dog (one stepper)
 │   └── (game)/             # the app shell (bottom tab bar) wraps these:
 │       ├── map/            # the hunt: HUD + SVG map + pin drop
 │       ├── journal/        # clue journal (unlocked + locked)

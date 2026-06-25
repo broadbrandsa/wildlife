@@ -95,7 +95,7 @@ There are two operationally distinct K9 units working in and around Kruger, and 
 
 **SANParks K9 Unit (inside Kruger):** Established 2012 and expanded rapidly, comprising approximately 52 dogs in Kruger, with 75 dogs working across national parks nationally ([SANParks](https://www.sanparks.org/corporate/fundraising/support-the-k9-unit); [SANParks Honorary Rangers](https://www.sanparksvolunteers.org/k9-national-project/)). Dogs are instrumental in 95% of all arrests and breeds include Belgian Malinois, Bloodhounds and Belgian Shepherds ([Hills Transforming Lives](https://www.hillstransforminglives.co.za/making-contact/the-national-parks-featured)). Johan de Beer is K9 Manager. In 2025 the Kruger unit was reported to include 12 operational K9 units with 11 newly trained handlers ([The Citizen](https://www.citizen.co.za/news/south-africa/good-news-for-south-africas-rhino-poaching-fight-but-alarm-bells-at-kruger-national-park/)). Fundraising support flows largely through SANParks Honorary Rangers' K9 Project Watchdog, Hill's Pet Nutrition (feeds 46 dogs in Kruger) and international partners.
 
-**Southern African Wildlife College K9 Unit (adjacent to Kruger):** Established 2015 with funding from WWF Nedbank Green Trust, with approximately 21 dogs by 2018 and expanded through the addition of Texan-born free-running hounds in 2018. Dog Master is Johan van Straaten, CEO is Theresa Sowry. Between February 2018 and December 2019 the unit deployed 120 times, arresting 134 poachers and seizing 55 weapons. The presence of a dog-plus-ranger team raises apprehension rates from 3-5% to over 60% ([International Rhino Foundation](https://rhinos.org/blog/expanding-support-for-k9-units-and-training-in-southern-africa/); [SAWC](https://wildlifecollege.org.za/k9-unit/)). Key donors include WWF Nedbank Green Trust, IFAW, International Rhino Foundation (which awarded a $100,000 grant), Ivan Carter Wildlife Conservation Alliance, Garmin, Foundation Hans Wilsdorf, Tusk Trust and the Chamberlain Foundation Trust.
+**Southern African Wildlife College K9 Unit (adjacent to Kruger):** Established 2015 with funding from WWF Nedbank Green Trust, with approximately 21 dogs by 2018 and expanded through the addition of Texan-born free-running hounds in 2018 (donated by houndsman Joe Braman, with the relocation funded by the Ivan Carter Wildlife Conservation Alliance). Its confirmed kennel composition is Belgian Malinois, English Foxhound × Bluetick Coonhound crosses, American Black and Tan Coonhounds, Bluetick Coonhounds and a Beagle cross. Dog Master is Johan van Straaten, CEO is Theresa Sowry. Between February 2018 and December 2019 the unit deployed 120 times, arresting 134 poachers and seizing 55 weapons. The presence of a dog-plus-ranger team raises apprehension rates from 3-5% to over 60% ([International Rhino Foundation](https://rhinos.org/blog/expanding-support-for-k9-units-and-training-in-southern-africa/); [SAWC](https://wildlifecollege.org.za/k9-unit/)). Key donors include WWF Nedbank Green Trust, IFAW, International Rhino Foundation (which awarded a $100,000 grant), Ivan Carter Wildlife Conservation Alliance, Garmin, Foundation Hans Wilsdorf, Tusk Trust and the Chamberlain Foundation Trust.
 
 **Confirmed partner: SAWC.**
 
@@ -223,7 +223,7 @@ The clue system is the natural bridge to curriculum alignment. Clues can be tagg
 
 ## 6. Gameplay design: improvements and missing pieces
 
-The core loop (choose a dog, receive clues, drop a pin) is elegant but thin. A competitive mobile market demands depth. Recommended enhancements:
+The core loop (choose a ranger and a dog, receive clues, drop a pin) is elegant but thin. A competitive mobile market demands depth. Recommended enhancements:
 
 ### 6.1 Core loop strengthening
 
@@ -463,7 +463,7 @@ Recurring monthly donations via tokenised cards (PayFast Subscriptions or Peach 
 **Months 4-9: MVP phase**
 
 - Build v1 on the locked Next.js stack with JSON seed for v1, Supabase for v2, Mapbox optional for v2 native shell, PayFast and Ozow donation integration (web-view fallback for iOS if needed).
-- 12 core scenarios, 4 dogs, English-only.
+- 12 core scenarios, 5 dogs, English-only.
 - Pilot at 3-5 private schools; iterate based on engagement data.
 - Register on Apple App Store and Google Play under the partner NGO's developer account.
 - Soft beta launch with 5,000-10,000 invited users.

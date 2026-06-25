@@ -5,7 +5,7 @@ This folder contains the complete research and decision history for the SAWC K9 
 ## Files in this folder (recommended read order)
 
 1. **SAWC_K9_PIN_DROP_HUNT_HANDOVER.md** (start here)
-   Master handover document. Single source of truth covering: concept summary, locked decisions, NGO partner context, strategic validation summary, Kruger geography summary, 8 game zones, full v1 prototype spec (28 screens), game mechanics, equipment shop, coupon code system, visual design, architecture, pitch demo flow, risks and compliance, v2 roadmap, open questions for SAWC, 7-day build plan, and outstanding research areas.
+   Master handover document. Single source of truth covering: concept summary, locked decisions, NGO partner context, strategic validation summary, Kruger geography summary, 8 game zones, full v1 prototype spec (29 screens), game mechanics, equipment shop, coupon code system, visual design, architecture, pitch demo flow, risks and compliance, v2 roadmap, open questions for SAWC, 7-day build plan, and outstanding research areas.
 
 2. **SAWC_K9_Strategic_Validation_Briefing.md** (deeper background)
    The original strategic validation briefing. Goes deeper on: SA mobile gaming market, comparable conservation games (Sea Hero Quest, Wildeverse, Green Game Jam), competitive landscape including existing Kruger apps, NGO partner candidates and why SAWC was chosen, original tech stack analysis (Flutter/Unity considered before locking on Next.js), educational angle and CAPS curriculum alignment, donation tier theory, partnership landscape, risks, and the original go-to-market phasing.

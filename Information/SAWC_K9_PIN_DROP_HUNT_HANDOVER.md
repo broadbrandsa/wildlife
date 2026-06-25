@@ -20,7 +20,7 @@
 6. [Clue bank: worked examples by category](#6-clue-bank-worked-examples-by-category)
 7. [Eight game zones](#7-eight-game-zones)
 8. [v1 prototype specification](#8-v1-prototype-specification)
-9. [Player customer journey: 28 screens](#9-player-customer-journey-28-screens)
+9. [Player customer journey: 29 screens](#9-player-customer-journey-29-screens)
 10. [Game mechanics and economy](#10-game-mechanics-and-economy)
 11. [Coupon code and sponsor clue mechanic](#11-coupon-code-and-sponsor-clue-mechanic)
 12. [Visual design direction](#12-visual-design-direction)
@@ -88,8 +88,9 @@ Sources: [SAWC K9 Unit](https://wildlifecollege.org.za/k9-unit/); [International
 ### 3.2 SAWC K9 unit structure
 
 - Established 2015 with funding from WWF Nedbank Green Trust
-- ~21 dogs by 2018, expanded with addition of Texan-born free-running hounds (Joe Braman donation, 2018)
-- Pack types: Bloodhounds (cold spoor trackers), Belgian Malinois (apprehension), Springer Spaniels (detection: ammo, horn, pangolin scales), free-running pack hounds (Texan Black-and-Tan Coonhounds, Bluetick Coonhounds, Foxhounds, run at 40 km/h off-leash)
+- ~21 dogs by 2018, expanded with the addition of Texan-born free-running hounds (donated by houndsman Joe Braman in 2018, with the relocation funded by the Ivan Carter Wildlife Conservation Alliance)
+- SAWC-confirmed breeds: Belgian Malinois (apprehension and detection), plus a home-bred free-running pack of English Foxhound × Bluetick Coonhound crosses, American Black and Tan Coonhounds, Bluetick Coonhounds and a Beagle cross, all running off-leash at up to 40 km/h
+- Wider Greater Kruger K9 ecosystem (not SAWC's own kennel): cold-spoor Bloodhounds used by the SANParks Kruger unit, and detection Springer Spaniels worked at park gates for ammunition, horn and pangolin scales. The game represents these as guest dogs cross-training with SAWC
 - Dog Master: Johan van Straaten
 - CEO: Theresa Sowry
 - Operational stats: between Feb 2018 and Dec 2019, deployed 120 times, arrested 134 poachers, seized 55 weapons
@@ -483,7 +484,7 @@ A real, working Next.js 15 application using App Router and TypeScript, hosted o
 
 ### 8.2 What's in scope
 
-- Player journey end-to-end (28 screens, see section 9)
+- Player journey end-to-end (29 screens, see section 9)
 - Game mechanics (pin drop, equipment shop, clue release)
 - Coupon code system with three demo sponsor codes
 - Our Allies page (plain text, no logos)
@@ -504,9 +505,9 @@ A real, working Next.js 15 application using App Router and TypeScript, hosted o
 
 ---
 
-## 9. Player customer journey: 28 screens
+## 9. Player customer journey: 29 screens
 
-The player passes through 28 distinct screens between first launch and round-end. The flow is intentionally linear for the first session (so a sponsor at a pitch cannot get lost) and becomes free-roam HUD from session two.
+The player passes through 29 distinct screens between first launch and round-end. The flow is intentionally linear for the first session (so a sponsor at a pitch cannot get lost) and becomes free-roam HUD from session two.
 
 | # | Route | Phase | Purpose |
 |---|---|---|---|
@@ -515,29 +516,30 @@ The player passes through 28 distinct screens between first launch and round-end
 | 3 | `/onboarding/age` | Onboarding | Birth year picker |
 | 4 | `/onboarding/parent` | Onboarding | Parent email gate (under 18 only) |
 | 5 | `/onboarding/name` | Onboarding | Display name |
-| 6 | `/onboarding/origin` | Onboarding | Chat-bubble origin story (4 cards) |
-| 7 | `/onboarding/dog` | Onboarding | Pick your dog (4 options) |
-| 8 | `/clue/first` | Hunt | First clue reveal |
-| 9 | `/map` | Hunt | Main HUD, map exploration |
-| 10 | `/map/pin` | Hunt | Pin confirm sheet |
-| 11 | `/journal` | Hunt | Clue journal list |
-| 12 | `/journal/[id]` | Hunt | Single clue card |
-| 13 | `/shop` | Shop | Equipment shop with 3 tabs |
-| 14 | `/shop/[id]` | Shop | Item detail |
-| 15 | `/checkout/[id]` | Shop | Amount confirm |
-| 16 | `/checkout/[id]/bank` | Shop | Bank picker (Ozow mimic) |
-| 17 | `/checkout/[id]/auth` | Shop | "Open your bank app" loader |
-| 18 | `/checkout/[id]/success` | Shop | Receipt + activate |
-| 19 | `/codes` | Hunt | Intel Intercept entry (coupon codes) |
-| 20 | `/codes/success` | Hunt | Sponsor clue reveal |
-| 21 | `/profile` | Meta | Stats and history |
-| 22 | `/profile/donations` | Meta | Donation history |
-| 23 | `/profile/edit` | Meta | Edit name, dog |
-| 24 | `/allies` | Meta | Our Allies (plain table) |
-| 25 | `/round/end` | Hunt | Round-end reveal (3-card sequence) |
-| 26 | `/round/winner` | Hunt | Winner reveal (top 50) |
-| 27 | `/round/new` | Hunt | New round welcome |
-| 28 | `/legal` | Meta | Terms, privacy, Section 36 rules |
+| 6 | `/onboarding/origin` | Onboarding | Chat-bubble origin story (5 cards) |
+| 7 | `/onboarding/ranger` | Onboarding | Pick your ranger (5 options) |
+| 8 | `/onboarding/dog` | Onboarding | Pick your dog (5 options) |
+| 9 | `/clue/first` | Hunt | First clue reveal |
+| 10 | `/map` | Hunt | Main HUD, map exploration |
+| 11 | `/map/pin` | Hunt | Pin confirm sheet |
+| 12 | `/journal` | Hunt | Clue journal list |
+| 13 | `/journal/[id]` | Hunt | Single clue card |
+| 14 | `/shop` | Shop | Equipment shop with 3 tabs |
+| 15 | `/shop/[id]` | Shop | Item detail |
+| 16 | `/checkout/[id]` | Shop | Amount confirm |
+| 17 | `/checkout/[id]/bank` | Shop | Bank picker (Ozow mimic) |
+| 18 | `/checkout/[id]/auth` | Shop | "Open your bank app" loader |
+| 19 | `/checkout/[id]/success` | Shop | Receipt + activate |
+| 20 | `/codes` | Hunt | Intel Intercept entry (coupon codes) |
+| 21 | `/codes/success` | Hunt | Sponsor clue reveal |
+| 22 | `/profile` | Meta | Stats and history |
+| 23 | `/profile/donations` | Meta | Donation history |
+| 24 | `/profile/edit` | Meta | Edit name, ranger, dog |
+| 25 | `/allies` | Meta | Our Allies (plain table) |
+| 26 | `/round/end` | Hunt | Round-end reveal (3-card sequence) |
+| 27 | `/round/winner` | Hunt | Winner reveal (top 50) |
+| 28 | `/round/new` | Hunt | New round welcome |
+| 29 | `/legal` | Meta | Terms, privacy, Section 36 rules |
 
 Plus a hidden `/__demo` route (env-gated) that resets state and seeds pitch-ready data.
 
@@ -549,27 +551,53 @@ Justification: audience is mixed adults and kids on Android-dominant SA networks
 
 ### 9.2 Origin story
 
-A 4-card chat-bubble sequence styled as field-radio messages from "Theresa" (a fictional dispatcher whose name nods to real CEO Theresa Sowry without misrepresenting her).
+A 5-card chat-bubble sequence styled as field-radio messages from "Theresa" (a fictional dispatcher whose name nods to real CEO Theresa Sowry without misrepresenting her).
 
 - Card 1: "There has been an incursion overnight on the western boundary."
 - Card 2: "We have a fresh scent. The ranger team is grounded in fog. You and your dog are our best chance."
 - Card 3: "Drop a pin where you think the suspect is hiding. Closest guess at round end gets the team in there."
 - Card 4: "Welcome to the K9 Unit."
+- Card 5: "First, choose your ranger. Then, choose your dog."
+
+Card 5 sets up the two selection screens that follow: ranger first, then dog.
 
 The chat-bubble pattern is borrowed from Internet of Elephants' Wildeverse: cheap, kid-readable, low-data, and avoids cinematic-cutscene cheese.
 
-### 9.3 Dog selection
+### 9.3 Ranger selection
 
-Four selectable dogs, each tied to a real SAWC K9 role and conferring a small mechanical bonus.
+The player chooses a ranger character to play as. The ranger is the player's avatar; the dog (next screen) is their companion. Two separate screens: ranger first, then dog.
 
-| Dog | Real SAWC role | In-game effect | Personality |
-|---|---|---|---|
-| Storm, Belgian Malinois | Apprehension and detection all-rounder | +1 free clue at round midpoint | "Brave, fast, will protect you" |
-| Scout, Bloodhound | On-leash spoor tracker | Reveals zone-level direction hint earlier | "Patient, methodical, world-class nose" |
-| Banjo, Texan coonhound cross | Free-running pack hound | Slightly larger pin radius (more forgiving scoring) | "Off-leash, fearless, runs at 40 km/h" |
-| Pepper, Springer Spaniel | Detection (ammo, horn, pangolin scales) | Unlocks a "contraband intercept" bonus clue | "Small, focused, finds what others miss" |
+Five selectable rangers. Ranger choice is **cosmetic only** in v1: it carries no mechanical bonus, since the dog provides the gameplay effect. The choice is purely about player identity and representation.
 
-Mechanical effects are subtle and balanced. This is a fundraising game, not a competitive one. Choice is for personality and re-play, not min-maxing. The Texan-hound origin (Joe Braman, 2018) is unlocked as a "Did you know?" fact in Banjo's profile.
+| Name | Who they are | Heritage | Personality | Background silhouette |
+|---|---|---|---|---|
+| Grace | Black South African woman | Tsonga/Shangaan, from a community near the Greater Kruger | "Brave, kind, deeply rooted in this land. She knows this bush by heart." | Marula trees |
+| Sabata | Black South African man | Sesotho name meaning "leader" or "chief" | "Experienced, calm natural authority, the kind of senior ranger who has trained dozens of others." | Mopane leaves |
+| Vince | White South African man | Afrikaner heritage, weathered dog handler | "Focused, intense, the look of a dog handler who reads the bush like a book." | Acacia thorn tree |
+| Rubaina | Indian South African woman | KwaZulu-Natal heritage, careful observer | "Thoughtful, sharp-eyed, the quiet competence of someone who earned her place." | Fever tree branches |
+| Shakier | Coloured South African man | Western Cape heritage, team morale | "Open, friendly, the morale of the team, with the alert eyes of someone who knows the bush." | Lowveld grass |
+
+The lineup mirrors the real demographic of SAWC field rangers and the wider Greater Kruger anti-poaching community, so any player can see themselves on the team. Grace is anchored on real SAWC ranger Precious Malapane, a Tsonga/Shangaan woman who trains and runs the SAWC free-running hound pack.
+
+Visual consistency across all five: olive-green field uniform with rolled-up sleeves, brown hiking boots, a wide-brim bush hat or peaked olive field cap, and binoculars on a leather strap. No firearms, no military insignia, no logos. Each ranger sits against the background silhouette noted above for quick visual identity.
+
+### 9.4 Dog selection
+
+Five selectable dogs, each tied to a real SAWC K9 role and conferring a small mechanical bonus.
+
+| Dog | Breed | SAWC role | In-game effect | Personality |
+|---|---|---|---|---|
+| Storm | Belgian Malinois | Apprehension and detection all-rounder | +1 free clue at round midpoint | "Brave, fast, will protect you" |
+| Scout | Bloodhound (guest dog from a sister unit, cross-trains with SAWC) | On-leash cold-spoor tracker | Reveals zone-level direction hint earlier in the round | "Patient, methodical, world-class nose" |
+| Banjo | English Foxhound × American Bluetick Coonhound cross | Free-running pack hound, off-leash sprinter | Slightly larger pin radius (more forgiving scoring) | "Off-leash, fearless, runs at 40 km/h" |
+| Dotty | American (Black and Tan) Coonhound | Senior pack matriarch, top-performing off-leash hound, mother of the home-bred SAWC pack | Unlocks pack-formation clue at day 30 | "Experienced, calm, the heart of the pack" |
+| Pepper | English Springer Spaniel (guest detection dog, cross-trains with SAWC) | Detection of rhino horn, ivory, ammunition, contraband | Unlocks "contraband intercept" bonus clue | "Small, focused, finds what others miss" |
+
+Mechanical effects are subtle and balanced. This is a fundraising game, not a competitive one. Choice is for personality and re-play, not min-maxing.
+
+Breed accuracy and honesty: Storm (Malinois), Banjo (English Foxhound × American Bluetick Coonhound cross) and Dotty (American Black and Tan Coonhound) are SAWC-confirmed breeds and need no further framing. Scout (Bloodhound) and Pepper (Springer Spaniel) are framed in-game as guest dogs cross-training with SAWC, because those exact breeds are not in SAWC's confirmed kennel roster: Bloodhounds are used by the SANParks Kruger unit and Springer Spaniels work park gates for detection. This framing is honest and teaches players about the wider Kruger K9 ecosystem.
+
+Real-life tie-ins surface as "Did you know?" facts. Banjo carries the Texan-hound origin: the free-running pack was donated by houndsman Joe Braman in 2018, with the relocation funded by the Ivan Carter Wildlife Conservation Alliance. Dotty is modelled on a real four-year-old SAWC Coonhound, one of the unit's top-performing off-leash hounds, who had a litter of 10 puppies in March 2026.
 
 ---
 
@@ -748,7 +776,7 @@ Reasons:
 
 ### 12.5 Dog illustrations
 
-**Stylised character art faithful to breed silhouette, not photoreal.** Each dog gets head-and-shoulders portrait for shop and HUD; full-body 2D billboard for map. Real breed accuracy (Malinois black mask, Bloodhound dewlap, Coonhound mottled coat, Springer feathered ears) for educational integrity. Stylisation prevents uncanny valley.
+**Stylised character art faithful to breed silhouette, not photoreal.** Each dog gets head-and-shoulders portrait for shop and HUD; full-body 2D billboard for map. Real breed accuracy (Malinois black mask, Bloodhound dewlap, Foxhound × Bluetick Coonhound markings, Black and Tan Coonhound tan points, Springer feathered ears) for educational integrity. Stylisation prevents uncanny valley.
 
 ### 12.6 Animation strategy
 
@@ -872,12 +900,22 @@ create table players (
   province text,
   parent_email text,                    -- encrypted, only if under 18
   consent_record jsonb,
+  ranger_id text references rangers(id),
   dog_id text references dogs(id),
   created_at timestamptz default now()
 );
 
+create table rangers (
+  id text primary key,                  -- 'grace', 'sabata', 'vince', 'rubaina', 'shakier'
+  name text not null,
+  heritage text not null,
+  personality text not null,
+  background text not null,             -- background silhouette motif, e.g. 'marula trees'
+  cosmetic boolean default true         -- rangers carry no mechanical bonus in v1
+);
+
 create table dogs (
-  id text primary key,                  -- 'storm', 'scout', 'banjo', 'pepper'
+  id text primary key,                  -- 'storm', 'scout', 'banjo', 'dotty', 'pepper'
   name text not null,
   breed text not null,
   role text not null,
@@ -1068,8 +1106,8 @@ The single most important deliverable. 3 minutes 30 seconds. Three emotional bea
 1. Mike taps `/__demo` before handing the phone (reset is invisible)
 2. Sponsor lands on splash (1.2s), then welcome (5s read)
 3. **Onboarding as a kid in Joburg** (45s): birth year 2014 (kid path), name "Ranger Kgosi", Gauteng, parent email gate bypassed in demo mode (hidden behind query param; mandatory in production)
-4. **Origin story chat-bubbles** (30s): four cards establish SAWC K9 as real, 54-68% apprehension rate vs 3-5% without
-5. **Dog selection** (15s): Mike has soft preference for Banjo because the Texan-hound origin is the most surprising fact
+4. **Origin story chat-bubbles** (30s): five cards establish SAWC K9 as real, 54-68% apprehension rate vs 3-5% without, and set up the two character picks
+5. **Ranger and dog selection** (20s): first pick from five rangers (the player's avatar; the lineup reflects the real demographic of SAWC rangers so every player sees themselves on the team), then five dogs. Mike has a soft preference for Banjo because the Texan-hound origin is the most surprising fact, though Dotty, a real SAWC dog and mother of the home-bred pack, is the strongest emotional hook
 6. **First clue reveal** (10s): vellum card with Day 1 zone-level clue
 7. **Map exploration** (20s): pinch and pan, Mike points out 8 zones briefly
 8. **Drop a pin** (10s): tap somewhere, pin animates in
@@ -1082,7 +1120,7 @@ The single most important deliverable. 3 minutes 30 seconds. Three emotional bea
 
 ### 14.2 Hardcoded vs live
 
-**Hardcoded:** Round 1 poacher location (server-side, hidden); Day 1 clue text; 4 demo dogs; 12 equipment items; 3 demo sponsors; 3 demo coupon codes; round-1 dashboard aggregate stats.
+**Hardcoded:** Round 1 poacher location (server-side, hidden); Day 1 clue text; 5 demo rangers; 5 demo dogs; 12 equipment items; 3 demo sponsors; 3 demo coupon codes; round-1 dashboard aggregate stats.
 
 **Live (computed at runtime):** pin position; pin distance from poacher; inventory state; clues unlocked; donation total; redeemed codes; days remaining (computed from round start). All persist in localStorage. `/__demo` resets between sponsors.
 
@@ -1093,11 +1131,13 @@ The single most important deliverable. 3 minutes 30 seconds. Three emotional bea
 | Round 1 metadata | Hardcoded | `data/rounds.json` |
 | Poacher location | Hardcoded, server-only | `data/poacher.server.json` |
 | 18 round-1 clues | Hardcoded, written with SAWC review | `data/clues.json` |
-| 4 dogs | Hardcoded, real SAWC roles | `data/dogs.json` |
+| 5 rangers | Hardcoded, cosmetic avatars | `data/rangers.json` |
+| 5 dogs | Hardcoded, real SAWC roles | `data/dogs.json` |
 | 12 equipment items | Hardcoded, prices anchored to SAWC publications | `data/equipment.json` |
 | 3 demo sponsors with allies copy | Hardcoded | `data/sponsors.json` |
 | 3 demo coupon codes | Hardcoded | `data/codes.json` |
 | Map asset | Commissioned illustration | `public/map/lowveld.webp` |
+| Ranger portraits | Commissioned illustration (5 full-body avatars) | `public/rangers/*.webp` |
 | Dog portraits | Commissioned illustration | `public/dogs/*.webp` |
 | Plane silhouette | Commissioned illustration | `public/equipment/bat-hawk.svg` |
 
@@ -1198,7 +1238,7 @@ These need explicit SAWC sign-off before build proceeds.
 
 1. **Clue accuracy and review process.** Who at SAWC signs off on the 18 round-1 clues? Recommended: Theresa Sowry or Johan van Straaten as approver, two-week review window
 2. **Map approval.** Does SAWC want the map closer to or further from real KNP? Default: lowveld-inspired, non-literal
-3. **Dog naming and likeness.** Four selectable dogs use generic names (Storm, Scout, Banjo, Pepper). Does SAWC want to use real K9 names (V, Rhino, Scent are publicly known)? Some real dogs may be retired/deceased; emotional risk
+3. **Dog naming and likeness.** Five selectable dogs use generic names (Storm, Scout, Banjo, Dotty, Pepper). Dotty is modelled on a real SAWC dog (a four-year-old Coonhound, mother of the home-bred pack), so confirm SAWC is comfortable with that tie-in. Does SAWC want to use more real K9 names (V, Rhino, Scent are publicly known)? Some real dogs may be retired/deceased; emotional risk
 4. **Donation flow approval.** SAWC's finance team must approve Section 18A receipt template and funding-equivalent copy ("R150 = one week of dog food"). Some claims (dog food figure) are estimates; SAWC may substitute their own published equivalents
 5. **Prize structure.** Is "Kruger experience for 2 + naming rights + adopt-a-K9" structure acceptable? Pack-hound naming rights has emotional, brand, operational implications
 6. **Section 18A status confirmation** with SARS approved-PBO list
@@ -1215,8 +1255,8 @@ One-week build plan for v1 prototype, demo-ready. Assumes one full-stack develop
 
 | Day | Focus | Deliverables | AI tools |
 |---|---|---|---|
-| 1 | Project setup, design system | Next.js 15 + Tailwind v4 + Rubik scaffold, palette tokens, type scale, Zustand store, route shells for all 28 screens with placeholders. Order final map illustration from SA illustrator (parallel track) | v0.dev for screen mockups; Cursor/Claude Code for App Router scaffolding |
-| 2 | Onboarding + dog flow | Splash, welcome, age, parent gate, name, origin chat-bubbles, dog select. JSON seed for dogs | Cursor for chat-bubble component; v0.dev for dog cards |
+| 1 | Project setup, design system | Next.js 15 + Tailwind v4 + Rubik scaffold, palette tokens, type scale, Zustand store, route shells for all 29 screens with placeholders. Order final map illustration from SA illustrator (parallel track) | v0.dev for screen mockups; Cursor/Claude Code for App Router scaffolding |
+| 2 | Onboarding + ranger + dog flow | Splash, welcome, age, parent gate, name, origin chat-bubbles, ranger select, dog select. JSON seed for the 5 rangers and 5 dogs | Cursor for chat-bubble component; v0.dev for ranger and dog cards |
 | 3 | Map + pin drop | react-zoom-pan-pinch with placeholder map, pin drop with confirm sheet, parallel route for pin overlay, journal screen | Claude Code for gesture-handler logic |
 | 4 | Shop + fake checkout | Shop with 3 tabs, item detail, four-screen Ozow-mimic checkout, Section 18A receipt preview, item activation toast, JSON seed for 12 items | v0.dev for checkout screens; Claude for receipt component |
 | 5 | Coupon codes + Our Allies | Intel Intercept input with hyphen auto-format, success animation, error states, 3 demo codes seed, allies plain-table page, profile and donations history | Claude Code for input validation and rate limit |
@@ -1256,7 +1296,8 @@ Open question for Mike: depth = (a) strategic only (illustrator shortlist with p
 
 **Suggested production-manifest categories to cover when this brief launches:**
 - The illustrated lowveld map (single biggest asset, commission)
-- Dog portraits and full-body billboards (4 dogs x 2 views = 8 illustrations, commission with consistent character art)
+- Ranger avatars (5 rangers, full-body illustrations for the ranger-selection screen, consistent uniform and per-ranger background silhouette, commission)
+- Dog portraits and full-body billboards (5 dogs x 2 views = 10 illustrations, commission with consistent character art)
 - Equipment item icons (12 items, can be AI-generated then refined in Figma/Procreate, or simple flat illustrations)
 - Vellum/journal card backgrounds (texture, AI-generatable)
 - UI iconography (pin, radio dial, satchel, etc.; lucide-react base + custom for SAWC-specific)
@@ -1267,7 +1308,7 @@ Open question for Mike: depth = (a) strategic only (illustrator shortlist with p
 - Share-to-social card templates (Figma, programmatically composed)
 
 Recommended human-vs-AI split:
-- **Commission a human illustrator** for: the map, the 4 dogs, the kudu silhouette, the vellum card frames, any character art
+- **Commission a human illustrator** for: the map, the 5 rangers, the 5 dogs, the kudu silhouette, the vellum card frames, any character art
 - **AI-generate then refine** for: equipment icons, texture overlays, generic UI assets
 - **Pure design tool work** for: typography, layout, share cards, route map illustrations
 

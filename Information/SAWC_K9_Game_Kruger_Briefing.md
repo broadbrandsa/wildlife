@@ -371,13 +371,13 @@ Prevailing winds: warm easterlies (Indian Ocean) in summer; cooler westerlies an
 
 Kruger is divided into 22 ranger sections, each led by a Section Ranger: Pafuri, Punda Maria, Shingwedzi, Mooiplaas, Vlakteplaas, Shangoni, Mahlangeni, Phalaborwa, Letaba, Olifants, Houtboschrand, Satara, Kingfisherspruit, Tshokwane, Skukuza, Nwaswitshaka, Pretoriuskop, Stolznek, Malelane, Crocodile Bridge, Lower Sabie, Nkuhlu.
 
-The **SAWC K9 Unit** is based at the college near Orpen Gate/Hoedspruit and deploys into the Greater Kruger (plus adjoining reserves: Balule, Timbavati, Klaserie, Umbabat). It pioneered the "free-running pack" of Texan-bred hounds (Black and Tan Coonhounds, Bluetick Coonhounds, Foxhounds) that track poachers through the bush off-leash at up to 40 km/h.
+The **SAWC K9 Unit** is based at the college near Orpen Gate/Hoedspruit and deploys into the Greater Kruger (plus adjoining reserves: Balule, Timbavati, Klaserie, Umbabat). It pioneered the "free-running pack" of Texan-bred hounds (English Foxhound × Bluetick Coonhound crosses, American Black and Tan Coonhounds, Bluetick Coonhounds and a Beagle cross) that track poachers through the bush off-leash at up to 40 km/h. The pack was donated by houndsman Joe Braman in 2018, with the relocation funded by the Ivan Carter Wildlife Conservation Alliance.
 
-**Game narrative hook:** Players deploy from the SAWC K9 base near Orpen into any of the zones. In-game dog classes map to real roles:
-- **Trackers** (Bloodhounds, cold spoor)
-- **Apprehension** (Belgian Malinois)
-- **Detection** (Springer spaniels, ivory/horn)
-- **Free-running pack** (Coonhounds, speed tracking)
+**Game narrative hook:** Players deploy from the SAWC K9 base near Orpen into any of the zones, playing as one of five ranger avatars they choose at the start (Grace, Sabata, Vince, Rubaina, Shakier; the lineup reflects the real demographic of SAWC field rangers). The game's five selectable dogs map to real roles, with two framed as guest dogs cross-training with SAWC so the breeds stay accurate:
+- **Apprehension** (Belgian Malinois): SAWC-confirmed
+- **Free-running pack** (Foxhound × Bluetick Coonhound cross, and a Black and Tan Coonhound pack matriarch): SAWC-confirmed, speed tracking
+- **Cold-spoor trackers** (Bloodhounds): wider Kruger ecosystem, used by the SANParks Kruger unit, so framed in-game as a guest dog
+- **Detection** (Springer Spaniels, horn and ivory): worked at park gates, framed in-game as a guest dog
 
 ---
 
