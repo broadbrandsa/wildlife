@@ -32,7 +32,7 @@ export interface Zone {
     wash: "bushveld" | "savanna" | "clay" | "dawn" | "sand";
 }
 
-export type DogId = "storm" | "scout" | "banjo" | "pepper";
+export type DogId = "storm" | "scout" | "banjo" | "dotty" | "pepper";
 
 export interface Dog {
     id: DogId;
@@ -43,6 +43,21 @@ export interface Dog {
     personality: string;
     didYouKnow: string;
     icon: string;
+    photo: string;
+}
+
+export type RangerId = "grace" | "sabata" | "vince" | "rubaina" | "shakier";
+
+export interface Ranger {
+    id: RangerId;
+    name: string;
+    /** Short who-they-are line (demographic). */
+    who: string;
+    heritage: string;
+    personality: string;
+    /** Background silhouette motif behind the avatar. */
+    background: string;
+    photo: string;
 }
 
 export type EquipmentTier = "free" | "care" | "hunt" | "big-ticket";

@@ -2,8 +2,10 @@
 
 import { useRouter } from "next/navigation";
 
+import Image from "next/image";
+
 import { Button, Eyebrow, StatBlock } from "@/components/ds";
-import { DOG_BY_ID, EQUIPMENT_BY_ID, ROUND } from "@/data";
+import { DOG_BY_ID, EQUIPMENT_BY_ID, RANGER_BY_ID, ROUND } from "@/data";
 import { currentDay } from "@/lib/game";
 import { zar } from "@/lib/format";
 import { useGameStore } from "@/store/game";
@@ -36,6 +38,7 @@ export default function ProfilePage() {
     const router = useRouter();
     const player = useGameStore((s) => s.player);
     const dog = player ? DOG_BY_ID[player.dogId] : null;
+    const ranger = player ? RANGER_BY_ID[player.rangerId] : null;
     const donations = useGameStore((s) => s.donations);
     const donationsTotal = useGameStore((s) => s.donationsTotal);
     const redeemedCodes = useGameStore((s) => s.redeemedCodes);
@@ -52,12 +55,21 @@ export default function ProfilePage() {
         <div style={{ paddingBottom: "var(--space-7)" }}>
             {/* header */}
             <div style={{ background: "radial-gradient(120% 130% at 50% 0%, #2C4A39 0%, #182D23 100%)", color: "var(--sand-50)", padding: "var(--space-7) var(--gutter) var(--space-6)", textAlign: "center" }}>
-                <span style={{ display: "inline-flex", width: 72, height: 72, borderRadius: "var(--radius-pill)", background: "rgba(245,239,226,0.12)", color: "var(--ochre-300)", alignItems: "center", justifyContent: "center", fontSize: 36, marginBottom: "var(--space-3)" }}>
-                    <i className={`ph-fill ph-${dog?.icon ?? "user"}`} />
-                </span>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: "var(--space-3)" }}>
+                    {ranger && (
+                        <span style={{ position: "relative", width: 80, height: 80, borderRadius: "50%", overflow: "hidden", border: "2px solid var(--ochre-300)", background: "var(--sand-100)" }}>
+                            <Image src={ranger.photo} alt={ranger.name} fill sizes="80px" style={{ objectFit: "cover" }} />
+                        </span>
+                    )}
+                    {dog && (
+                        <span style={{ position: "relative", width: 64, height: 64, borderRadius: "50%", overflow: "hidden", border: "2px solid var(--ochre-300)", background: "var(--sand-100)" }}>
+                            <Image src={dog.photo} alt={dog.name} fill sizes="64px" style={{ objectFit: "cover" }} />
+                        </span>
+                    )}
+                </div>
                 <h1 style={{ color: "#fff", fontSize: "var(--text-h3)", margin: 0 }}>{player?.displayName}</h1>
                 <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.68rem", letterSpacing: "0.12em", color: "var(--ochre-300)", marginTop: 6 }}>
-                    HANDLER · {dog?.name?.toUpperCase()} THE {dog?.breed?.toUpperCase()}
+                    {ranger ? `RANGER ${ranger.name.toUpperCase()} · WITH ${dog?.name?.toUpperCase()}` : "HANDLER"}
                 </div>
             </div>
 

@@ -5,6 +5,7 @@ import { useEffect } from "react";
 
 import { useHydrated } from "@/hooks/use-hydrated";
 import { useGameStore } from "@/store/game";
+import { PhoneStage } from "@/components/game/PhoneStage";
 
 const TABS = [
     { id: "map", href: "/map", icon: "map-trifold", label: "Hunt" },
@@ -42,35 +43,15 @@ export function GameShell({ children }: { children: React.ReactNode }) {
     if (!hydrated || !player) return <Loader />;
 
     return (
-        <div
-            style={{
-                minHeight: "100dvh",
-                display: "flex",
-                alignItems: "stretch",
-                justifyContent: "center",
-                background: "radial-gradient(130% 100% at 50% 0%, #21392C 0%, #16110A 92%)",
-            }}
-        >
-            <div
-                style={{
-                    position: "relative",
-                    width: "100%",
-                    maxWidth: 480,
-                    minHeight: "100dvh",
-                    display: "flex",
-                    flexDirection: "column",
-                    background: "var(--surface-page)",
-                    boxShadow: "0 40px 100px -30px rgba(0,0,0,0.6)",
-                }}
+        <PhoneStage scroll={false}>
+            <main
+                className="kw-noscroll"
+                style={{ flex: 1, minHeight: 0, overflowY: "auto", WebkitOverflowScrolling: "touch", paddingBottom: "5.5rem" }}
             >
-                <main
-                    className="kw-noscroll"
-                    style={{ flex: 1, overflowY: "auto", WebkitOverflowScrolling: "touch", paddingBottom: "5.5rem" }}
-                >
-                    {children}
-                </main>
+                {children}
+            </main>
 
-                <nav
+            <nav
                     style={{
                         position: "sticky",
                         bottom: 0,
@@ -109,7 +90,6 @@ export function GameShell({ children }: { children: React.ReactNode }) {
                         );
                     })}
                 </nav>
-            </div>
-        </div>
+        </PhoneStage>
     );
 }

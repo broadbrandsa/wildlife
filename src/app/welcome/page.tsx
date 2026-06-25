@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ds";
 import { Logo } from "@/components/game/Logo";
+import { PhoneStage } from "@/components/game/PhoneStage";
 
 const POINTS = [
     { icon: "notebook", title: "Read the clues", body: "Clues drip out across the round, each one a real fact about Kruger's rivers, rock, plants and animals." },
@@ -15,7 +16,7 @@ export default function WelcomePage() {
     const router = useRouter();
 
     return (
-        <div style={{ minHeight: "100dvh", display: "flex", flexDirection: "column", background: "var(--surface-page)" }}>
+        <PhoneStage columnStyle={{ flexDirection: "column" }}>
             <div
                 style={{
                     background: "radial-gradient(120% 100% at 50% 0%, #2C4A39 0%, #182D23 100%)",
@@ -69,6 +70,6 @@ export default function WelcomePage() {
                     Start hunting
                 </Button>
             </div>
-        </div>
+        </PhoneStage>
     );
 }

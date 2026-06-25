@@ -5,6 +5,7 @@ import { useEffect } from "react";
 
 import { Button } from "@/components/ds";
 import { Logo } from "@/components/game/Logo";
+import { PhoneStage } from "@/components/game/PhoneStage";
 import { useHydrated } from "@/hooks/use-hydrated";
 import { useGameStore } from "@/store/game";
 
@@ -18,10 +19,8 @@ export default function SplashPage() {
     }, [hydrated, player, router]);
 
     return (
-        <div
-            style={{
-                minHeight: "100dvh",
-                display: "flex",
+        <PhoneStage
+            columnStyle={{
                 alignItems: "center",
                 justifyContent: "center",
                 padding: "var(--gutter)",
@@ -62,6 +61,6 @@ export default function SplashPage() {
                     IN SUPPORT OF THE SAWC K9 ANTI-POACHING UNIT
                 </p>
             </div>
-        </div>
+        </PhoneStage>
     );
 }

@@ -1,10 +1,12 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { DOGS } from "@/data";
+import { DOGS, RANGERS } from "@/data";
 import { Button, Eyebrow, Field } from "@/components/ds";
+import { PhoneStage } from "@/components/game/PhoneStage";
 import { useGameStore } from "@/store/game";
 
 const THIS_YEAR = 2026;
@@ -14,9 +16,11 @@ const ORIGIN = [
     "We have a fresh scent. The ranger team is grounded in fog. You and your dog are our best chance.",
     "Drop a pin where you think the suspect is hiding. Closest guess at round end gets the team in there.",
     "Welcome to the K9 Unit.",
+    "First, choose your ranger. Then, choose your dog.",
 ];
+const HERO_CARD = "Welcome to the K9 Unit.";
 
-type Step = "age" | "parent" | "name" | "origin" | "dog";
+type Step = "age" | "parent" | "name" | "origin" | "ranger" | "dog";
 
 function ProgressDots({ index, total }: { index: number; total: number }) {
     return (
@@ -46,12 +50,15 @@ export default function OnboardingPage() {
     const [parentEmail, setParentEmail] = useState("");
     const [name, setName] = useState("");
     const [originSeen, setOriginSeen] = useState(1);
+    const [rangerId, setRangerId] = useState<string | null>(null);
     const [dogId, setDogId] = useState<string | null>(null);
     const [error, setError] = useState("");
 
     const age = birthYear ? THIS_YEAR - Number(birthYear) : null;
     const isMinor = age != null && age < 18;
-    const steps: Step[] = isMinor ? ["age", "parent", "name", "origin", "dog"] : ["age", "name", "origin", "dog"];
+    const steps: Step[] = isMinor
+        ? ["age", "parent", "name", "origin", "ranger", "dog"]
+        : ["age", "name", "origin", "ranger", "dog"];
     const stepIndex = steps.indexOf(step);
 
     const submitAge = () => {
@@ -83,19 +90,22 @@ export default function OnboardingPage() {
     };
 
     const finish = () => {
-        if (!dogId) return;
+        if (!rangerId || !dogId) return;
         setPlayer({
             id: crypto.randomUUID(),
             displayName: name.trim(),
             birthYear: Number(birthYear),
+            rangerId,
             dogId,
             parentEmail: isMinor ? parentEmail : undefined,
         });
         router.replace("/map?welcome=1");
     };
 
+    const selectedRanger = RANGERS.find((r) => r.id === rangerId);
+
     return (
-        <div style={{ minHeight: "100dvh", display: "flex", flexDirection: "column", background: "var(--surface-page)" }}>
+        <PhoneStage columnStyle={{ flexDirection: "column" }}>
             <div style={{ padding: "var(--space-6) var(--gutter) 0" }}>
                 <button
                     onClick={() => (stepIndex <= 0 ? router.back() : setStep(steps[stepIndex - 1]))}
@@ -177,41 +187,102 @@ export default function OnboardingPage() {
                 )}
 
                 {step === "origin" && (
-                    <div className="kw-rise" style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+                    <div className="kw-rise" style={{ display: "flex", flexDirection: "column", flex: 1 }}>
                         <Eyebrow rule>Incoming · field radio</Eyebrow>
                         <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "var(--space-4)", marginTop: "var(--space-5)" }}>
-                            {ORIGIN.slice(0, originSeen).map((line, i) => (
-                                <div
-                                    key={i}
-                                    className="kw-rise"
-                                    style={{
-                                        alignSelf: "flex-start",
-                                        maxWidth: "85%",
-                                        background: i === ORIGIN.length - 1 ? "var(--brand)" : "var(--surface-card)",
-                                        color: i === ORIGIN.length - 1 ? "var(--sand-50)" : "var(--text-primary)",
-                                        border: "1px solid var(--border-subtle)",
-                                        borderRadius: "var(--radius-lg)",
-                                        borderBottomLeftRadius: 4,
-                                        padding: "var(--space-4) var(--space-5)",
-                                        boxShadow: "var(--shadow-sm)",
-                                    }}
-                                >
-                                    {i === 0 && (
-                                        <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--text-accent)", marginBottom: 4 }}>
-                                            Dispatch · Theresa
-                                        </div>
-                                    )}
-                                    {line}
-                                </div>
-                            ))}
+                            {ORIGIN.slice(0, originSeen).map((line, i) => {
+                                const hero = line === HERO_CARD;
+                                return (
+                                    <div
+                                        key={i}
+                                        className="kw-rise"
+                                        style={{
+                                            alignSelf: "flex-start",
+                                            maxWidth: "85%",
+                                            background: hero ? "var(--brand)" : "var(--surface-card)",
+                                            color: hero ? "var(--sand-50)" : "var(--text-primary)",
+                                            border: "1px solid var(--border-subtle)",
+                                            borderRadius: "var(--radius-lg)",
+                                            borderBottomLeftRadius: 4,
+                                            padding: "var(--space-4) var(--space-5)",
+                                            boxShadow: "var(--shadow-sm)",
+                                        }}
+                                    >
+                                        {i === 0 && (
+                                            <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--text-accent)", marginBottom: 4 }}>
+                                                Dispatch · Theresa
+                                            </div>
+                                        )}
+                                        {line}
+                                    </div>
+                                );
+                            })}
                         </div>
                         <Button
                             size="lg"
                             fullWidth
-                            onClick={() => (originSeen < ORIGIN.length ? setOriginSeen((n) => n + 1) : setStep("dog"))}
+                            onClick={() => (originSeen < ORIGIN.length ? setOriginSeen((n) => n + 1) : setStep("ranger"))}
                             iconRight={<i className="ph ph-arrow-right" />}
                         >
-                            {originSeen < ORIGIN.length ? "Next message" : "Choose your dog"}
+                            {originSeen < ORIGIN.length ? "Next message" : "Choose your ranger"}
+                        </Button>
+                    </div>
+                )}
+
+                {step === "ranger" && (
+                    <div className="kw-rise" style={{ display: "flex", flexDirection: "column", gap: "var(--space-5)" }}>
+                        <div>
+                            <Eyebrow>Your ranger</Eyebrow>
+                            <h1 style={{ fontSize: "var(--text-h2)", margin: "var(--space-3) 0 0" }}>Who do you play as?</h1>
+                            <p style={{ color: "var(--text-secondary)", marginTop: "var(--space-2)" }}>
+                                This is you on the team. The lineup reflects the real rangers of the Greater Kruger.
+                            </p>
+                        </div>
+
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-3)" }}>
+                            {RANGERS.map((r) => {
+                                const on = rangerId === r.id;
+                                return (
+                                    <button
+                                        key={r.id}
+                                        onClick={() => setRangerId(r.id)}
+                                        style={{
+                                            cursor: "pointer",
+                                            textAlign: "left",
+                                            background: on ? "var(--accent-soft)" : "var(--surface-card)",
+                                            border: `1.5px solid ${on ? "var(--ochre-500)" : "var(--border-subtle)"}`,
+                                            borderRadius: "var(--radius-lg)",
+                                            padding: 0,
+                                            overflow: "hidden",
+                                            boxShadow: on ? "0 0 0 3px var(--ochre-100)" : "var(--shadow-xs)",
+                                            transition: "all var(--dur-fast) var(--ease-out)",
+                                        }}
+                                    >
+                                        <div style={{ position: "relative", width: "100%", aspectRatio: "1 / 1", background: "var(--sand-100)" }}>
+                                            <Image src={r.photo} alt={r.name} fill sizes="200px" style={{ objectFit: "cover" }} />
+                                            {on && (
+                                                <span style={{ position: "absolute", top: 8, right: 8, width: 26, height: 26, borderRadius: "50%", background: "var(--ochre-500)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "var(--shadow-sm)" }}>
+                                                    <i className="ph-fill ph-check" style={{ fontSize: 15 }} />
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div style={{ padding: "0.6rem 0.7rem 0.7rem" }}>
+                                            <strong style={{ fontFamily: "var(--font-serif)", fontSize: "1.05rem" }}>{r.name}</strong>
+                                            <div style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginTop: 2, lineHeight: 1.3 }}>{r.who}</div>
+                                        </div>
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {selectedRanger && (
+                            <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--text-secondary)", fontStyle: "italic", lineHeight: 1.5 }}>
+                                &ldquo;{selectedRanger.personality}&rdquo;
+                            </p>
+                        )}
+
+                        <Button size="lg" fullWidth disabled={!rangerId} onClick={() => setStep("dog")} iconRight={<i className="ph ph-arrow-right" />}>
+                            Now choose your dog
                         </Button>
                     </div>
                 )}
@@ -219,13 +290,13 @@ export default function OnboardingPage() {
                 {step === "dog" && (
                     <div className="kw-rise" style={{ display: "flex", flexDirection: "column", gap: "var(--space-5)" }}>
                         <div>
-                            <Eyebrow>Final step · your partner</Eyebrow>
+                            <Eyebrow>Your partner</Eyebrow>
                             <h1 style={{ fontSize: "var(--text-h2)", margin: "var(--space-3) 0 0" }}>Pick your dog</h1>
                             <p style={{ color: "var(--text-secondary)", marginTop: "var(--space-2)" }}>
                                 Each is based on a real SAWC K9 role and gives a small edge on the hunt.
                             </p>
                         </div>
-                        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
                             {DOGS.map((d) => {
                                 const on = dogId === d.id;
                                 return (
@@ -238,28 +309,30 @@ export default function OnboardingPage() {
                                             background: on ? "var(--accent-soft)" : "var(--surface-card)",
                                             border: `1.5px solid ${on ? "var(--ochre-500)" : "var(--border-subtle)"}`,
                                             borderRadius: "var(--radius-lg)",
-                                            padding: "var(--space-4)",
-                                            display: "flex",
-                                            gap: "var(--space-4)",
-                                            alignItems: "center",
+                                            padding: 0,
+                                            overflow: "hidden",
                                             boxShadow: on ? "0 0 0 3px var(--ochre-100)" : "var(--shadow-xs)",
                                             transition: "all var(--dur-fast) var(--ease-out)",
                                         }}
                                     >
-                                        <span style={{ flex: "none", width: 48, height: 48, borderRadius: "var(--radius-pill)", background: "var(--green-100)", color: "var(--green-700)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26 }}>
-                                            <i className={`ph${on ? "-fill" : ""} ph-${d.icon}`} />
-                                        </span>
-                                        <span style={{ flex: 1 }}>
-                                            <span style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                                                <strong style={{ fontFamily: "var(--font-serif)", fontSize: "1.1rem" }}>{d.name}</strong>
-                                                <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>{d.breed}</span>
+                                        <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 9", background: "var(--sand-100)" }}>
+                                            <Image src={d.photo} alt={d.name} fill sizes="430px" style={{ objectFit: "cover" }} />
+                                            {on && (
+                                                <span style={{ position: "absolute", top: 10, right: 10, width: 28, height: 28, borderRadius: "50%", background: "var(--ochre-500)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "var(--shadow-sm)" }}>
+                                                    <i className="ph-fill ph-check" style={{ fontSize: 16 }} />
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div style={{ padding: "var(--space-4)" }}>
+                                            <span style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
+                                                <strong style={{ fontFamily: "var(--font-serif)", fontSize: "1.15rem" }}>{d.name}</strong>
+                                                <span style={{ fontSize: "0.74rem", color: "var(--text-muted)" }}>{d.breed}</span>
                                             </span>
-                                            <span style={{ display: "block", fontSize: "0.82rem", color: "var(--text-secondary)", marginTop: 2 }}>{d.personality}</span>
-                                            <span style={{ display: "block", fontFamily: "var(--font-mono)", fontSize: "0.66rem", letterSpacing: "0.06em", color: "var(--ochre-700)", marginTop: 6 }}>
+                                            <span style={{ display: "block", fontSize: "0.84rem", color: "var(--text-secondary)", marginTop: 3 }}>{d.personality}</span>
+                                            <span style={{ display: "block", fontFamily: "var(--font-mono)", fontSize: "0.66rem", letterSpacing: "0.06em", color: "var(--ochre-700)", marginTop: 8 }}>
                                                 <i className="ph ph-sparkle" /> {d.effect}
                                             </span>
-                                        </span>
-                                        {on && <i className="ph-fill ph-check-circle" style={{ color: "var(--ochre-600)", fontSize: 22 }} />}
+                                        </div>
                                     </button>
                                 );
                             })}
@@ -270,6 +343,6 @@ export default function OnboardingPage() {
                     </div>
                 )}
             </div>
-        </div>
+        </PhoneStage>
     );
 }

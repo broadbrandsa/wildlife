@@ -1,12 +1,13 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
 
 import { Button, IconButton, Tag } from "@/components/ds";
 import { ClueCard } from "@/components/game/ClueCard";
 import { KrugerMap } from "@/components/game/KrugerMap";
-import { CLUE_BY_ID, CLUES, DOG_BY_ID, ROUND } from "@/data";
+import { CLUE_BY_ID, CLUES, DOG_BY_ID, RANGER_BY_ID, ROUND } from "@/data";
 import { availableClueIds, currentDay, daysRemaining } from "@/lib/game";
 import { zar } from "@/lib/format";
 import { useGameStore } from "@/store/game";
@@ -38,6 +39,7 @@ function MapInner() {
     }, [available]);
 
     const dog = player ? DOG_BY_ID[player.dogId] : null;
+    const ranger = player ? RANGER_BY_ID[player.rangerId] : null;
 
     const closeWelcome = () => {
         setDismissed(true);
@@ -82,29 +84,43 @@ function MapInner() {
             {/* Map */}
             <div style={{ position: "relative", height: "min(52dvh, 460px)", background: "radial-gradient(120% 110% at 50% 0%, #2C4A39 0%, #16110A 92%)" }}>
                 <KrugerMap pin={pin} onPlace={(x, y) => setPin(x, y)} />
-                {dog && (
-                    <div
+                {(ranger || dog) && (
+                    <button
+                        onClick={() => router.push("/profile")}
+                        aria-label="Your team"
                         style={{
                             position: "absolute",
                             left: 12,
                             top: 12,
                             display: "inline-flex",
                             alignItems: "center",
-                            gap: 8,
-                            background: "rgba(250,246,236,0.92)",
+                            gap: 10,
+                            background: "rgba(250,246,236,0.94)",
                             backdropFilter: "blur(8px)",
+                            border: "none",
+                            cursor: "pointer",
                             borderRadius: "var(--radius-pill)",
-                            padding: "0.35rem 0.75rem 0.35rem 0.5rem",
+                            padding: "0.3rem 0.85rem 0.3rem 0.4rem",
                             boxShadow: "var(--shadow-md)",
-                            fontSize: "0.78rem",
-                            fontWeight: 600,
                         }}
                     >
-                        <span style={{ width: 26, height: 26, borderRadius: "50%", background: "var(--green-100)", color: "var(--green-700)", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-                            <i className={`ph-fill ph-${dog.icon}`} />
+                        <span style={{ display: "inline-flex" }}>
+                            {ranger && (
+                                <span style={{ position: "relative", width: 32, height: 32, borderRadius: "50%", overflow: "hidden", border: "2px solid var(--sand-50)", background: "var(--sand-100)" }}>
+                                    <Image src={ranger.photo} alt={ranger.name} fill sizes="32px" style={{ objectFit: "cover" }} />
+                                </span>
+                            )}
+                            {dog && (
+                                <span style={{ position: "relative", width: 32, height: 32, marginLeft: -10, borderRadius: "50%", overflow: "hidden", border: "2px solid var(--sand-50)", background: "var(--sand-100)" }}>
+                                    <Image src={dog.photo} alt={dog.name} fill sizes="32px" style={{ objectFit: "cover", objectPosition: "center" }} />
+                                </span>
+                            )}
                         </span>
-                        {dog.name}
-                    </div>
+                        <span style={{ textAlign: "left", lineHeight: 1.1 }}>
+                            <span style={{ display: "block", fontSize: "0.8rem", fontWeight: 700, color: "var(--text-primary)" }}>{ranger?.name}</span>
+                            <span style={{ display: "block", fontSize: "0.66rem", color: "var(--text-muted)" }}>with {dog?.name}</span>
+                        </span>
+                    </button>
                 )}
             </div>
 
@@ -168,9 +184,23 @@ function MapInner() {
                     >
                         <div style={{ width: 44, height: 5, borderRadius: 999, background: "var(--border-default)", margin: "0 auto var(--space-5)" }} />
                         <div style={{ textAlign: "center", marginBottom: "var(--space-5)" }}>
+                            {(ranger || dog) && (
+                                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: "var(--space-4)" }}>
+                                    {ranger && (
+                                        <span style={{ position: "relative", width: 56, height: 56, borderRadius: "50%", overflow: "hidden", border: "2px solid var(--ochre-300)", background: "var(--sand-100)" }}>
+                                            <Image src={ranger.photo} alt={ranger.name} fill sizes="56px" style={{ objectFit: "cover" }} />
+                                        </span>
+                                    )}
+                                    {dog && (
+                                        <span style={{ position: "relative", width: 56, height: 56, borderRadius: "50%", overflow: "hidden", border: "2px solid var(--ochre-300)", background: "var(--sand-100)" }}>
+                                            <Image src={dog.photo} alt={dog.name} fill sizes="56px" style={{ objectFit: "cover" }} />
+                                        </span>
+                                    )}
+                                </div>
+                            )}
                             <Tag tone="green">
                                 <i className="ph-fill ph-paw-print" style={{ marginRight: 4 }} />
-                                {dog?.name} is ready
+                                {ranger?.name} and {dog?.name} are ready
                             </Tag>
                             <h2 style={{ fontSize: "var(--text-h3)", margin: "var(--space-3) 0 0" }}>Your first clue</h2>
                         </div>

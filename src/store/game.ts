@@ -10,6 +10,7 @@ export interface Player {
     id: string;
     displayName: string;
     birthYear: number;
+    rangerId: string;
     dogId: string;
     parentEmail?: string;
 }
