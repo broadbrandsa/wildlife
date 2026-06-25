@@ -76,10 +76,30 @@ export default function ShopPage() {
                                     </span>
                                 </div>
                                 <p style={{ margin: "0.25rem 0 0", fontSize: "0.85rem", color: "var(--text-secondary)" }}>{item.description}</p>
-                                <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: "0.5rem", fontSize: "0.74rem", color: "var(--ochre-700)" }}>
-                                    <i className="ph ph-sparkle" /> {item.effect}
+
+                                <div
+                                    style={{
+                                        marginTop: "0.6rem",
+                                        background: "var(--green-50)",
+                                        border: "1px solid var(--green-100)",
+                                        borderRadius: "var(--radius-sm)",
+                                        padding: "0.6rem 0.7rem",
+                                    }}
+                                >
+                                    <div style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: "var(--font-mono)", fontSize: "0.6rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--green-700)" }}>
+                                        <i className="ph ph-target" /> How it helps the hunt
+                                    </div>
+                                    <p style={{ margin: "0.3rem 0 0", fontSize: "0.8rem", color: "var(--text-primary)", lineHeight: 1.5 }}>{item.effect}</p>
+                                    {item.unlocksClueId && (
+                                        <div style={{ marginTop: "0.5rem" }}>
+                                            <Tag tone="ochre" size="sm">
+                                                <i className="ph ph-notebook" style={{ marginRight: 4 }} /> Unlocks a new clue
+                                            </Tag>
+                                        </div>
+                                    )}
                                 </div>
-                                <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: "0.3rem", fontFamily: "var(--font-mono)", fontSize: "0.66rem", color: "var(--text-muted)" }}>
+
+                                <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: "0.5rem", fontFamily: "var(--font-mono)", fontSize: "0.66rem", color: "var(--text-muted)" }}>
                                     <i className="ph ph-hand-heart" /> {item.fundedEquivalent}
                                 </div>
 

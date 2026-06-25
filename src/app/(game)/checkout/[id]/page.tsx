@@ -83,6 +83,12 @@ export default function CheckoutPage() {
                                     <div style={{ fontSize: "0.82rem", color: "var(--text-secondary)" }}>{item.description}</div>
                                 </div>
                             </div>
+                            <div style={{ marginTop: "var(--space-4)", paddingTop: "var(--space-4)", borderTop: "1px solid var(--border-subtle)" }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: "var(--font-mono)", fontSize: "0.6rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--green-700)" }}>
+                                    <i className="ph ph-target" /> How it helps the hunt
+                                </div>
+                                <p style={{ margin: "0.3rem 0 0", fontSize: "0.84rem", color: "var(--text-primary)", lineHeight: 1.5 }}>{item.effect}</p>
+                            </div>
                             <div style={{ marginTop: "var(--space-4)", paddingTop: "var(--space-4)", borderTop: "1px solid var(--border-subtle)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                 <span style={{ color: "var(--text-secondary)" }}>Your donation</span>
                                 <span style={{ fontFamily: "var(--font-serif)", fontSize: "1.8rem", fontWeight: 600 }}>{zar(item.priceZar)}</span>
