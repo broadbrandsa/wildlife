@@ -7,9 +7,8 @@ import Image from "next/image";
 import { Button, Eyebrow, StatBlock } from "@/components/ds";
 import { ImpactCard, useCampaignTotal } from "@/components/game/impact";
 import { DOG_BY_ID, EQUIPMENT_BY_ID, RANGER_BY_ID, ROUND } from "@/data";
-import { currentDay } from "@/lib/game";
 import { zar } from "@/lib/format";
-import { useGameStore } from "@/store/game";
+import { useCurrentDay, useGameStore } from "@/store/game";
 
 function Row({ icon, label, onClick }: { icon: string; label: string; onClick: () => void }) {
     return (
@@ -46,6 +45,8 @@ export default function ProfilePage() {
     const donationsTotal = useGameStore((s) => s.donationsTotal);
     const redeemedCodes = useGameStore((s) => s.redeemedCodes);
     const reset = useGameStore((s) => s.reset);
+    const setDemoDay = useGameStore((s) => s.setDemoDay);
+    const day = useCurrentDay();
 
     const onReset = () => {
         if (confirm("Reset this demo? This clears your ranger, pin, donations and clues.")) {
@@ -109,7 +110,7 @@ export default function ProfilePage() {
                 <div style={{ display: "flex", gap: "var(--space-5)", background: "var(--surface-card)", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-lg)", padding: "var(--space-5)", boxShadow: "var(--shadow-xs)" }}>
                     <StatBlock value={zar(donationsTotal)} label="Donated" />
                     <StatBlock value={donations.length} label="Gifts" divider />
-                    <StatBlock value={`${currentDay()}/${ROUND.durationDays}`} label="Round day" divider />
+                    <StatBlock value={`${day}/${ROUND.durationDays}`} label="Round day" divider />
                 </div>
 
                 {/* impact (community total) */}
@@ -140,6 +141,7 @@ export default function ProfilePage() {
 
                 {/* links */}
                 <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+                    <Row icon="trophy" label="Prizes and how to win" onClick={() => router.push("/prizes")} />
                     <Row icon="users-three" label="Meet the real K9 Unit" onClick={() => router.push("/team")} />
                     <Row icon="hand-heart" label="Your impact" onClick={() => router.push("/impact")} />
                     <Row icon="heart" label="Our allies" onClick={() => router.push("/allies")} />
@@ -149,6 +151,33 @@ export default function ProfilePage() {
 
                 <div style={{ fontSize: "0.78rem", color: "var(--text-muted)", textAlign: "center" }}>
                     {redeemedCodes.length} sponsor code{redeemedCodes.length === 1 ? "" : "s"} redeemed
+                </div>
+
+                {/* demo controls: scrub through the round to pitch the full arc */}
+                <div style={{ background: "var(--surface-card)", border: "1px dashed var(--border-default)", borderRadius: "var(--radius-lg)", padding: "var(--space-5)" }}>
+                    <Eyebrow>Demo controls</Eyebrow>
+                    <div style={{ display: "flex", alignItems: "center", gap: "var(--space-4)", marginTop: "var(--space-4)" }}>
+                        <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.7rem", letterSpacing: "0.08em", color: "var(--text-secondary)", whiteSpace: "nowrap" }}>
+                            DAY {day}
+                        </span>
+                        <input
+                            type="range"
+                            min={1}
+                            max={ROUND.durationDays}
+                            value={day}
+                            onChange={(e) => setDemoDay(Number(e.target.value))}
+                            aria-label="Simulate round day"
+                            style={{ flex: 1, accentColor: "var(--green-700)" }}
+                        />
+                    </div>
+                    <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", margin: "var(--space-3) 0 0", lineHeight: 1.5 }}>
+                        Scrub through the round to show how clues release over 90 days.
+                    </p>
+                    <div style={{ marginTop: "var(--space-4)" }}>
+                        <Button size="sm" variant="secondary" fullWidth onClick={() => router.push("/debrief?preview=1")} iconRight={<i className="ph ph-flag-checkered" />}>
+                            Preview the round-end debrief
+                        </Button>
+                    </div>
                 </div>
 
                 <Button variant="ghost" fullWidth onClick={onReset} iconLeft={<i className="ph ph-arrow-counter-clockwise" />}>

@@ -1,8 +1,9 @@
 import type { Equipment } from "./types";
 
 /**
- * 12-item equipment shop. Prices anchored to SAWC's published donation values
- * where they exist (R500 monthly K9 healthcare, R2,400 ranger GPS).
+ * 13-item equipment shop. Prices anchored to SAWC's published donation values
+ * where they exist (R500 monthly K9 healthcare, R500 ranger compass, R1,850
+ * aerial patrol hour, R2,400 ranger GPS, toward the R7,300 T5 dog collar).
  * Items with `unlocksClueId` reveal a paid, operational clue when donated.
  */
 export const EQUIPMENT: Equipment[] = [
@@ -84,20 +85,19 @@ export const EQUIPMENT: Equipment[] = [
         priceZar: 250,
         description: "Live tracking on your dog's collar.",
         effect: "Shows exactly where your dog has tracked and tightens the search area around the scent, narrowing your guess.",
-        fundedEquivalent: "Garmin / Tractive working-hound GPS pool",
+        fundedEquivalent: "Toward SAWC's R7,300 T5 tracking collar for the pack",
         icon: "map-pin-area",
         unlocksClueId: "eq-gps",
     },
     {
-        id: "plane-flyover",
-        name: "Plane fly-over",
+        id: "ranger-compass",
+        name: "Ranger's compass",
         tier: "hunt",
-        priceZar: 350,
-        description: "A Bat Hawk microlight sweep of one zone.",
-        effect: "Brings back an aerial photo that narrows the hunt from a whole zone down to a single feature.",
-        fundedEquivalent: "About a third of a Bat Hawk flight hour",
-        icon: "airplane-tilt",
-        unlocksClueId: "eq-plane",
+        priceZar: 500,
+        description: "A field compass for navigating deep bush and reporting your exact position.",
+        effect: "Adds the compass pull to your dog's daily scent reads, showing which direction the trail is drawing toward.",
+        fundedEquivalent: "Exact match to SAWC's published donation",
+        icon: "compass-rose",
     },
     {
         id: "monthly-healthcare",
@@ -108,6 +108,17 @@ export const EQUIPMENT: Equipment[] = [
         effect: "Keeps your dog fit for the whole round, so illness never costs you a day of the hunt.",
         fundedEquivalent: "Exact match to SAWC's published donation",
         icon: "first-aid-kit",
+    },
+    {
+        id: "plane-flyover",
+        name: "Aerial patrol hour",
+        tier: "big-ticket",
+        priceZar: 1850,
+        description: "One hour of a Savannah light sport aircraft over the hunt, low and slow.",
+        effect: "Brings back an aerial photo that narrows the hunt from a whole zone down to a single feature.",
+        fundedEquivalent: "Exact match: one hour of Savannah patrol fuel",
+        icon: "airplane-tilt",
+        unlocksClueId: "eq-plane",
     },
     {
         id: "ranger-gps",

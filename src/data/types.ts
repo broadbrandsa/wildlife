@@ -86,17 +86,22 @@ export type ClueCategory =
     | "operational"
     | "seasonal";
 
-export type ClueSource = "free" | "equipment" | "sponsor";
+export type ClueSource = "free" | "equipment" | "sponsor" | "dog";
 export type ClueDifficulty = "zone" | "feature" | "landmark";
+/** Trail clues point toward the poacher. Elimination clues rule ground out. */
+export type ClueKind = "trail" | "elimination";
 
 export interface Clue {
     id: string;
     source: ClueSource;
     category: ClueCategory;
     difficulty: ClueDifficulty;
-    /** Day in the 90-day round this free clue releases (free clues only). */
+    kind?: ClueKind;
+    /** Day in the round this clue releases (free and dog clues). */
     releaseDay?: number;
-    /** Zone this clue points to. */
+    /** For dog clues: the dog that surfaces this clue. */
+    dogId?: string;
+    /** Zone this clue is about (the target zone, or the zone it rules out). */
     zoneId: ZoneId;
     body: string;
     didYouKnow: string;

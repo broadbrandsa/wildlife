@@ -4,6 +4,9 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 import { CODE_BY_VALUE, EQUIPMENT_BY_ID } from "@/data";
+import type { ZoneId } from "@/data";
+import { currentDay } from "@/lib/game";
+import type { Direction, ScentTier } from "@/lib/game";
 import { receiptNumber } from "@/lib/format";
 
 export interface Player {
@@ -37,6 +40,23 @@ export type RedeemResult =
     | { ok: true; unlockType: string; payloadId: string; creditLine: string }
     | { ok: false; reason: "unknown" | "used" | "expired" };
 
+/** Case-board verdict a player has recorded against a zone. */
+export type ZoneMark = "suspect" | "eliminated";
+
+/** The dog's most recent verdict on the pin. One read per round day. */
+export interface ScentRead {
+    day: number;
+    tier: ScentTier;
+    direction: Direction;
+    x: number;
+    y: number;
+}
+
+export interface Patrol {
+    lastDay: number | null;
+    streak: number;
+}
+
 interface GameState {
     hasHydrated: boolean;
     player: Player | null;
@@ -47,6 +67,11 @@ interface GameState {
     donations: Donation[];
     donationsTotal: number;
     notifyAsked: boolean;
+    zoneMarks: Partial<Record<ZoneId, ZoneMark>>;
+    lastScentRead: ScentRead | null;
+    patrol: Patrol;
+    /** Demo-only day override, driven by the profile page scrubber. */
+    demoDay: number | null;
 
     setHasHydrated: (v: boolean) => void;
     setPlayer: (player: Player) => void;
@@ -58,6 +83,10 @@ interface GameState {
     unlockClue: (id: string) => void;
     redeemCode: (raw: string) => RedeemResult;
     setNotifyAsked: () => void;
+    cycleZoneMark: (zoneId: ZoneId) => void;
+    recordScentRead: (read: ScentRead) => void;
+    logPatrol: (day: number) => void;
+    setDemoDay: (day: number | null) => void;
     reset: () => void;
 }
 
@@ -73,6 +102,10 @@ const initial = {
     donations: [] as Donation[],
     donationsTotal: 0,
     notifyAsked: false,
+    zoneMarks: {} as Partial<Record<ZoneId, ZoneMark>>,
+    lastScentRead: null as ScentRead | null,
+    patrol: { lastDay: null, streak: 0 } as Patrol,
+    demoDay: null as number | null,
 };
 
 export const useGameStore = create<GameState>()(
@@ -155,6 +188,29 @@ export const useGameStore = create<GameState>()(
 
             setNotifyAsked: () => set({ notifyAsked: true }),
 
+            // open → suspect → eliminated → open
+            cycleZoneMark: (zoneId) =>
+                set((s) => {
+                    const cur = s.zoneMarks[zoneId];
+                    const next: ZoneMark | undefined =
+                        cur === undefined ? "suspect" : cur === "suspect" ? "eliminated" : undefined;
+                    const zoneMarks = { ...s.zoneMarks };
+                    if (next) zoneMarks[zoneId] = next;
+                    else delete zoneMarks[zoneId];
+                    return { zoneMarks };
+                }),
+
+            recordScentRead: (read) => set({ lastScentRead: read }),
+
+            logPatrol: (day) =>
+                set((s) => {
+                    if (s.patrol.lastDay === day) return {};
+                    const streak = s.patrol.lastDay === day - 1 ? s.patrol.streak + 1 : 1;
+                    return { patrol: { lastDay: day, streak } };
+                }),
+
+            setDemoDay: (day) => set({ demoDay: day }),
+
             reset: () => set({ ...initial }),
         }),
         {
@@ -164,3 +220,9 @@ export const useGameStore = create<GameState>()(
         },
     ),
 );
+
+/** The round day the UI should render, honouring the demo scrubber. */
+export function useCurrentDay(): number {
+    const demoDay = useGameStore((s) => s.demoDay);
+    return currentDay(demoDay);
+}

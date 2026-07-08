@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 
 import { Button, Eyebrow } from "@/components/ds";
 import { CostList, ImpactLadder, impactState, liveEquivalent, useCampaignTotal } from "@/components/game/impact";
+import { FUNDRAISING_GOAL_ZAR, GOAL_LINE } from "@/data";
 import { zar } from "@/lib/format";
 
 export default function ImpactPage() {
@@ -35,6 +36,25 @@ export default function ImpactPage() {
                         {zar(next.threshold - total)} more unlocks &ldquo;{next.title.toLowerCase()}&rdquo;.
                     </p>
                 )}
+
+                {/* round goal */}
+                <div style={{ marginTop: "var(--space-5)" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "var(--font-mono)", fontSize: "0.64rem", letterSpacing: "0.08em", color: "rgba(245,239,226,0.7)", marginBottom: 6 }}>
+                        <span>ROUND GOAL</span>
+                        <span>{zar(FUNDRAISING_GOAL_ZAR)}</span>
+                    </div>
+                    <div style={{ height: 8, borderRadius: "var(--radius-pill)", background: "rgba(245,239,226,0.15)", overflow: "hidden" }}>
+                        <div
+                            style={{
+                                width: `${Math.max(Math.min(total / FUNDRAISING_GOAL_ZAR, 1) * 100, 2)}%`,
+                                height: "100%",
+                                borderRadius: "var(--radius-pill)",
+                                background: "var(--ochre-400)",
+                            }}
+                        />
+                    </div>
+                    <p style={{ margin: "var(--space-3) 0 0", fontSize: "0.8rem", color: "rgba(245,239,226,0.7)", lineHeight: 1.55 }}>{GOAL_LINE}</p>
+                </div>
             </div>
 
             <div style={{ padding: "var(--space-6) var(--gutter)" }}>

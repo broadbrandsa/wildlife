@@ -1,18 +1,24 @@
 /**
  * Real-world SAWC K9 Unit costs, used to translate money raised into concrete
- * impact. Figures are drawn from the research in /Information (SAWC published
- * donation pages plus sector benchmarks) and are estimates pending SAWC's own
- * confirmation. Keep them here so the impact ladder stays honest and editable.
+ * impact. Figures verified against SAWC's published K9 unit page (July 2026):
+ * 35 dogs, R5,000 average annual medical care per dog (R175,000 covers all),
+ * R500/month healthcare sponsorship, R2,400 handheld GPS, R500 compass,
+ * R7,300 T5 GPS dog collar, R1,850 per aerial patrol hour.
+ * Food figures remain sector benchmarks pending SAWC confirmation.
  */
 export const UNIT_COSTS = {
-    dogsInPack: 21, // approximate working pack size
-    foodPerDogYear: 7800, // ~R150/week of premium hound food x 52
-    healthcarePerDogYear: 6000, // R500/dog/month x 12 (SAWC published)
+    dogsInPack: 35, // SAWC published: "we have 35 dogs"
+    foodPerDogYear: 7800, // ~R150/week of premium hound food x 52 (benchmark)
+    healthcarePerDogYear: 5000, // SAWC published average annual medical care per dog
+    healthcareSponsorMonth: 500, // SAWC's published monthly healthcare sponsorship
     rangerGps: 2400, // SAWC published
+    rangerCompass: 500, // SAWC published
+    gpsDogCollar: 7300, // SAWC published (T5 collar + handheld need)
+    aerialPatrolHour: 1850, // SAWC published (Savannah fuel per patrol hour)
     rangerTraining: 52000, // 6-week anti-poaching field-ranger course
-    packFoodPerMonth: 20000, // ~R20,000/month for the whole pack
-    packFoodPerYear: 240000, // x 12
-    annualHealthcareGoal: 175000, // SAWC's published 2025 healthcare fund goal
+    packFoodPerMonth: 22750, // 35 dogs x R7,800 / 12 (benchmark)
+    packFoodPerYear: 273000, // 35 dogs x R7,800 (benchmark)
+    annualHealthcareGoal: 175000, // SAWC's published goal: all 35 dogs cared for
 };
 
 /**
@@ -32,12 +38,15 @@ export interface CostLine {
 
 /** The unit's real running costs, shown as supporting detail on the impact page. */
 export const COST_LINES: CostLine[] = [
-    { label: "Food for one dog, a year", amount: 7800, icon: "bowl-food", note: "~R150 a week" },
-    { label: "Vet care for one dog, a year", amount: 6000, icon: "first-aid-kit", note: "R500 a month" },
-    { label: "Feeding the whole pack, a month", amount: 20000, icon: "paw-print", note: "~21 dogs" },
+    { label: "A ranger's field compass", amount: 500, icon: "compass-rose" },
+    { label: "A month of one dog's healthcare", amount: 500, icon: "first-aid-kit", note: "Parasite control, vaccinations, check-ups" },
+    { label: "One hour of aerial patrol", amount: 1850, icon: "airplane-tilt", note: "Savannah fuel, 500,000 ha to cover" },
     { label: "A ranger's handheld GPS", amount: 2400, icon: "compass" },
+    { label: "Medical care for one dog, a year", amount: 5000, icon: "heartbeat", note: "R175,000 covers all 35 dogs" },
+    { label: "A T5 GPS collar for a hound", amount: 7300, icon: "map-pin-area", note: "Tracked from the chopper on operations" },
+    { label: "Food for one dog, a year", amount: 7800, icon: "bowl-food", note: "~R150 a week" },
     { label: "Training one anti-poaching ranger", amount: 52000, icon: "graduation-cap", note: "6-week course" },
-    { label: "The unit's healthcare, a full year", amount: 175000, icon: "heartbeat" },
+    { label: "The unit's healthcare, a full year", amount: 175000, icon: "heartbeat", note: "All 35 dogs" },
 ];
 
 export interface Milestone {
@@ -67,10 +76,16 @@ export const MILESTONES: Milestone[] = [
         icon: "compass",
     },
     {
-        threshold: 6000,
-        title: "A year of vet care for one dog",
+        threshold: 5000,
+        title: "A year of medical care for one dog",
         detail: "Vet visits, vaccinations and parasite control for twelve months.",
         icon: "first-aid-kit",
+    },
+    {
+        threshold: 7300,
+        title: "A T5 GPS collar for a hound",
+        detail: "Live tracking for a free-running hound on deployment.",
+        icon: "map-pin-area",
     },
     {
         threshold: 7800,
@@ -87,7 +102,7 @@ export const MILESTONES: Milestone[] = [
     {
         threshold: 39000,
         title: "Five dogs fed for a year",
-        detail: "A quarter of the pack, fed for twelve months.",
+        detail: "A working line of the pack, fed for twelve months.",
         icon: "bowl-food",
     },
     {
@@ -97,16 +112,16 @@ export const MILESTONES: Milestone[] = [
         icon: "graduation-cap",
     },
     {
-        threshold: 164000,
-        title: "The whole pack fed for a year",
-        detail: "All twenty-one working dogs, fed for twelve months.",
-        icon: "paw-print",
-    },
-    {
         threshold: 175000,
         title: "The unit's annual healthcare funded",
-        detail: "A full year of vet care for every dog in the unit.",
+        detail: "A full year of medical care for every one of the 35 dogs.",
         icon: "heartbeat",
+    },
+    {
+        threshold: 273000,
+        title: "The whole pack fed for a year",
+        detail: "All thirty-five working dogs, fed for twelve months.",
+        icon: "paw-print",
     },
     {
         threshold: 500000,

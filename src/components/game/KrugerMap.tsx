@@ -48,9 +48,11 @@ interface KrugerMapProps {
     onPlace?: (x: number, y: number) => void;
     revealZones?: ZoneId[];
     showLabels?: boolean;
+    /** Revealed poacher location (debrief only). */
+    target?: { x: number; y: number } | null;
 }
 
-export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true }: KrugerMapProps) {
+export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, target = null }: KrugerMapProps) {
     const down = useRef<{ x: number; y: number } | null>(null);
 
     const handlePointerDown = (e: React.PointerEvent) => {
@@ -186,6 +188,36 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true }:
                             </text>
                         </g>
                     </svg>
+
+                    {/* the revealed poacher camp (debrief only) */}
+                    {target && (
+                        <span
+                            className="kw-pin-drop"
+                            style={{
+                                position: "absolute",
+                                left: `${target.x * 100}%`,
+                                top: `${target.y * 100}%`,
+                                transform: "translate(-50%, -50%)",
+                                pointerEvents: "none",
+                            }}
+                        >
+                            <span
+                                style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    width: 30,
+                                    height: 30,
+                                    borderRadius: "50%",
+                                    background: "var(--ochre-500)",
+                                    boxShadow: "var(--shadow-md)",
+                                    border: "2px solid #fff",
+                                }}
+                            >
+                                <i className="ph-fill ph-campfire" style={{ color: "var(--sand-900)", fontSize: 15 }} />
+                            </span>
+                        </span>
+                    )}
 
                     {/* the player's pin (HTML overlay so it can animate crisply) */}
                     {pin && (

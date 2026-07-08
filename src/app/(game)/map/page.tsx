@@ -2,15 +2,32 @@
 
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useMemo, useRef, useState } from "react";
 
 import { Button, IconButton, Tag } from "@/components/ds";
 import { ClueCard } from "@/components/game/ClueCard";
 import { ImpactHighlight, useCampaignTotal } from "@/components/game/impact";
 import { KrugerMap } from "@/components/game/KrugerMap";
-import { CLUE_BY_ID, CLUES, DOG_BY_ID, RANGER_BY_ID, ROUND } from "@/data";
-import { availableClueIds, currentDay, daysRemaining } from "@/lib/game";
-import { useGameStore } from "@/store/game";
+import { ZoneSheet } from "@/components/game/ZoneSheet";
+import { CLUE_BY_ID, CLUES, DOG_BY_ID, RANGER_BY_ID, ROUND, ZONES, ZONE_BY_ID, patrolNoteForDay } from "@/data";
+import type { Zone } from "@/data";
+import {
+    SCENT_TEXT,
+    availableClueIds,
+    daysRemaining,
+    isRoundOver,
+    scentRead,
+    zoneAtPoint,
+} from "@/lib/game";
+import type { ScentTier } from "@/lib/game";
+import { useCurrentDay, useGameStore } from "@/store/game";
+
+const TIER_META: Record<ScentTier, { label: string; tone: "neutral" | "teal" | "ochre" | "clay"; icon: string }> = {
+    cold: { label: "Cold ground", tone: "neutral", icon: "thermometer-cold" },
+    faint: { label: "Faint trail", tone: "teal", icon: "wind" },
+    warm: { label: "Warm trail", tone: "ochre", icon: "footprints" },
+    hot: { label: "Fresh sign", tone: "clay", icon: "paw-print" },
+};
 
 function MapInner() {
     const router = useRouter();
@@ -22,26 +39,60 @@ function MapInner() {
     const setPin = useGameStore((s) => s.setPin);
     const lockPin = useGameStore((s) => s.lockPin);
     const cluesUnlocked = useGameStore((s) => s.cluesUnlocked);
+    const inventory = useGameStore((s) => s.inventory);
+    const lastScentRead = useGameStore((s) => s.lastScentRead);
+    const recordScentRead = useGameStore((s) => s.recordScentRead);
+    const patrol = useGameStore((s) => s.patrol);
+    const logPatrol = useGameStore((s) => s.logPatrol);
     const campaignTotal = useCampaignTotal();
 
     const [dismissed, setDismissed] = useState(false);
-    const day = currentDay();
+    const [guideZone, setGuideZone] = useState<Zone | null>(null);
+    const [confirmLock, setConfirmLock] = useState(false);
+    const confirmTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const day = useCurrentDay();
+    const roundOver = isRoundOver(day);
 
     const available = useMemo(() => {
-        const ids = availableClueIds(cluesUnlocked, day);
+        const ids = availableClueIds(cluesUnlocked, day, player?.dogId);
         return CLUES.filter((c) => ids.has(c.id));
-    }, [cluesUnlocked, day]);
+    }, [cluesUnlocked, day, player?.dogId]);
 
     // Latest / most specific clue to surface on the HUD.
     const latest = useMemo(() => {
-        const freeSorted = available.filter((c) => c.source === "free").sort((a, b) => (b.releaseDay ?? 0) - (a.releaseDay ?? 0));
-        return freeSorted[0] ?? available[available.length - 1] ?? CLUE_BY_ID["free-d1"];
+        const dated = available
+            .filter((c) => c.releaseDay != null)
+            .sort((a, b) => (b.releaseDay ?? 0) - (a.releaseDay ?? 0));
+        return dated[0] ?? available[available.length - 1] ?? CLUE_BY_ID["free-d1"];
     }, [available]);
 
     const dog = player ? DOG_BY_ID[player.dogId] : null;
     const ranger = player ? RANGER_BY_ID[player.rangerId] : null;
     const rangerName = player?.displayName ?? "Ranger";
     const dogName = player?.dogName ?? dog?.name ?? "your dog";
+
+    const pinZone = pin ? ZONE_BY_ID[zoneAtPoint(pin)] : null;
+    const readTakenToday = lastScentRead?.day === day;
+    const patrolledToday = patrol.lastDay === day;
+    const note = patrolNoteForDay(day);
+
+    const onAskForRead = () => {
+        if (!pin || readTakenToday) return;
+        const result = scentRead(pin, player?.dogId);
+        recordScentRead({ day, tier: result.tier, direction: result.direction, x: pin.x, y: pin.y });
+    };
+
+    const onLockTap = () => {
+        if (!confirmLock) {
+            setConfirmLock(true);
+            if (confirmTimer.current) clearTimeout(confirmTimer.current);
+            confirmTimer.current = setTimeout(() => setConfirmLock(false), 3500);
+            return;
+        }
+        if (confirmTimer.current) clearTimeout(confirmTimer.current);
+        setConfirmLock(false);
+        lockPin();
+    };
 
     const closeWelcome = () => {
         setDismissed(true);
@@ -65,9 +116,14 @@ function MapInner() {
                         </div>
                         <h1 style={{ color: "#fff", fontSize: "var(--text-h3)", margin: "0.3rem 0 0" }}>The hunt</h1>
                     </div>
-                    <IconButton label="Intel Intercept" variant="solid" onClick={() => router.push("/codes")} style={{ background: "var(--ochre-500)", color: "var(--sand-900)" }}>
-                        <i className="ph ph-radio" />
-                    </IconButton>
+                    <span style={{ display: "inline-flex", gap: "var(--space-2)" }}>
+                        <IconButton label="Prizes and how to win" variant="solid" onClick={() => router.push("/prizes")} style={{ background: "rgba(245,239,226,0.14)", color: "var(--sand-50)" }}>
+                            <i className="ph ph-trophy" />
+                        </IconButton>
+                        <IconButton label="Intel Intercept" variant="solid" onClick={() => router.push("/codes")} style={{ background: "var(--ochre-500)", color: "var(--sand-900)" }}>
+                            <i className="ph ph-radio" />
+                        </IconButton>
+                    </span>
                 </div>
 
                 <div style={{ display: "flex", gap: "var(--space-5)", marginTop: "var(--space-4)", fontFamily: "var(--font-mono)", fontSize: "0.68rem", letterSpacing: "0.06em", color: "rgba(245,239,226,0.82)" }}>
@@ -75,11 +131,13 @@ function MapInner() {
                         <i className="ph ph-calendar-blank" /> DAY {day} / {ROUND.durationDays}
                     </span>
                     <span>
-                        <i className="ph ph-hourglass-medium" /> {daysRemaining()} DAYS LEFT
+                        <i className="ph ph-hourglass-medium" /> {daysRemaining(day)} DAYS LEFT
                     </span>
-                    <span>
-                        <i className="ph ph-crosshair" /> 1 SUSPECT AT LARGE
-                    </span>
+                    {patrol.streak > 1 && (
+                        <span>
+                            <i className="ph ph-flame" /> {patrol.streak} DAY STREAK
+                        </span>
+                    )}
                 </div>
             </header>
 
@@ -126,8 +184,61 @@ function MapInner() {
                 )}
             </div>
 
-            {/* Pin status + latest clue */}
-            <div style={{ flex: 1, padding: "var(--space-5) var(--gutter)", display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
+            {/* Field guide chips */}
+            <div style={{ padding: "var(--space-3) 0 0", background: "var(--surface-page)" }}>
+                <div style={{ display: "flex", gap: "var(--space-2)", overflowX: "auto", padding: "0 var(--gutter)", scrollbarWidth: "none" }}>
+                    <span style={{ flex: "none", alignSelf: "center", fontFamily: "var(--font-mono)", fontSize: "0.6rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--text-muted)" }}>
+                        Field guide
+                    </span>
+                    {ZONES.map((z) => (
+                        <button
+                            key={z.id}
+                            onClick={() => setGuideZone(z)}
+                            style={{
+                                flex: "none",
+                                border: "1px solid var(--border-default)",
+                                background: "var(--surface-card)",
+                                borderRadius: "var(--radius-pill)",
+                                padding: "0.3rem 0.75rem",
+                                fontSize: "0.74rem",
+                                fontWeight: 600,
+                                color: "var(--text-secondary)",
+                                cursor: "pointer",
+                                whiteSpace: "nowrap",
+                            }}
+                        >
+                            <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.64rem", color: "var(--text-accent)", marginRight: 5 }}>{z.number}</span>
+                            {z.name}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Pin status + scent read + patrol + latest clue */}
+            <div style={{ flex: 1, padding: "var(--space-4) var(--gutter) var(--space-5)", display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
+                {roundOver && (
+                    <div
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "var(--space-3)",
+                            background: "var(--green-100)",
+                            border: "1px solid var(--green-200)",
+                            borderRadius: "var(--radius-lg)",
+                            padding: "var(--space-4)",
+                        }}
+                    >
+                        <i className="ph-fill ph-flag-checkered" style={{ fontSize: 22, color: "var(--green-700)" }} />
+                        <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: 700, fontSize: "0.92rem" }}>The round is over</div>
+                            <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>The suspect&apos;s camp has been found. See how close you came.</div>
+                        </div>
+                        <Button size="sm" onClick={() => router.push("/debrief")}>
+                            Debrief
+                        </Button>
+                    </div>
+                )}
+
                 <div
                     style={{
                         display: "flex",
@@ -148,14 +259,94 @@ function MapInner() {
                             {!pin ? "No pin dropped yet" : pin.locked ? "Pin locked in" : "Pin dropped"}
                         </div>
                         <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
-                            {!pin ? "Tap the map to place your guess." : pin.locked ? "Locked for the round." : "Tap the map to move it, any time before lock."}
+                            {!pin
+                                ? "Tap the map to place your guess."
+                                : pinZone
+                                  ? `Zone ${pinZone.number} · ${pinZone.name}${pin.locked ? " · locked for the round" : ""}`
+                                  : pin.locked
+                                    ? "Locked for the round."
+                                    : "Tap the map to move it, any time before lock."}
                         </div>
                     </div>
                     {pin && !pin.locked && (
-                        <Button size="sm" variant="secondary" onClick={lockPin}>
-                            Lock in
+                        <Button size="sm" variant={confirmLock ? "primary" : "secondary"} onClick={onLockTap}>
+                            {confirmLock ? "Tap to confirm" : "Lock in"}
                         </Button>
                     )}
+                </div>
+
+                {/* Scent read: the dog's daily verdict on your pin */}
+                {pin && !roundOver && (
+                    <div
+                        style={{
+                            background: "var(--surface-card)",
+                            border: "1px solid var(--border-subtle)",
+                            borderRadius: "var(--radius-lg)",
+                            padding: "var(--space-4)",
+                            boxShadow: "var(--shadow-xs)",
+                        }}
+                    >
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-3)" }}>
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: 8, fontFamily: "var(--font-mono)", fontSize: "0.64rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-accent)" }}>
+                                <i className="ph ph-paw-print" /> Scent read
+                            </span>
+                            {readTakenToday && lastScentRead ? (
+                                <Tag tone={TIER_META[lastScentRead.tier].tone} size="sm">
+                                    <i className={`ph ph-${TIER_META[lastScentRead.tier].icon}`} style={{ marginRight: 4 }} />
+                                    {TIER_META[lastScentRead.tier].label}
+                                </Tag>
+                            ) : (
+                                <Button size="sm" onClick={onAskForRead}>
+                                    Ask {dogName}
+                                </Button>
+                            )}
+                        </div>
+                        <p style={{ margin: "var(--space-3) 0 0", fontFamily: "var(--font-serif)", fontSize: "0.98rem", lineHeight: 1.5, color: "var(--sand-900)" }}>
+                            {readTakenToday && lastScentRead
+                                ? SCENT_TEXT[lastScentRead.tier].replace("{dog}", dogName) +
+                                  (lastScentRead.tier !== "hot"
+                                      ? player?.dogId === "scout"
+                                          ? ` Scout holds the old trail a moment longer. The scent pulls ${lastScentRead.direction}.`
+                                          : inventory.includes("ranger-compass")
+                                            ? ` Your compass needle settles. The trail pulls ${lastScentRead.direction}.`
+                                            : ""
+                                      : "")
+                                : `Once a day, ${dogName} can check the ground where your pin sits. Use it well.`}
+                        </p>
+                        {readTakenToday && (
+                            <div style={{ marginTop: "var(--space-2)", fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.08em", color: "var(--text-muted)" }}>
+                                READ TAKEN · {dogName.toUpperCase()} RESTS UNTIL TOMORROW
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Morning patrol: the light daily ritual */}
+                <div
+                    style={{
+                        background: "var(--surface-card)",
+                        border: "1px solid var(--border-subtle)",
+                        borderRadius: "var(--radius-lg)",
+                        padding: "var(--space-4)",
+                        boxShadow: "var(--shadow-xs)",
+                    }}
+                >
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-3)" }}>
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 8, fontFamily: "var(--font-mono)", fontSize: "0.64rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-accent)" }}>
+                            <i className={`ph ph-${note.icon}`} /> Morning patrol
+                        </span>
+                        {patrolledToday ? (
+                            <Tag tone="green" size="sm">
+                                <i className="ph-fill ph-check-circle" style={{ marginRight: 4 }} />
+                                {patrol.streak > 1 ? `${patrol.streak} days` : "Logged"}
+                            </Tag>
+                        ) : (
+                            <Button size="sm" variant="secondary" onClick={() => logPatrol(day)}>
+                                Log patrol
+                            </Button>
+                        )}
+                    </div>
+                    <p style={{ margin: "var(--space-3) 0 0", fontSize: "0.86rem", lineHeight: 1.55, color: "var(--text-secondary)" }}>{note.body}</p>
                 </div>
 
                 <ImpactHighlight amount={campaignTotal} onOpen={() => router.push("/impact")} />
@@ -174,6 +365,8 @@ function MapInner() {
                     </div>
                 )}
             </div>
+
+            <ZoneSheet zone={guideZone} onClose={() => setGuideZone(null)} />
 
             {/* First-launch welcome sheet */}
             {showWelcome && !dismissed && (

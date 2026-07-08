@@ -1,13 +1,13 @@
 "use client";
 
 import { Tag } from "@/components/ds";
-import { ZONE_BY_ID } from "@/data";
 import type { Clue } from "@/data";
 
-const SOURCE_META: Record<Clue["source"], { label: string; icon: string; tone: "ochre" | "teal" | "clay" }> = {
+const SOURCE_META: Record<Clue["source"], { label: string; icon: string; tone: "ochre" | "teal" | "clay" | "green" }> = {
     free: { label: "Field clue", icon: "tree", tone: "teal" },
     equipment: { label: "Kit intel", icon: "binoculars", tone: "ochre" },
     sponsor: { label: "Intel intercept", icon: "radio", tone: "clay" },
+    dog: { label: "Dog instinct", icon: "paw-print", tone: "green" },
 };
 
 const CATEGORY_ICON: Record<string, string> = {
@@ -24,7 +24,7 @@ const CATEGORY_ICON: Record<string, string> = {
 
 export function ClueCard({ clue, compact = false }: { clue: Clue; compact?: boolean }) {
     const meta = SOURCE_META[clue.source];
-    const zone = ZONE_BY_ID[clue.zoneId];
+    const isElimination = clue.kind === "elimination";
 
     return (
         <div
@@ -49,10 +49,18 @@ export function ClueCard({ clue, compact = false }: { clue: Clue; compact?: bool
                 <span style={{ display: "inline-flex", alignItems: "center", gap: 8, fontFamily: "var(--font-mono)", fontSize: "0.64rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-accent)" }}>
                     <i className={`ph ph-${meta.icon}`} /> {meta.label}
                 </span>
-                <Tag tone={meta.tone} size="sm">
-                    <i className={`ph ph-${CATEGORY_ICON[clue.category] ?? "compass"}`} style={{ marginRight: 4 }} />
-                    {clue.difficulty}
-                </Tag>
+                <span style={{ display: "inline-flex", gap: 6 }}>
+                    {isElimination && (
+                        <Tag tone="neutral" size="sm">
+                            <i className="ph ph-prohibit" style={{ marginRight: 4 }} />
+                            rules ground out
+                        </Tag>
+                    )}
+                    <Tag tone={meta.tone} size="sm">
+                        <i className={`ph ph-${CATEGORY_ICON[clue.category] ?? "compass"}`} style={{ marginRight: 4 }} />
+                        {clue.difficulty}
+                    </Tag>
+                </span>
             </div>
 
             <div style={{ padding: "var(--space-5)" }}>
@@ -88,9 +96,11 @@ export function ClueCard({ clue, compact = false }: { clue: Clue; compact?: bool
                 )}
             </div>
 
-            <div style={{ padding: "0.6rem var(--space-4)", borderTop: "1px solid var(--border-subtle)", fontFamily: "var(--font-mono)", fontSize: "0.64rem", letterSpacing: "0.08em", color: "var(--text-muted)" }}>
-                ZONE {zone.number} · {zone.name.toUpperCase()}
-            </div>
+            {clue.releaseDay != null && (
+                <div style={{ padding: "0.6rem var(--space-4)", borderTop: "1px solid var(--border-subtle)", fontFamily: "var(--font-mono)", fontSize: "0.64rem", letterSpacing: "0.08em", color: "var(--text-muted)" }}>
+                    DAY {clue.releaseDay} · TAKE IT TO THE CASE BOARD
+                </div>
+            )}
         </div>
     );
 }

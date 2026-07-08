@@ -15,7 +15,7 @@ const SECTIONS = [
     },
     {
         title: "The hunt & prizes",
-        body: "Closest pin at round end wins. Entry is free and never tied to a donation. Full written rules, a free entry path and independent verification will be published before any prize round runs, in line with section 36 of the Consumer Protection Act.",
+        body: "The 26 locked pins closest to the revealed camp win the round's tiered prizes (1 first, 5 second, 20 third). Ties are broken by whichever pin locked earliest. Entry is free and never tied to a donation. Winners are verified and announced within seven days of round end. Full written rules, a free entry path and independent verification will be published before any prize round runs, in line with section 36 of the Consumer Protection Act. Prize partners shown in this prototype are illustrative.",
     },
     {
         title: "Where your money goes",
