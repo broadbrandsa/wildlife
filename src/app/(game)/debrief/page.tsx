@@ -7,6 +7,8 @@ import { Button, Eyebrow, StatBlock, Tag } from "@/components/ds";
 import { KrugerMap } from "@/components/game/KrugerMap";
 import { DOG_BY_ID, ROUND, ZONE_BY_ID } from "@/data";
 import { distanceKm, isRoundOver, trackerRating, zoneAtPoint } from "@/lib/game";
+import { rangersHunting } from "@/lib/community";
+import { shareTrackerResult } from "@/lib/share-card";
 import { zar } from "@/lib/format";
 import { useCurrentDay, useGameStore } from "@/store/game";
 
@@ -92,6 +94,26 @@ function DebriefInner() {
                                     : `The trail ended in zone ${targetZone.number}. ${dogName} still gets dinner, and so does the whole pack.`}
                             </p>
                         </div>
+
+                        <Button
+                            fullWidth
+                            onClick={() =>
+                                shareTrackerResult({
+                                    rangerName: player?.displayName ?? "Ranger",
+                                    dogName,
+                                    distanceKm: dist,
+                                    ratingTitle: rating.title,
+                                    roundName: `Round ${ROUND.number} · ${ROUND.name}`,
+                                })
+                            }
+                            iconLeft={<i className="ph ph-share-network" />}
+                        >
+                            Share your result
+                        </Button>
+
+                        <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.66rem", letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text-muted)", textAlign: "center", margin: 0 }}>
+                            {rangersHunting(ROUND.durationDays).toLocaleString("en-ZA")} rangers hunted this round
+                        </p>
                     </>
                 ) : (
                     <div style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-lg)", padding: "var(--space-5)", textAlign: "center" }}>

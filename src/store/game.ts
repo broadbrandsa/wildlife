@@ -69,6 +69,8 @@ interface GameState {
     notifyAsked: boolean;
     zoneMarks: Partial<Record<ZoneId, ZoneMark>>;
     lastScentRead: ScentRead | null;
+    /** How many scent reads have been taken on a given round day. */
+    scentReadsToday: { day: number; count: number } | null;
     patrol: Patrol;
     /** Demo-only day override, driven by the profile page scrubber. */
     demoDay: number | null;
@@ -104,6 +106,7 @@ const initial = {
     notifyAsked: false,
     zoneMarks: {} as Partial<Record<ZoneId, ZoneMark>>,
     lastScentRead: null as ScentRead | null,
+    scentReadsToday: null as { day: number; count: number } | null,
     patrol: { lastDay: null, streak: 0 } as Patrol,
     demoDay: null as number | null,
 };
@@ -200,7 +203,12 @@ export const useGameStore = create<GameState>()(
                     return { zoneMarks };
                 }),
 
-            recordScentRead: (read) => set({ lastScentRead: read }),
+            recordScentRead: (read) =>
+                set((s) => {
+                    const prior = s.scentReadsToday;
+                    const count = prior && prior.day === read.day ? prior.count + 1 : 1;
+                    return { lastScentRead: read, scentReadsToday: { day: read.day, count } };
+                }),
 
             logPatrol: (day) =>
                 set((s) => {

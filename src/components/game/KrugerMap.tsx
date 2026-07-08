@@ -50,9 +50,11 @@ interface KrugerMapProps {
     showLabels?: boolean;
     /** Revealed poacher location (debrief only). */
     target?: { x: number; y: number } | null;
+    /** Maximum pinch-zoom. Pro binoculars lift this from 4 to 8. */
+    maxScale?: number;
 }
 
-export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, target = null }: KrugerMapProps) {
+export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, target = null, maxScale = 4 }: KrugerMapProps) {
     const down = useRef<{ x: number; y: number } | null>(null);
 
     const handlePointerDown = (e: React.PointerEvent) => {
@@ -71,7 +73,7 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
     };
 
     return (
-        <TransformWrapper minScale={1} maxScale={4} doubleClick={{ mode: "zoomIn" }} centerOnInit>
+        <TransformWrapper minScale={1} maxScale={maxScale} doubleClick={{ mode: "zoomIn" }} centerOnInit>
             <TransformComponent
                 wrapperStyle={{ width: "100%", height: "100%" }}
                 contentStyle={{ width: "100%", height: "100%" }}

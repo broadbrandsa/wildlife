@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { Button, Eyebrow, Tag } from "@/components/ds";
-import { EQUIPMENT } from "@/data";
+import { EQUIPMENT, FAIR_PLAY_LINE } from "@/data";
 import type { EquipmentTier } from "@/data";
 import { zar } from "@/lib/format";
 import { useGameStore } from "@/store/game";
@@ -36,6 +36,9 @@ export default function ShopPage() {
             <h1 style={{ fontSize: "var(--text-h2)", margin: "var(--space-3) 0 var(--space-2)" }}>Equip your hunt</h1>
             <p style={{ color: "var(--text-secondary)", margin: 0 }}>
                 Every donation buys real kit for the K9 Unit. Some gear also unlocks new intel.
+            </p>
+            <p style={{ display: "flex", gap: 6, alignItems: "flex-start", color: "var(--text-muted)", fontSize: "0.78rem", lineHeight: 1.5, margin: "var(--space-3) 0 0" }}>
+                <i className="ph ph-scales" style={{ marginTop: 2, color: "var(--green-600)" }} /> {FAIR_PLAY_LINE}
             </p>
 
             <div style={{ display: "flex", gap: 8, overflowX: "auto", margin: "var(--space-5) 0 var(--space-6)", paddingBottom: 2 }} className="kw-noscroll">

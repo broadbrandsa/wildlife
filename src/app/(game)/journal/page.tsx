@@ -8,7 +8,7 @@ import { ClueCard } from "@/components/game/ClueCard";
 import { ZoneSheet } from "@/components/game/ZoneSheet";
 import { CLUES, DOG_BY_ID, EQUIPMENT, ZONES } from "@/data";
 import type { Clue, Zone } from "@/data";
-import { availableClueIds, isDogClueReleased, isFreeClueReleased } from "@/lib/game";
+import { availableClueIds, isDogClueReleased, isFreeClueReleased, nextClueLabel } from "@/lib/game";
 import { useCurrentDay, useGameStore } from "@/store/game";
 
 const ITEM_FOR_CLUE: Record<string, { id: string; name: string }> = Object.fromEntries(
@@ -157,6 +157,9 @@ export default function JournalPage() {
             <p style={{ color: "var(--text-secondary)", margin: 0 }}>
                 {available.length} clue{available.length === 1 ? "" : "s"} in hand · {locked.length} still to come.
             </p>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: "var(--space-2)", fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-muted)" }}>
+                <i className="ph ph-timer" /> {nextClueLabel(day, player?.dogId)}
+            </div>
 
             {/* Case board */}
             <div style={{ margin: "var(--space-6) 0 0" }}>

@@ -65,6 +65,13 @@ Demo coupon codes (Intel Intercept): `5FM-SHINGWEDZI-42`, `BIRD-ROLLER-07`, `SCH
 - **Morning patrol** (`map`): a daily log-in ritual with a rotating field note (`src/data/patrol.ts`) and a streak counter.
 - **Debrief** (`/debrief`): shown when the round ends (or via profile preview). Reveals the camp, scores your pin distance and awards a tracker rating.
 - **Prizes** (`/prizes`): how the round is won (closest locked pin, ties to the earliest lock) and the tiered prize table from `src/data/prizes.ts`: 1 grand safari prize, 5 getaway prizes, 20 gear prizes, with illustrative SA prize partners. Also carries the R500,000 round fundraising goal, echoed on the impact page. Entry is free and never tied to a donation (CPA section 36 note on the legal page).
+- **Community presence** (`src/lib/community.ts`): a deterministic v1 simulation of the national field of players, seeded off the round day (rangers hunting, pins locked). Shown on the map HUD and as debrief context. Replace with real aggregates once pins and donations are recorded server-side.
+- **Next-clue countdown** (`map` and `journal`): a mono line counting down to the next free or dog-instinct clue (`nextClueLabel` in `src/lib/game.ts`).
+- **Share card** (`/debrief`): a 1080x1350 result card drawn client-side on a canvas (`src/lib/share-card.ts`), shared via the Web Share API where available, otherwise downloaded as a PNG.
+
+## Real unit photography
+
+The team page (`/team`) shows the real SAWC handlers and dogs. Until the College supplies portraits, each profile renders a branded placeholder plate. To drop in a real photo, add the image under `public/Unit/` using the convention `public/Unit/<first-name-lowercase>.jpg` (for example `public/Unit/precious.jpg`), then set `photo: "/Unit/precious.jpg"` on that profile in `src/data/real-team.ts`. The team page renders the photo automatically when `photo` is set. Do not commit placeholder images.
 
 ## Out of scope for v1 (see `Information/` for the full handover)
 

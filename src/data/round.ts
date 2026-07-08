@@ -17,5 +17,10 @@ export const ROUND: Round = {
 /**
  * Demo state is "Day 1 of Round 1" per the pitch spec. Set to a number to pin
  * the round day deterministically; set to null to compute from the real date.
+ *
+ * Production: this MUST be set to null so the day is derived from the real
+ * calendar, and the poacher coordinates above MUST move server-side (never
+ * shipped to the client) so a determined player cannot read them from the
+ * bundle. This whole file is a v1 offline prototype convenience.
  */
 export const DEMO_DAY_OVERRIDE: number | null = 1;

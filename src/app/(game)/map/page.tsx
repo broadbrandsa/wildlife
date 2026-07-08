@@ -16,10 +16,12 @@ import {
     availableClueIds,
     daysRemaining,
     isRoundOver,
+    nextClueLabel,
     scentRead,
     zoneAtPoint,
 } from "@/lib/game";
 import type { ScentTier } from "@/lib/game";
+import { rangersHunting } from "@/lib/community";
 import { useCurrentDay, useGameStore } from "@/store/game";
 
 const TIER_META: Record<ScentTier, { label: string; tone: "neutral" | "teal" | "ochre" | "clay"; icon: string }> = {
@@ -41,6 +43,7 @@ function MapInner() {
     const cluesUnlocked = useGameStore((s) => s.cluesUnlocked);
     const inventory = useGameStore((s) => s.inventory);
     const lastScentRead = useGameStore((s) => s.lastScentRead);
+    const scentReadsToday = useGameStore((s) => s.scentReadsToday);
     const recordScentRead = useGameStore((s) => s.recordScentRead);
     const patrol = useGameStore((s) => s.patrol);
     const logPatrol = useGameStore((s) => s.logPatrol);
@@ -73,11 +76,15 @@ function MapInner() {
 
     const pinZone = pin ? ZONE_BY_ID[zoneAtPoint(pin)] : null;
     const readTakenToday = lastScentRead?.day === day;
+    const maxReads = inventory.includes("reinforced-leash") ? 2 : 1;
+    const readsToday = scentReadsToday?.day === day ? scentReadsToday.count : 0;
+    const canRead = readsToday < maxReads;
     const patrolledToday = patrol.lastDay === day;
     const note = patrolNoteForDay(day);
+    const clueCountdown = nextClueLabel(day, player?.dogId);
 
     const onAskForRead = () => {
-        if (!pin || readTakenToday) return;
+        if (!pin || !canRead) return;
         const result = scentRead(pin, player?.dogId);
         recordScentRead({ day, tier: result.tier, direction: result.direction, x: pin.x, y: pin.y });
     };
@@ -126,12 +133,15 @@ function MapInner() {
                     </span>
                 </div>
 
-                <div style={{ display: "flex", gap: "var(--space-5)", marginTop: "var(--space-4)", fontFamily: "var(--font-mono)", fontSize: "0.68rem", letterSpacing: "0.06em", color: "rgba(245,239,226,0.82)" }}>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem var(--space-5)", marginTop: "var(--space-4)", fontFamily: "var(--font-mono)", fontSize: "0.68rem", letterSpacing: "0.06em", color: "rgba(245,239,226,0.82)" }}>
                     <span>
                         <i className="ph ph-calendar-blank" /> DAY {day} / {ROUND.durationDays}
                     </span>
                     <span>
                         <i className="ph ph-hourglass-medium" /> {daysRemaining(day)} DAYS LEFT
+                    </span>
+                    <span>
+                        <i className="ph ph-users-three" /> {rangersHunting(day).toLocaleString("en-ZA")} RANGERS HUNTING
                     </span>
                     {patrol.streak > 1 && (
                         <span>
@@ -143,7 +153,7 @@ function MapInner() {
 
             {/* Map */}
             <div style={{ position: "relative", height: "min(52dvh, 460px)", background: "radial-gradient(120% 110% at 50% 0%, #2C4A39 0%, #16110A 92%)" }}>
-                <KrugerMap pin={pin} onPlace={(x, y) => setPin(x, y)} />
+                <KrugerMap pin={pin} onPlace={(x, y) => setPin(x, y)} maxScale={inventory.includes("pro-binoculars") ? 8 : 4} />
                 {(ranger || dog) && (
                     <button
                         onClick={() => router.push("/profile")}
@@ -267,6 +277,11 @@ function MapInner() {
                                     ? "Locked for the round."
                                     : "Tap the map to move it, any time before lock."}
                         </div>
+                        {pin && !pin.locked && (
+                            <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)", marginTop: 4 }}>
+                                Ties go to the earliest locked pin, so lock in when you are sure.
+                            </div>
+                        )}
                     </div>
                     {pin && !pin.locked && (
                         <Button size="sm" variant={confirmLock ? "primary" : "secondary"} onClick={onLockTap}>
@@ -290,16 +305,19 @@ function MapInner() {
                             <span style={{ display: "inline-flex", alignItems: "center", gap: 8, fontFamily: "var(--font-mono)", fontSize: "0.64rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-accent)" }}>
                                 <i className="ph ph-paw-print" /> Scent read
                             </span>
-                            {readTakenToday && lastScentRead ? (
-                                <Tag tone={TIER_META[lastScentRead.tier].tone} size="sm">
-                                    <i className={`ph ph-${TIER_META[lastScentRead.tier].icon}`} style={{ marginRight: 4 }} />
-                                    {TIER_META[lastScentRead.tier].label}
-                                </Tag>
-                            ) : (
-                                <Button size="sm" onClick={onAskForRead}>
-                                    Ask {dogName}
-                                </Button>
-                            )}
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                                {readTakenToday && lastScentRead && (
+                                    <Tag tone={TIER_META[lastScentRead.tier].tone} size="sm">
+                                        <i className={`ph ph-${TIER_META[lastScentRead.tier].icon}`} style={{ marginRight: 4 }} />
+                                        {TIER_META[lastScentRead.tier].label}
+                                    </Tag>
+                                )}
+                                {canRead && (
+                                    <Button size="sm" onClick={onAskForRead}>
+                                        {readTakenToday ? "Ask again" : `Ask ${dogName}`}
+                                    </Button>
+                                )}
+                            </span>
                         </div>
                         <p style={{ margin: "var(--space-3) 0 0", fontFamily: "var(--font-serif)", fontSize: "0.98rem", lineHeight: 1.5, color: "var(--sand-900)" }}>
                             {readTakenToday && lastScentRead
@@ -315,7 +333,9 @@ function MapInner() {
                         </p>
                         {readTakenToday && (
                             <div style={{ marginTop: "var(--space-2)", fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.08em", color: "var(--text-muted)" }}>
-                                READ TAKEN · {dogName.toUpperCase()} RESTS UNTIL TOMORROW
+                                {maxReads > 1
+                                    ? `READS TODAY: ${readsToday} OF ${maxReads}`
+                                    : `READ TAKEN · ${dogName.toUpperCase()} RESTS UNTIL TOMORROW`}
                             </div>
                         )}
                     </div>
@@ -360,6 +380,9 @@ function MapInner() {
                             <button onClick={() => router.push("/journal")} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-link)", fontSize: "0.8rem", fontWeight: 600 }}>
                                 All clues <i className="ph ph-arrow-right" />
                             </button>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: "var(--space-3)", fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.12em", color: "var(--text-muted)" }}>
+                            <i className="ph ph-timer" /> {clueCountdown}
                         </div>
                         <ClueCard clue={latest} />
                     </div>

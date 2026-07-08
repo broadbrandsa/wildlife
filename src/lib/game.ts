@@ -54,6 +54,29 @@ export function availableClueIds(unlocked: string[], day: number, dogId?: string
 }
 
 /**
+ * Days until the next time-released clue lands (a free clue, or one of the
+ * chosen dog's instinct clues). Returns null once every timed clue is out.
+ */
+export function nextClueDays(day: number, dogId?: string | null): number | null {
+    const upcoming = CLUES.filter(
+        (c) =>
+            c.releaseDay != null &&
+            c.releaseDay > day &&
+            (c.source === "free" || (c.source === "dog" && c.dogId === dogId)),
+    ).map((c) => c.releaseDay as number);
+    if (upcoming.length === 0) return null;
+    return Math.min(...upcoming) - day;
+}
+
+/** Mono countdown copy for the next clue. */
+export function nextClueLabel(day: number, dogId?: string | null): string {
+    const days = nextClueDays(day, dogId);
+    if (days == null) return "ALL FIELD CLUES RELEASED";
+    if (days <= 1) return "NEW CLUE TOMORROW";
+    return `NEXT CLUE IN ${days} DAYS`;
+}
+
+/**
  * Stylised distance from a normalised pin to a normalised target, scaled to
  * Kruger's real dimensions (~90 km wide east-west, ~360 km north-south).
  * Not a true projection; the map is illustration, not a survey.
