@@ -188,6 +188,30 @@ export default function CheckoutPage() {
                             </div>
                         )}
 
+                        {item.unlocksFieldGuideZoneId && (
+                            <div>
+                                <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.66rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--text-accent)", marginBottom: "var(--space-3)" }}>
+                                    Field guide unlocked
+                                </div>
+                                <div
+                                    style={{
+                                        display: "flex",
+                                        gap: "var(--space-3)",
+                                        alignItems: "flex-start",
+                                        background: "var(--teal-100)",
+                                        border: "1px solid var(--teal-300)",
+                                        borderRadius: "var(--radius-lg)",
+                                        padding: "var(--space-4)",
+                                    }}
+                                >
+                                    <i className="ph-fill ph-book-open" style={{ fontSize: 20, color: "var(--teal-700)", marginTop: 2 }} />
+                                    <span style={{ fontSize: "0.86rem", color: "var(--text-secondary)", lineHeight: 1.55 }}>
+                                        {item.name} is now open. Read it from the field guide chips on the map, or from the case board in your journal.
+                                    </span>
+                                </div>
+                            </div>
+                        )}
+
                         <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
                             <Button size="lg" fullWidth onClick={() => router.push("/map")} iconRight={<i className="ph ph-map-trifold" />}>
                                 Back to the hunt

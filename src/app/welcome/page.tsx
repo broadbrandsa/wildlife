@@ -8,7 +8,7 @@ import { PhoneStage } from "@/components/game/PhoneStage";
 
 const POINTS = [
     { icon: "notebook", title: "Read the clues", body: "Clues drip out across the round, each one a real fact about Kruger's rivers, rock, plants and animals." },
-    { icon: "map-pin", title: "Drop your pin", body: "Work out where the poacher is hiding and drop a pin on the map. Move it as often as you like, then lock it in before the round ends." },
+    { icon: "map-pin", title: "Track the scent", body: "Send your ranger to a spot on the map and your dog reads the ground there. You can move once a day, so hunt the scent, close in, then lock in your answer." },
     { icon: "trophy", title: "Win real prizes", body: "The closest locked pins take the prizes: a Kruger safari with a visit to the K9 pack, getaways and gear for 26 winners in all." },
     { icon: "paw-print", title: "Fund the dogs", body: "Donate to kit out your hunt. Every rand goes to the SAWC K9 Anti-Poaching Unit, and winning never requires spending a cent." },
 ];

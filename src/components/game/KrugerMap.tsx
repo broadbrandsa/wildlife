@@ -78,12 +78,15 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
         <TransformWrapper minScale={1} maxScale={maxScale} doubleClick={{ mode: "zoomIn" }} centerOnInit>
             <TransformComponent
                 wrapperStyle={{ width: "100%", height: "100%" }}
-                contentStyle={{ width: "100%", height: "100%" }}
+                contentStyle={{ width: "100%", height: "100%", display: "flex", justifyContent: "center" }}
             >
+                {/* The interactive layer matches the drawing's aspect ratio exactly, so a
+                    normalised tap fraction is a fraction of the PARK ARTWORK. Zone bands,
+                    thirds and distance in lib/game.ts all assume this coordinate space. */}
                 <div
                     onPointerDown={handlePointerDown}
                     onPointerUp={handlePointerUp}
-                    style={{ position: "relative", width: "100%", height: "100%", touchAction: "none" }}
+                    style={{ position: "relative", height: "100%", aspectRatio: `${VW} / ${VH}`, touchAction: "none" }}
                 >
                     <svg viewBox={`0 0 ${VW} ${VH}`} width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
                         <defs>
