@@ -60,7 +60,13 @@ Demo coupon codes (Intel Intercept): `5FM-RHINO-06`, `BIRD-MARULA-07`, `SCHOOL-W
 
 ## Kit room
 
-Every purchasable item funds the real SAWC K9 unit and gives a real hunt advantage: `reinforced-leash` (a second scent read a day), `pro-binoculars` (deeper map zoom), `ranger-boots` (reads reach further), `ranger-compass` (reads show the trail's compass direction), `monthly-healthcare` (a fit dog never draws a blank, cold reads come back faint), and five kit items that reveal a paid intel clue (`topo-map`, `gps-collar`, `ranger-gps`, `plane-flyover`, `helicopter-recon`). Dog choice shapes the scent read too: Scout and Dotty show direction; Banjo, Storm and Pepper widen the range. Logic in `src/lib/game.ts` (`scentRead`, `readShowsDirection`).
+Every purchasable item funds the real SAWC K9 unit and gives a real hunt advantage: `reinforced-leash` (a second scent read a day), `pro-binoculars` (deeper map zoom), `ranger-boots` (reads reach further), `ranger-compass` (reads show the trail's compass direction), `monthly-healthcare` (a fit dog never draws a blank, cold reads come back faint), and five kit items that reveal a paid intel clue (`topo-map`, `gps-collar`, `ranger-gps`, `plane-flyover`, `helicopter-recon`). Each item has a `realWorldNote` surfaced behind a "What is this really?" disclosure in the shop, with a link to the in-app K9 Unit page. Dog choice shapes the scent read too: Scout and Dotty show direction; Banjo, Storm and Pepper widen the range. Logic in `src/lib/game.ts` (`scentRead`, `readShowsDirection`).
+
+## Field guides
+
+The field guide is the deduction toolkit (each zone's rock, plants, animals and named places, in `src/data/zones.ts`). Players choose ONE zone's guide free at sign-on (the final onboarding step) and unlock the rest in the kit room (`GUIDES` in `src/data/equipment.ts`, R60 each). Owned guides are tracked in the store's `fieldGuides`. On the map, field-guide chips and the journal case board show a lock for zones you have not unlocked and route to the shop. Marking a zone suspect or eliminated on the case board stays free for everyone, so deduction is never paywalled, only the detailed guide is.
+
+The morning-patrol ritual was removed. The scent read now carries an always-visible one-line explainer on the map.
 
 ## Gameplay systems
 

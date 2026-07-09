@@ -64,7 +64,7 @@ function LockedRow({ clue, dogName, onAction }: { clue: Clue; dogName?: string; 
 }
 
 /** Case board row: tap to cycle open → suspect → ruled out. */
-function CaseRow({ zone, onOpenGuide }: { zone: Zone; onOpenGuide: () => void }) {
+function CaseRow({ zone, owned, onOpenGuide, onLockedGuide }: { zone: Zone; owned: boolean; onOpenGuide: () => void; onLockedGuide: () => void }) {
     const mark = useGameStore((s) => s.zoneMarks[zone.id]);
     const cycleZoneMark = useGameStore((s) => s.cycleZoneMark);
 
@@ -110,11 +110,11 @@ function CaseRow({ zone, onOpenGuide }: { zone: Zone; onOpenGuide: () => void })
                 </span>
             </button>
             <button
-                onClick={onOpenGuide}
-                aria-label={`Field guide for ${zone.name}`}
-                style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-link)", fontSize: 17, padding: "0.2rem" }}
+                onClick={owned ? onOpenGuide : onLockedGuide}
+                aria-label={owned ? `Field guide for ${zone.name}` : `Unlock the field guide for ${zone.name}`}
+                style={{ background: "none", border: "none", cursor: "pointer", color: owned ? "var(--text-link)" : "var(--text-muted)", fontSize: 17, padding: "0.2rem" }}
             >
-                <i className="ph ph-book-open" />
+                <i className={`ph ph-${owned ? "book-open" : "lock-simple"}`} />
             </button>
         </div>
     );
@@ -148,6 +148,7 @@ export default function JournalPage() {
     }, [cluesUnlocked, day, player?.dogId]);
 
     const marks = useGameStore((s) => s.zoneMarks);
+    const fieldGuides = useGameStore((s) => s.fieldGuides);
     const openCount = ZONES.length - Object.values(marks).filter((m) => m === "eliminated").length;
 
     return (
@@ -167,11 +168,17 @@ export default function JournalPage() {
                     <Eyebrow rule>Case board</Eyebrow>
                 </div>
                 <p style={{ fontSize: "0.82rem", color: "var(--text-muted)", margin: "var(--space-2) 0 var(--space-3)" }}>
-                    Tap a zone to mark your verdict. {openCount} of {ZONES.length} still open. The book opens the field guide.
+                    Tap a zone to mark your verdict. {openCount} of {ZONES.length} still open. The book opens its field guide; a lock means you can unlock that guide in the kit room.
                 </p>
                 <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
                     {ZONES.map((z) => (
-                        <CaseRow key={z.id} zone={z} onOpenGuide={() => setGuideZone(z)} />
+                        <CaseRow
+                            key={z.id}
+                            zone={z}
+                            owned={fieldGuides.includes(z.id)}
+                            onOpenGuide={() => setGuideZone(z)}
+                            onLockedGuide={() => router.push("/shop")}
+                        />
                     ))}
                 </div>
             </div>

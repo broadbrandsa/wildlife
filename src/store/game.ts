@@ -52,11 +52,6 @@ export interface ScentRead {
     y: number;
 }
 
-export interface Patrol {
-    lastDay: number | null;
-    streak: number;
-}
-
 interface GameState {
     hasHydrated: boolean;
     player: Player | null;
@@ -64,6 +59,8 @@ interface GameState {
     inventory: string[];
     cluesUnlocked: string[];
     redeemedCodes: string[];
+    /** Zones whose field guide the player owns (one chosen free at sign-on). */
+    fieldGuides: ZoneId[];
     donations: Donation[];
     donationsTotal: number;
     notifyAsked: boolean;
@@ -71,7 +68,6 @@ interface GameState {
     lastScentRead: ScentRead | null;
     /** How many scent reads have been taken on a given round day. */
     scentReadsToday: { day: number; count: number } | null;
-    patrol: Patrol;
     /** Demo-only day override, driven by the profile page scrubber. */
     demoDay: number | null;
 
@@ -83,11 +79,11 @@ interface GameState {
     purchase: (equipmentId: string) => Donation;
     grantEquipment: (equipmentId: string) => void;
     unlockClue: (id: string) => void;
+    grantFieldGuide: (zoneId: ZoneId) => void;
     redeemCode: (raw: string) => RedeemResult;
     setNotifyAsked: () => void;
     cycleZoneMark: (zoneId: ZoneId) => void;
     recordScentRead: (read: ScentRead) => void;
-    logPatrol: (day: number) => void;
     setDemoDay: (day: number | null) => void;
     reset: () => void;
 }
@@ -101,13 +97,13 @@ const initial = {
     inventory: ["standard-collar", "field-map"],
     cluesUnlocked: [] as string[],
     redeemedCodes: [] as string[],
+    fieldGuides: [] as ZoneId[],
     donations: [] as Donation[],
     donationsTotal: 0,
     notifyAsked: false,
     zoneMarks: {} as Partial<Record<ZoneId, ZoneMark>>,
     lastScentRead: null as ScentRead | null,
     scentReadsToday: null as { day: number; count: number } | null,
-    patrol: { lastDay: null, streak: 0 } as Patrol,
     demoDay: null as number | null,
 };
 
@@ -136,9 +132,13 @@ export const useGameStore = create<GameState>()(
                     const clues = item?.unlocksClueId
                         ? [...new Set([...s.cluesUnlocked, item.unlocksClueId])]
                         : s.cluesUnlocked;
+                    const guides = item?.unlocksFieldGuideZoneId
+                        ? [...new Set([...s.fieldGuides, item.unlocksFieldGuideZoneId])]
+                        : s.fieldGuides;
                     return {
                         inventory: [...new Set([...s.inventory, equipmentId])],
                         cluesUnlocked: clues,
+                        fieldGuides: guides,
                     };
                 }),
 
@@ -155,9 +155,13 @@ export const useGameStore = create<GameState>()(
                     const clues = item?.unlocksClueId
                         ? [...new Set([...s.cluesUnlocked, item.unlocksClueId])]
                         : s.cluesUnlocked;
+                    const guides = item?.unlocksFieldGuideZoneId
+                        ? [...new Set([...s.fieldGuides, item.unlocksFieldGuideZoneId])]
+                        : s.fieldGuides;
                     return {
                         inventory: [...new Set([...s.inventory, equipmentId])],
                         cluesUnlocked: clues,
+                        fieldGuides: guides,
                         donations: [donation, ...s.donations],
                         donationsTotal: s.donationsTotal + donation.amountZar,
                     };
@@ -166,6 +170,9 @@ export const useGameStore = create<GameState>()(
             },
 
             unlockClue: (id) => set((s) => ({ cluesUnlocked: [...new Set([...s.cluesUnlocked, id])] })),
+
+            grantFieldGuide: (zoneId) =>
+                set((s) => ({ fieldGuides: [...new Set([...s.fieldGuides, zoneId])] })),
 
             redeemCode: (raw) => {
                 const value = raw.trim().toUpperCase();
@@ -208,13 +215,6 @@ export const useGameStore = create<GameState>()(
                     const prior = s.scentReadsToday;
                     const count = prior && prior.day === read.day ? prior.count + 1 : 1;
                     return { lastScentRead: read, scentReadsToday: { day: read.day, count } };
-                }),
-
-            logPatrol: (day) =>
-                set((s) => {
-                    if (s.patrol.lastDay === day) return {};
-                    const streak = s.patrol.lastDay === day - 1 ? s.patrol.streak + 1 : 1;
-                    return { patrol: { lastDay: day, streak } };
                 }),
 
             setDemoDay: (day) => set({ demoDay: day }),

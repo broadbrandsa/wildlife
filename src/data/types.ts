@@ -73,6 +73,10 @@ export interface Equipment {
     icon: string;
     /** If set, buying this item unlocks the clue with this id. */
     unlocksClueId?: string;
+    /** If set, buying this item unlocks the field guide for this zone. */
+    unlocksFieldGuideZoneId?: ZoneId;
+    /** Short factual note on how the real SAWC K9 unit uses this item. */
+    realWorldNote?: string;
 }
 
 export type ClueCategory =
