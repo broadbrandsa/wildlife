@@ -1,310 +1,410 @@
 import type { Clue } from "./types";
 
 /**
- * Round 1 clue bank. The poacher is hidden at Red Rocks on the Shingwedzi
- * (Zone 3, mopane-shingwedzi).
+ * Single-round clue bank. The poacher hides at a bald granite lookout koppie in
+ * far-southern Kruger (Mathekenyane / Granokop, Zone 7). Built backwards from
+ * that spot across five difficulty tiers. No clue ever names Mathekenyane or
+ * Granokop; the answer is reached by combining clues and the field guide.
  *
- * Design rules for the arc:
- * - Early clues are riddles. They describe ground, plants, animals and names
- *   without ever spelling out the answer. The field guide makes them solvable.
- * - Elimination clues rule ground out, so all eight zones stay in play.
- * - Place names on the trail (Shingwedzi, Red Rocks) only appear from day 60.
- * - "Did you know" teaches something real without giving the answer away
- *   before the trail clue itself does.
+ * 20 free time-released clues (everyone) + 10 paid clues:
+ *   5 equipment-unlocked (bought in the kit room) + 5 sponsor-code clues.
  *
- * 13 free time-released (9 trail + 4 elimination) + 5 equipment-locked
- * + 3 sponsor-coupon + 3 dog-instinct clues.
+ * Canonical design and sources: Information/SAWC_K9_Clue_Bank.xlsx
+ * IDs match the spreadsheet (f01-f20 free, s01-s10 paid).
  */
 export const CLUES: Clue[] = [
-    // ---- Free, time-released (the difficulty curve) ----------
+    // ---------- TIER 1: entry, north vs south (days 1-14) ----------
     {
-        id: "free-d1",
+        id: "f01",
+        source: "free",
+        category: "geological",
+        difficulty: "region",
+        kind: "trail",
+        tier: 1,
+        releaseDay: 1,
+        zoneId: "southern-sabie",
+        body: "Dispatch opens the file: the suspect camps where the hills are pale grey granite domes, not the flat black plains of the middle park nor the red mopane country of the north. Think of the older, southern ground.",
+        didYouKnow:
+            "Almost half of Kruger is granite up to 3.5 billion years old, among the oldest rock on Earth, and it dominates the south and west.",
+    },
+    {
+        id: "f02",
+        source: "free",
+        category: "seasonal",
+        difficulty: "region",
+        kind: "trail",
+        tier: 1,
+        releaseDay: 6,
+        zoneId: "southern-sabie",
+        body: "The rain gauge by the nearest camp is one of the fuller ones in the park. This is the wetter, greener half, where the storms come first.",
+        didYouKnow:
+            "Rainfall falls on a gradient, from about 750 mm a year in the south-west to about 400 mm in the dry north-east.",
+    },
+    {
+        id: "f03",
+        source: "free",
+        category: "mammal",
+        difficulty: "region",
+        kind: "trail",
+        tier: 1,
+        releaseDay: 10,
+        zoneId: "southern-sabie",
+        body: "This is the busiest country in Kruger, the roads most tourists drive, and the ground where the great grey rhino once grazed thickest. It is also where the dogs are needed most.",
+        didYouKnow:
+            "Southern Kruger holds the densest network of roads and camps, and was home to most of the park's white rhino, which is why poaching pressure has been heaviest here.",
+    },
+    {
+        id: "f04",
+        source: "free",
+        category: "hydrological",
+        difficulty: "region",
+        kind: "trail",
+        tier: 1,
+        releaseDay: 14,
+        zoneId: "southern-sabie",
+        body: "The closest great river is the one whose Tsonga name means fearful, for the crocodiles in it, and which carries more kinds of fish than any other river in the park.",
+        didYouKnow:
+            "The Sabie means fearful in Tsonga and supports 49 fish species, the most of any river in Kruger. The road along it is rated among the best game-viewing roads in Africa.",
+    },
+
+    // ---------- TIER 2: narrow within the south (days 19-34) ----------
+    {
+        id: "f05",
+        source: "free",
+        category: "mammal",
+        difficulty: "zone",
+        kind: "elimination",
+        tier: 2,
+        releaseDay: 19,
+        zoneId: "far-north",
+        body: "The pack cast for scent in the far north, among the butterfly-leaved trees and the fat grey baobabs, where samango monkeys bark in the fever-tree forest. Three days, nothing. Rule the north out.",
+        didYouKnow:
+            "The butterfly-shaped mopane leaf, the baobab and the samango monkey all belong to Kruger's northern half. The samango is found only in the far northern riverine forest at Pafuri.",
+    },
+    {
+        id: "f06",
+        source: "free",
+        category: "geological",
+        difficulty: "zone",
+        kind: "trail",
+        tier: 2,
+        releaseDay: 24,
+        zoneId: "southern-sabie",
+        body: "Underfoot the rock is pale grey and pink, weathered into bald rounded domes and scattered koppies, not the dark cracked turf of the eastern plains.",
+        didYouKnow:
+            "The Nelspruit Granite Suite forms the rounded koppies of the south around Pretoriuskop, Berg-en-Dal and Skukuza. The eastern plains are dark basalt clay soils called turf.",
+    },
+    {
+        id: "f07",
         source: "free",
         category: "botanical",
         difficulty: "zone",
         kind: "trail",
-        releaseDay: 1,
-        zoneId: "mopane-shingwedzi",
-        body: "Dispatch radios in: the campfire ash was mixed with butterfly-shaped leaves, and elephant dung lay all around the site. Wherever this man is walking, that tree grows thick.",
+        tier: 2,
+        releaseDay: 29,
+        zoneId: "southern-sabie",
+        body: "Silver-leaved trees catch the afternoon light on the slopes, and red bushwillow crowds the rocky rises. This is mixed granite woodland, not open golden savanna.",
         didYouKnow:
-            "One Kruger tree has leaves that fold like a butterfly's wings and blush orange in autumn. Check the field guide: it rules out half the park.",
+            "Silver cluster-leaf and red bushwillow are typical of the southern granite woodlands, while the central plains are open knob-thorn and marula savanna.",
     },
     {
-        id: "free-d4",
+        id: "f08",
         source: "free",
-        category: "botanical",
+        category: "mammal",
         difficulty: "zone",
         kind: "elimination",
-        releaseDay: 4,
-        zoneId: "far-north",
-        body: "The pack swept the fever tree forests where three countries meet. Two days of casting for scent, nothing. The trail does not start this far north.",
+        tier: 2,
+        releaseDay: 34,
+        zoneId: "sw-granite",
+        body: "The dogs worked the high sour grasslands to the west, where sable bulls graze near the park's oldest camp. No sign of the man. He is not in the far south-west corner.",
         didYouKnow:
-            "The Far North around Pafuri holds Kruger's only fever tree forest. Early travellers blamed the yellow-barked trees for malaria, hence the name.",
+            "The sourveld around Pretoriuskop, the oldest rest camp, carries Kruger's best population of sable antelope, whose horns can sweep back over a metre.",
     },
+
+    // ---------- TIER 3: the Skukuza and Sabie area (days 39-54) ----------
     {
-        id: "free-d7",
+        id: "f09",
         source: "free",
         category: "cultural",
-        difficulty: "zone",
+        difficulty: "feature",
         kind: "trail",
-        releaseDay: 7,
-        zoneId: "mopane-shingwedzi",
-        body: "An elder told the ranger the suspect was seen near the river whose Tsonga name means 'place of ironstone'. She would say no more.",
+        tier: 3,
+        releaseDay: 39,
+        zoneId: "southern-sabie",
+        body: "The nearest large camp carries the name the Shangaan gave a warden they respected: he who sweeps clean.",
         didYouKnow:
-            "Most of Kruger's rivers carry Tsonga names that describe the land they cross. Learn what a name means and the country starts reading like a map.",
+            "Skukuza is named for James Stevenson-Hamilton, the park's first warden. Local Shangaan people called him Skukuza, he who sweeps clean, for clearing the old hunters out.",
     },
     {
-        id: "free-d12",
+        id: "f10",
+        source: "free",
+        category: "historical",
+        difficulty: "feature",
+        kind: "trail",
+        tier: 3,
+        releaseDay: 44,
+        zoneId: "southern-sabie",
+        body: "Not far from that camp, a small rise of hills holds the scattered ashes of the same first warden and his wife. The suspect keeps within sight of those little hills.",
+        didYouKnow:
+            "Stevenson-Hamilton's ashes, and his wife Hilda's, were scattered on Shirimantanga koppie near Skukuza. Shirimantanga means place of little hills in Tsonga.",
+    },
+    {
+        id: "f11",
         source: "free",
         category: "mammal",
-        difficulty: "zone",
-        kind: "elimination",
-        releaseDay: 12,
-        zoneId: "sw-granite",
-        body: "A tip-off sent the dogs to the granite koppies near Pretoriuskop. They found sable bulls grazing in peace and no sign of any man. Cross it off.",
-        didYouKnow:
-            "The sourveld around Pretoriuskop carries Kruger's best population of sable antelope, a bull's horns can sweep back over a metre.",
-    },
-    {
-        id: "free-d14",
-        source: "free",
-        category: "mammal",
-        difficulty: "zone",
+        difficulty: "feature",
         kind: "trail",
-        releaseDay: 14,
-        zoneId: "mopane-shingwedzi",
-        body: "A herd of tsessebe watched the dogs from open ground, and roan moved beyond them. Few tourists ever reach the country where those two graze together.",
+        tier: 3,
+        releaseDay: 49,
+        zoneId: "southern-sabie",
+        body: "Leopards are unusually common in this country, draping their kills in the riverine trees along the great fish-river road a little to the north of the camp.",
         didYouKnow:
-            "Tsessebe and roan antelope favour the lightly wooded plains of Kruger's north and are rare everywhere else in the park.",
+            "The Sabie River corridor, especially the road between Skukuza and Lower Sabie, has one of the highest leopard densities in Africa.",
     },
     {
-        id: "free-d21",
+        id: "f12",
         source: "free",
         category: "bird",
-        difficulty: "zone",
-        kind: "trail",
-        releaseDay: 21,
-        zoneId: "mopane-shingwedzi",
-        body: "A bateleur tipped its wings overhead and a Meves's starling chattered in the shrubveld. The dogs pressed on toward a river line.",
-        didYouKnow:
-            "The Meves's starling, with its long wedge tail, is a northern bird in Kruger. Birders say you seldom meet one south of the Olifants.",
-    },
-    {
-        id: "free-d26",
-        source: "free",
-        category: "mammal",
-        difficulty: "zone",
-        kind: "elimination",
-        releaseDay: 26,
-        zoneId: "central-basalt",
-        body: "The unit worked the open basalt plains around Satara for three days. The lion prides there lay fat and undisturbed. No man moves through pride country unnoticed.",
-        didYouKnow:
-            "The sweet basalt grazing around Satara supports the highest lion density in Kruger, which is exactly why a man on foot avoids it.",
-    },
-    {
-        id: "free-d30",
-        source: "free",
-        category: "geological",
         difficulty: "feature",
         kind: "trail",
-        releaseDay: 30,
-        zoneId: "mopane-shingwedzi",
-        body: "The scent led to iron-red boulders rising above a riverbed, where elephants cooled in the water below. Rock like that is rare in this park.",
+        tier: 3,
+        releaseDay: 54,
+        zoneId: "southern-sabie",
+        body: "Before dawn a southern ground hornbill boomed from the woodland near the camp, a turkey-sized black bird with a red throat, a bird of the southern and central park.",
         didYouKnow:
-            "Iron oxide can stain ancient sandstone a deep red. Only a few corners of Kruger show rock like this, and the geology overlay marks every one.",
+            "The southern ground hornbill, near-threatened and turkey-sized, favours the open woodlands of central and southern Kruger around Satara, Tshokwane and Lower Sabie.",
+    },
+
+    // ---------- TIER 4: features around the koppie (days 59-69) ----------
+    {
+        id: "f13",
+        source: "free",
+        category: "topographic",
+        difficulty: "landmark",
+        kind: "trail",
+        tier: 4,
+        releaseDay: 59,
+        zoneId: "southern-sabie",
+        body: "The camp sits at the foot of a bald granite dome that rises alone above the woodland, a lookout hill with a view for many miles in every direction.",
+        didYouKnow:
+            "Isolated granite domes, called koppies or inselbergs, rise above the southern woodland. Several, like the one south of Skukuza, are public lookout points.",
     },
     {
-        id: "free-d40",
+        id: "f14",
+        source: "free",
+        category: "operational",
+        difficulty: "landmark",
+        kind: "trail",
+        tier: 4,
+        releaseDay: 64,
+        zoneId: "southern-sabie",
+        body: "It lies just off the tar road that runs south from the sweeping-warden's camp toward the crocodile-river gate, not along the famous leopard road that runs east.",
+        didYouKnow:
+            "The H3 tar road runs south from Skukuza toward Malelane and the Crocodile River, while the leopard road runs east to Lower Sabie.",
+    },
+    {
+        id: "f15",
+        source: "free",
+        category: "cultural",
+        difficulty: "landmark",
+        kind: "trail",
+        tier: 4,
+        releaseDay: 69,
+        zoneId: "southern-sabie",
+        body: "The hill's own name, in Tsonga, is a warning: it speaks of a tiny burrowing flea that lodges in the feet of the careless.",
+        didYouKnow:
+            "The name means place of jigger fleas in Tsonga. The jigger, or sand flea, burrows into skin, a hazard the old travellers knew well.",
+    },
+
+    // ---------- TIER 5: triangulate onto the dome (days 74-90) ----------
+    {
+        id: "f16",
         source: "free",
         category: "geological",
-        difficulty: "feature",
+        difficulty: "pinpoint",
+        kind: "trail",
+        tier: 5,
+        releaseDay: 74,
+        zoneId: "southern-sabie",
+        body: "The dome is bald because it sheds its skin in curved sheets, like an onion, under the heat. The suspect's fire sits on bare rock near the top, where the granite is smooth.",
+        didYouKnow:
+            "Granite domes go bald through exfoliation: curved outer sheets peel off as the rock expands and contracts with heat, leaving smooth bare stone.",
+    },
+    {
+        id: "f17",
+        source: "free",
+        category: "synthesis",
+        difficulty: "pinpoint",
+        kind: "trail",
+        tier: 5,
+        releaseDay: 78,
+        zoneId: "southern-sabie",
+        body: "Put it together. A lone granite lookout dome. South of the sweeping-warden's camp. West of the fearful river. Within sight of the little-hills koppie where the warden's ashes lie.",
+        didYouKnow:
+            "Good tracking is triangulation: each clue is a bearing, and the answer is where the bearings cross. Rangers work the same way with scent, sign and terrain.",
+    },
+    {
+        id: "f18",
+        source: "free",
+        category: "topographic",
+        difficulty: "pinpoint",
+        kind: "trail",
+        tier: 5,
+        releaseDay: 82,
+        zoneId: "southern-sabie",
+        body: "From the fire the suspect can see the Sabie's dark tree-line to the north, and low granite hills rolling away south toward the crocodile-river border.",
+        didYouKnow:
+            "From a southern lookout koppie you can read the whole landscape: riverine forest marking the Sabie to the north, open granite country falling south to the Crocodile River border.",
+    },
+    {
+        id: "f19",
+        source: "free",
+        category: "operational",
+        difficulty: "pinpoint",
+        kind: "trail",
+        tier: 5,
+        releaseDay: 86,
+        zoneId: "southern-sabie",
+        body: "Field teams have ringed a single bald koppie between the two southern camps. The scent always returns to its rocky crown.",
+        didYouKnow:
+            "When a free-running pack keeps returning to one point, handlers tighten the ring around it. Persistence of scent at one spot is the strongest sign of all.",
+    },
+    {
+        id: "f20",
+        source: "free",
+        category: "synthesis",
+        difficulty: "pinpoint",
+        kind: "trail",
+        tier: 5,
+        releaseDay: 90,
+        zoneId: "southern-sabie",
+        body: "The hunt ends where the oldest rock in Africa breaks the surface, at a flea-named lookout dome the tourists climb for the view, south of the great camp. Drop your pin on its crown.",
+        didYouKnow:
+            "The southern granite is part of the Kaapvaal Craton, some of the oldest continental crust on Earth. The hunt closes on one bald dome standing on 3.5-billion-year-old rock.",
+    },
+
+    // ================= PAID: equipment-unlocked (5) =================
+    {
+        id: "s02",
+        source: "equipment",
+        category: "geological",
+        difficulty: "zone",
+        kind: "trail",
+        tier: 2,
+        zoneId: "southern-sabie",
+        body: "Kit intel: the rock beneath the camp is Nelspruit granite, part of the Kaapvaal Craton, roughly 3.5 billion years old, among the most ancient crust exposed anywhere on the planet.",
+        didYouKnow:
+            "The Kaapvaal Craton is one of the world's oldest surviving pieces of continental crust. Kruger's southern granites formed before complex life existed.",
+    },
+    {
+        id: "s03",
+        source: "equipment",
+        category: "bird",
+        difficulty: "landmark",
         kind: "elimination",
-        releaseDay: 40,
+        tier: 4,
         zoneId: "lebombo",
-        body: "Some swore the red rock meant the eastern border ridge. The dogs climbed it and found only klipspringers. That stone is grey-green rhyolite, not red. Rule the ridge out.",
+        body: "Kit intel: a Verreaux's eagle quartered the ridge and found no cliff to nest on here. This is a rounded dome, not the sheer rhyolite wall of the eastern border.",
         didYouKnow:
-            "The Lebombo ridge along the Mozambique border is rhyolite, an old volcanic rock. It weathers grey-green, never the rust red of ironstone country.",
+            "Verreaux's eagles need sheer cliffs, found on the Lebombo ridge, at Red Rocks and in Lanner Gorge. A rounded granite dome offers no such ledge.",
     },
     {
-        id: "free-d45",
-        source: "free",
+        id: "s05",
+        source: "equipment",
+        category: "hydrological",
+        difficulty: "landmark",
+        kind: "trail",
+        tier: 4,
+        zoneId: "southern-sabie",
+        body: "Kit intel: the camp draws its water from the fearful river, the same river that feeds the finest game-viewing road in Africa just to the north.",
+        didYouKnow:
+            "The Sabie River supplies Skukuza and feeds the corridor widely called the best game-viewing road in Africa for its leopards, lions and riverine birds.",
+    },
+    {
+        id: "s08",
+        source: "equipment",
+        category: "operational",
+        difficulty: "feature",
+        kind: "trail",
+        tier: 3,
+        zoneId: "southern-sabie",
+        body: "Kit intel: the K9 base lies far to the north-west near Orpen. The pack was trucked south for this deployment, a long haul deep into rhino country.",
+        didYouKnow:
+            "The SAWC K9 unit is based near Orpen Gate and Hoedspruit and deploys across the Greater Kruger, including long moves south into the high-pressure rhino zones.",
+    },
+    {
+        id: "s10",
+        source: "equipment",
+        category: "topographic",
+        difficulty: "landmark",
+        kind: "trail",
+        tier: 4,
+        zoneId: "southern-sabie",
+        body: "Kit intel: the hill is one of several bald granite heads south of the Sabie, but the tourist maps mark this one alone with a lookout symbol and a flea's name.",
+        didYouKnow:
+            "Several granite domes rise south of the Sabie, but only a few are gazetted public lookouts. This one appears on tourist maps as a named viewpoint.",
+    },
+
+    // ================= PAID: sponsor-code clues (5) =================
+    {
+        id: "s01",
+        source: "sponsor",
+        category: "astronomical",
+        difficulty: "feature",
+        kind: "trail",
+        tier: 3,
+        zoneId: "southern-sabie",
+        body: "Sponsor intel: at eight in the evening in winter the Southern Cross stands high over the dome, and a line drawn down through it points to true south, over the low granite hills.",
+        didYouKnow:
+            "The Southern Cross points to the south celestial pole: extend its long axis about four and a half times to find true south. Rangers navigate by it on moonless nights.",
+    },
+    {
+        id: "s04",
+        source: "sponsor",
+        category: "historical",
+        difficulty: "feature",
+        kind: "trail",
+        tier: 3,
+        zoneId: "southern-sabie",
+        body: "Sponsor intel: the warden whose ashes rest on the nearby koppie ran this park for 44 years and gave the great southern camp its name.",
+        didYouKnow:
+            "James Stevenson-Hamilton was warden from 1902 to 1946, 44 years. His nickname Skukuza became the name of the park's largest camp.",
+    },
+    {
+        id: "s06",
+        source: "sponsor",
         category: "mammal",
-        difficulty: "feature",
+        difficulty: "region",
         kind: "trail",
-        releaseDay: 45,
-        zoneId: "mopane-shingwedzi",
-        body: "Klipspringers bounced across the red stone and a rock hyrax watched from a ledge. Water sat still in a dam just downstream of the boulders.",
+        tier: 1,
+        zoneId: "southern-sabie",
+        body: "Sponsor intel: white rhino once grazed this southern granite country in their thousands. That is why the poachers come, and why the dogs run.",
         didYouKnow:
-            "Klipspringers walk on the very tips of their hooves and can stand on a rock ledge the size of a coin.",
+            "Southern Kruger held the bulk of the world's white rhino. That concentration is exactly why the poaching pressure, and the K9 response, centres here.",
     },
     {
-        id: "free-d60",
-        source: "free",
-        category: "hydrological",
-        difficulty: "feature",
-        kind: "trail",
-        releaseDay: 60,
-        zoneId: "mopane-shingwedzi",
-        body: "The dogs worked a bend in the Shingwedzi, upstream of Kanniedood Dam, where the banks turn to bare red rock. The river finally has its name.",
-        didYouKnow:
-            "Kanniedood ('cannot die') Dam was named for the hardy trees that survive its seasonal floods. Shingwedzi is Tsonga for 'place of ironstone'.",
-    },
-    {
-        id: "free-d75",
-        source: "free",
-        category: "geological",
-        difficulty: "landmark",
-        kind: "trail",
-        releaseDay: 75,
-        zoneId: "mopane-shingwedzi",
-        body: "A cold campfire sat on iron-red boulders smoothed by centuries of Shingwedzi floods, just off the loop road from the camp.",
-        didYouKnow:
-            "The Red Rocks loop is one of the few places in the mopane north where you leave the trees for open sandstone.",
-    },
-    {
-        id: "free-d88",
-        source: "free",
-        category: "geological",
-        difficulty: "landmark",
-        kind: "trail",
-        releaseDay: 88,
-        zoneId: "mopane-shingwedzi",
-        body: "Synthesis: stand at the Red Rocks viewpoint on the Shingwedzi. The suspect's camp was within sight of the largest red dome.",
-        didYouKnow:
-            "Red Rocks viewpoint is the signature stop on the Shingwedzi loop and the answer this whole hunt has pointed toward.",
-    },
-
-    // ---- Dog-instinct clues (unlocked by your chosen dog) -----
-    {
-        id: "dog-pepper",
-        source: "dog",
-        category: "operational",
+        id: "s07",
+        source: "sponsor",
+        category: "botanical",
         difficulty: "zone",
         kind: "trail",
-        releaseDay: 14,
-        dogId: "pepper",
-        zoneId: "mopane-shingwedzi",
-        body: "Pepper flags a bakkie at a northern gate. Under the spare wheel, wire snares and river sand stained rust red. The driver came down from ironstone country.",
+        tier: 2,
+        zoneId: "southern-sabie",
+        body: "Sponsor intel: as the granite rises the marula and knob-thorn thin out, and the slopes pass to red bushwillow and silver cluster-leaf.",
         didYouKnow:
-            "Detection spaniels like Pepper screen vehicles at park gates for horn, ivory and ammunition, and a find like this can redirect a whole operation.",
+            "On southern koppies the open-plains marula and knob-thorn give way to red bushwillow and silver cluster-leaf, a clear signal you have left the basalt plains.",
     },
     {
-        id: "dog-dotty",
-        source: "dog",
-        category: "operational",
-        difficulty: "zone",
-        kind: "trail",
-        releaseDay: 30,
-        dogId: "dotty",
-        zoneId: "mopane-shingwedzi",
-        body: "Dotty swings the whole pack off the plains and holds a line north-east, nose down, toward mopane country and a river. The old matriarch does not guess.",
-        didYouKnow:
-            "When SAWC's free-running pack commits to a line, handlers follow by vehicle and GPS. A senior hound like Dotty anchors the younger dogs.",
-    },
-    {
-        id: "dog-storm",
-        source: "dog",
-        category: "operational",
-        difficulty: "feature",
-        kind: "trail",
-        releaseDay: 45,
-        dogId: "storm",
-        zoneId: "mopane-shingwedzi",
-        body: "Storm finds a cached water bottle buried at the base of a mopane. The mud on it is red sandstone grit, river-worn. Your suspect keeps returning to the same boulders.",
-        didYouKnow:
-            "A Malinois like Storm is trained to indicate on human articles without touching them, preserving evidence for the case that follows an arrest.",
-    },
-
-    // ---- Equipment-locked (operational / visual) -------------
-    {
-        id: "eq-topo",
-        source: "equipment",
-        category: "geological",
-        difficulty: "feature",
-        kind: "trail",
-        zoneId: "mopane-shingwedzi",
-        body: "Your topographic overlay lights up a band of sandstone cutting through the mopane on the Shingwedzi, the only red rock for miles.",
-        didYouKnow:
-            "Granite dominates Kruger's west, basalt the east, rhyolite the Lebombo ridge, and sandstone the far north.",
-    },
-    {
-        id: "eq-gps",
-        source: "equipment",
-        category: "operational",
-        difficulty: "feature",
-        kind: "trail",
-        zoneId: "mopane-shingwedzi",
-        body: "The GPS collar pings a tight patrol radius around the Shingwedzi camp. The scent never leaves the river's red-rock bend.",
-        didYouKnow:
-            "GPS collars let handlers see exactly where a free-running hound has tracked, even out of sight.",
-    },
-    {
-        id: "eq-plane",
-        source: "equipment",
-        category: "operational",
-        difficulty: "landmark",
-        kind: "trail",
-        zoneId: "mopane-shingwedzi",
-        body: "The Savannah's aerial photo shows a thread of smoke beside a cluster of bald red boulders on the north bank.",
-        didYouKnow:
-            "The College's airwing flies Savannah light sport aircraft, low and slow, patrolling some 500,000 hectares of the Greater Kruger.",
-    },
-    {
-        id: "eq-ranger-gps",
-        source: "equipment",
-        category: "operational",
-        difficulty: "landmark",
-        kind: "trail",
-        zoneId: "mopane-shingwedzi",
-        body: "Field-team GPS confirms it: the waypoint sits between the Red Rocks viewpoint and the river, north bank.",
-        didYouKnow:
-            "A handheld GPS costs SAWC about R2,400 and is standard kit for a field ranger on patrol.",
-    },
-    {
-        id: "eq-heli",
-        source: "equipment",
-        category: "operational",
-        difficulty: "landmark",
-        kind: "trail",
-        zoneId: "mopane-shingwedzi",
-        body: "The Squirrel sweeps two zones and finds nothing in the central plains. The only fresh sign is at Red Rocks on the Shingwedzi.",
-        didYouKnow:
-            "A helicopter hour for SANParks costs roughly R15,000, which is why aerial time is reserved for live operations.",
-    },
-
-    // ---- Sponsor-coupon clues (character-led + educational) ---
-    {
-        id: "sp-5fm",
+        id: "s09",
         source: "sponsor",
-        category: "geological",
-        difficulty: "feature",
+        category: "seasonal",
+        difficulty: "pinpoint",
         kind: "trail",
-        zoneId: "mopane-shingwedzi",
-        body: "Ranger Precious, on air: 'The suspect was last seen where the river runs over red stone. That stone is ancient sandstone, stained by iron, in the mopane north.'",
+        tier: 5,
+        zoneId: "southern-sabie",
+        body: "Sponsor intel: winter mornings bring ground frost to the valleys, but the bald dome holds the day's heat into the night, a stone beacon for a cold man to camp against.",
         didYouKnow:
-            "The Red Rocks sandstone was laid down long before the dinosaurs, then lifted and weathered into the domes you see today.",
-    },
-    {
-        id: "sp-radio2",
-        source: "sponsor",
-        category: "bird",
-        difficulty: "feature",
-        kind: "trail",
-        zoneId: "mopane-shingwedzi",
-        body: "A guest birder calls it in: 'Listen for the racket-tailed roller. South of Shingwedzi you won't hear it. Your suspect is in roller country, near the red rock.'",
-        didYouKnow:
-            "The racket-tailed roller is a far-north special, almost never recorded south of the Shingwedzi.",
-    },
-    {
-        id: "sp-school",
-        source: "sponsor",
-        category: "hydrological",
-        difficulty: "landmark",
-        kind: "trail",
-        zoneId: "mopane-shingwedzi",
-        body: "A school's class submits the answer together: 'The red boulders are on the Shingwedzi, just up from Kanniedood Dam. That's where the camp was.'",
-        didYouKnow:
-            "Every perennial river in Kruger flows east toward Mozambique. The Shingwedzi crosses the border below Kanniedood.",
+            "Bare granite absorbs heat by day and releases it slowly at night, so a rock dome stays warmer after dark than the frost-pooling valleys around it.",
     },
 ];
 
@@ -312,4 +412,5 @@ export const CLUE_BY_ID: Record<string, Clue> = Object.fromEntries(CLUES.map((c)
 
 export const FREE_CLUES = CLUES.filter((c) => c.source === "free");
 
+/** Dog-instinct clues are retired; dog choice now shapes the scent read instead. */
 export const DOG_CLUES = CLUES.filter((c) => c.source === "dog");

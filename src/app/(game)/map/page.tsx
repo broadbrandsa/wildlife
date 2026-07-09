@@ -17,6 +17,7 @@ import {
     daysRemaining,
     isRoundOver,
     nextClueLabel,
+    readShowsDirection,
     scentRead,
     zoneAtPoint,
 } from "@/lib/game";
@@ -66,7 +67,7 @@ function MapInner() {
         const dated = available
             .filter((c) => c.releaseDay != null)
             .sort((a, b) => (b.releaseDay ?? 0) - (a.releaseDay ?? 0));
-        return dated[0] ?? available[available.length - 1] ?? CLUE_BY_ID["free-d1"];
+        return dated[0] ?? available[available.length - 1] ?? CLUE_BY_ID["f01"];
     }, [available]);
 
     const dog = player ? DOG_BY_ID[player.dogId] : null;
@@ -83,9 +84,15 @@ function MapInner() {
     const note = patrolNoteForDay(day);
     const clueCountdown = nextClueLabel(day, player?.dogId);
 
+    const showsDirection = readShowsDirection(player?.dogId, inventory.includes("ranger-compass"));
+
     const onAskForRead = () => {
         if (!pin || !canRead) return;
-        const result = scentRead(pin, player?.dogId);
+        const result = scentRead(pin, {
+            dogId: player?.dogId,
+            boots: inventory.includes("ranger-boots"),
+            healthy: inventory.includes("monthly-healthcare"),
+        });
         recordScentRead({ day, tier: result.tier, direction: result.direction, x: pin.x, y: pin.y });
     };
 
@@ -322,12 +329,8 @@ function MapInner() {
                         <p style={{ margin: "var(--space-3) 0 0", fontFamily: "var(--font-serif)", fontSize: "0.98rem", lineHeight: 1.5, color: "var(--sand-900)" }}>
                             {readTakenToday && lastScentRead
                                 ? SCENT_TEXT[lastScentRead.tier].replace("{dog}", dogName) +
-                                  (lastScentRead.tier !== "hot"
-                                      ? player?.dogId === "scout"
-                                          ? ` Scout holds the old trail a moment longer. The scent pulls ${lastScentRead.direction}.`
-                                          : inventory.includes("ranger-compass")
-                                            ? ` Your compass needle settles. The trail pulls ${lastScentRead.direction}.`
-                                            : ""
+                                  (lastScentRead.tier !== "hot" && showsDirection
+                                      ? ` The trail pulls ${lastScentRead.direction}.`
                                       : "")
                                 : `Once a day, ${dogName} can check the ground where your pin sits. Use it well.`}
                         </p>
@@ -424,7 +427,7 @@ function MapInner() {
                             </Tag>
                             <h2 style={{ fontSize: "var(--text-h3)", margin: "var(--space-3) 0 0" }}>Your first clue</h2>
                         </div>
-                        <ClueCard clue={CLUE_BY_ID["free-d1"]} />
+                        <ClueCard clue={CLUE_BY_ID["f01"]} />
                         <div style={{ marginTop: "var(--space-5)" }}>
                             <Button size="lg" fullWidth onClick={closeWelcome} iconRight={<i className="ph ph-map-pin" />}>
                                 Start tracking

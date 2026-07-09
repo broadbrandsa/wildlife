@@ -1,10 +1,19 @@
 import type { Equipment } from "./types";
 
 /**
- * 13-item equipment shop. Prices anchored to SAWC's published donation values
- * where they exist (R500 monthly K9 healthcare, R500 ranger compass, R1,850
- * aerial patrol hour, R2,400 ranger GPS, toward the R7,300 T5 dog collar).
- * Items with `unlocksClueId` reveal a paid, operational clue when donated.
+ * The kit room. Every purchasable item both funds the real SAWC K9 unit AND
+ * gives a genuine advantage in the hunt. Prices anchor to SAWC's published
+ * donation values where they exist (R500 monthly healthcare, R500 ranger
+ * compass, R1,850 aerial patrol hour, R2,400 handheld GPS, toward the R7,300
+ * T5 tracking collar).
+ *
+ * Two starter items are free. The rest map to one clear hunt mechanic each:
+ *   - reinforced-leash  : a second scent read each day
+ *   - pro-binoculars    : deeper map zoom for a more precise pin
+ *   - ranger-boots      : your reads reach further (cover more ground)
+ *   - ranger-compass    : reads show the compass direction of the trail
+ *   - monthly-healthcare: a fit dog never draws a blank (cold reads come back faint)
+ *   - five kit items with `unlocksClueId` reveal a paid intel clue
  */
 export const EQUIPMENT: Equipment[] = [
     {
@@ -12,8 +21,8 @@ export const EQUIPMENT: Equipment[] = [
         name: "Standard collar",
         tier: "free",
         priceZar: 0,
-        description: "Your dog's everyday leather collar.",
-        effect: "Standard kit. It does not change the hunt on its own.",
+        description: "Your dog's everyday leather collar. Your team is on the board.",
+        effect: "Starter kit. Upgrade to the GPS collar to read your dog's track.",
         fundedEquivalent: "Included",
         icon: "circle",
     },
@@ -28,28 +37,18 @@ export const EQUIPMENT: Equipment[] = [
         icon: "map-trifold",
     },
     {
-        id: "dog-biscuits",
-        name: "Tin of dog biscuits",
-        tier: "care",
-        priceZar: 20,
-        description: "A treat for your tracker after a long day.",
-        effect: "A morale boost. It keeps your dog keen, but it will not reveal new ground by itself.",
-        fundedEquivalent: "One day of treats for the pack",
-        icon: "bone",
-    },
-    {
         id: "reinforced-leash",
-        name: "Reinforced leash",
+        name: "Tracking leash and harness",
         tier: "hunt",
         priceZar: 50,
-        description: "A heavy-duty Rogz leash for rough country.",
+        description: "A heavy-duty Rogz leash and tracking harness for rough country.",
         effect: "Lets your dog take a second scent read each day, so you can test two pins before the sun is high.",
-        fundedEquivalent: "A week of leash wear-and-replacement",
+        fundedEquivalent: "A tracking leash and harness for a handler",
         icon: "link",
     },
     {
         id: "pro-binoculars",
-        name: "Pro binoculars",
+        name: "Field binoculars",
         tier: "hunt",
         priceZar: 100,
         description: "High-power optics for reading distant ground.",
@@ -58,44 +57,44 @@ export const EQUIPMENT: Equipment[] = [
         icon: "binoculars",
     },
     {
-        id: "week-dog-food",
-        name: "A week of dog food",
-        tier: "care",
-        priceZar: 150,
-        description: "Premium working-hound nutrition for seven days.",
-        effect: "Keeps your dog strong through a long round. A care gift for the pack, with no bearing on the hunt itself.",
-        fundedEquivalent: "Roughly one week of food for one dog",
-        icon: "bowl-food",
-    },
-    {
         id: "topo-map",
-        name: "Topographic map",
+        name: "Topographic overlay",
         tier: "hunt",
         priceZar: 200,
         description: "A geologist's read of the park's rock.",
-        effect: "Overlays the rock types (granite, basalt, rhyolite, sandstone) onto the map. Many clues describe the ground, so this turns those clues into a place you can point to.",
-        fundedEquivalent: "Skukuza ranger field-map printing",
+        effect: "Reveals a paid intel clue reading the ground beneath the camp, turning the geology clues into a place you can point to.",
+        fundedEquivalent: "Field-map printing for a ranger section",
         icon: "stack",
-        unlocksClueId: "eq-topo",
+        unlocksClueId: "s02",
     },
     {
         id: "gps-collar",
-        name: "Premium GPS collar",
+        name: "GPS tracking collar",
         tier: "hunt",
         priceZar: 250,
-        description: "Live tracking on your dog's collar.",
-        effect: "Shows exactly where your dog has tracked and tightens the search area around the scent, narrowing your guess.",
+        description: "A T5 live-tracking collar for a free-running hound.",
+        effect: "Reveals a paid intel clue on where the pack was worked, tightening the search around the scent.",
         fundedEquivalent: "Toward SAWC's R7,300 T5 tracking collar for the pack",
         icon: "map-pin-area",
-        unlocksClueId: "eq-gps",
+        unlocksClueId: "s08",
+    },
+    {
+        id: "ranger-boots",
+        name: "Ranger patrol boots",
+        tier: "hunt",
+        priceZar: 350,
+        description: "Tough boots for a handler covering ground on foot all day.",
+        effect: "Your team covers more ground, so every scent read reaches further: warm and fresh trails show from a wider radius.",
+        fundedEquivalent: "A pair of field boots for a ranger",
+        icon: "boot",
     },
     {
         id: "ranger-compass",
         name: "Ranger's compass",
         tier: "hunt",
         priceZar: 500,
-        description: "A field compass for navigating deep bush and reporting your exact position.",
-        effect: "Adds the compass pull to your dog's daily scent reads, showing which direction the trail is drawing toward.",
+        description: "A field compass for navigating deep bush and reporting an exact position.",
+        effect: "Adds the compass pull to your dog's scent reads, showing which direction the trail is drawing toward.",
         fundedEquivalent: "Exact match to SAWC's published donation",
         icon: "compass-rose",
     },
@@ -105,7 +104,7 @@ export const EQUIPMENT: Equipment[] = [
         tier: "care",
         priceZar: 500,
         description: "Vet visits, vaccinations and parasite control for a month.",
-        effect: "Keeps your dog fit for the whole round, so illness never costs you a day of the hunt.",
+        effect: "A fit dog is never off the trail: your scent reads never draw a total blank, so a cold read still comes back as at least a faint trail.",
         fundedEquivalent: "Exact match to SAWC's published donation",
         icon: "first-aid-kit",
     },
@@ -115,32 +114,32 @@ export const EQUIPMENT: Equipment[] = [
         tier: "big-ticket",
         priceZar: 1850,
         description: "One hour of a Savannah light sport aircraft over the hunt, low and slow.",
-        effect: "Brings back an aerial photo that narrows the hunt from a whole zone down to a single feature.",
+        effect: "Reveals a paid intel clue from the air, narrowing the hunt from a whole zone down to a single feature.",
         fundedEquivalent: "Exact match: one hour of Savannah patrol fuel",
         icon: "airplane-tilt",
-        unlocksClueId: "eq-plane",
+        unlocksClueId: "s10",
     },
     {
         id: "ranger-gps",
-        name: "Ranger handheld GPS",
+        name: "Handheld GPS",
         tier: "big-ticket",
         priceZar: 2400,
-        description: "Handheld navigation for the field team.",
-        effect: "Confirms the suspect's last waypoint down to a single landmark, the most precise read yet.",
+        description: "Rugged handheld navigation for the field team.",
+        effect: "Reveals a paid intel clue fixing the camp against the nearest river and road, one of the most precise reads.",
         fundedEquivalent: "Exact match to SAWC's published donation",
         icon: "compass",
-        unlocksClueId: "eq-ranger-gps",
+        unlocksClueId: "s05",
     },
     {
         id: "helicopter-recon",
         name: "Helicopter recon",
         tier: "big-ticket",
         priceZar: 15000,
-        description: "A Squirrel helicopter sweep of the lowveld.",
-        effect: "Sweeps two zones at once and rules out the empty ground, pointing you straight to where the fresh sign is.",
-        fundedEquivalent: "About one hour of SANParks Squirrel ops",
+        description: "A helicopter sweep of the lowveld with the K9 team aboard.",
+        effect: "Reveals a paid intel clue that rules out the eastern ridge, pointing you back to the granite country.",
+        fundedEquivalent: "About one hour of SANParks helicopter operations",
         icon: "helicopter",
-        unlocksClueId: "eq-heli",
+        unlocksClueId: "s03",
     },
 ];
 

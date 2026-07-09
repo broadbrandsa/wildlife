@@ -121,16 +121,34 @@ export interface ScentReadResult {
     direction: Direction;
 }
 
-/** Banjo's free-running range makes every read a little more generous. */
 const TIER_KM: Record<ScentTier, number> = { hot: 20, warm: 50, faint: 110, cold: Infinity };
 
-export function scentRead(pin: MapPoint, dogId?: string | null): ScentReadResult {
+/** Dogs whose nose or range widens every scent read (warm and fresh reach further). */
+const WIDE_RANGE_DOGS = new Set(["banjo", "storm", "pepper"]);
+/** Dogs that read the line, so the read shows a compass direction. */
+const DIRECTION_DOGS = new Set(["scout", "dotty"]);
+
+export interface ScentReadOptions {
+    dogId?: string | null;
+    /** Ranger boots: your reads reach further (cover more ground). */
+    boots?: boolean;
+    /** Monthly healthcare: a fit dog never draws a blank, so cold reads come back faint. */
+    healthy?: boolean;
+}
+
+export function scentRead(pin: MapPoint, opts: ScentReadOptions = {}): ScentReadResult {
+    const { dogId, boots, healthy } = opts;
     const dist = distanceKm(pin, ROUND.poacher);
-    const bonus = dogId === "banjo" ? 1.3 : 1;
+    let bonus = 1;
+    if (dogId && WIDE_RANGE_DOGS.has(dogId)) bonus *= 1.3;
+    if (boots) bonus *= 1.25;
+
     let tier: ScentTier = "cold";
     if (dist <= TIER_KM.hot * bonus) tier = "hot";
     else if (dist <= TIER_KM.warm * bonus) tier = "warm";
     else if (dist <= TIER_KM.faint * bonus) tier = "faint";
+    // A fit, well-cared-for dog always brings back something.
+    if (healthy && tier === "cold") tier = "faint";
 
     const dx = (ROUND.poacher.x - pin.x) * 90;
     const dy = (ROUND.poacher.y - pin.y) * 360;
@@ -139,6 +157,11 @@ export function scentRead(pin: MapPoint, dogId?: string | null): ScentReadResult
     const direction = dirs[Math.round(((angle + 360) % 360) / 45) % 8];
 
     return { tier, direction };
+}
+
+/** Whether a read should surface a compass direction, given the dog and kit. */
+export function readShowsDirection(dogId?: string | null, hasCompass?: boolean): boolean {
+    return Boolean(hasCompass || (dogId && DIRECTION_DOGS.has(dogId)));
 }
 
 /** Field-ranger voice for each tier. `{dog}` is replaced with the dog's name. */

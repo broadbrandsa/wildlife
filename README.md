@@ -48,13 +48,19 @@ src/
 └── styles/tokens/          # Kruger Wild design tokens (colors, type, spacing, elevation)
 ```
 
-## Round 1 setup
+## Round setup
 
-The poacher is hidden at **Red Rocks on the Shingwedzi** (Zone 3). The clue bank holds 24 clues: 13 free time-released (9 trail + 4 elimination clues that rule other zones out), 5 equipment-locked, 3 sponsor-coupon and 3 dog-instinct clues (surfaced by your chosen dog). Early clues are riddles solved with the in-game field guide; the trail only names Shingwedzi from day 60 and Red Rocks from day 75.
+Single round, one winner (closest locked pin, ties to the earliest lock). The poacher hides at a **bald granite lookout koppie in far-southern Kruger**, anchored on **Mathekenyane (Granokop)** south of Skukuza (Zone 7). This sits in the general southern region of heaviest real rhino-poaching pressure, but the spot itself is a public tourist landmark, and no clue ever names it. Full design and sources: `Information/SAWC_K9_Clue_Bank.xlsx`.
+
+The clue bank holds **30 clues across five difficulty tiers**, built backwards from the koppie: **20 free time-released** clues (Tier 1 north-vs-south down to Tier 5 triangulation) plus **10 paid clues** (5 revealed by kit purchases, 5 by sponsor codes). Two are elimination clues that rule zones out. Early clues are riddles solved with the in-game field guide and case board; the trail never names the hill. Target: under 15 percent of players land a perfect pin.
 
 The demo is pinned to **Day 1** (`DEMO_DAY_OVERRIDE` in `src/data/round.ts`); set it to `null` to use real dates. The profile page has **demo controls**: a day scrubber to show the 90-day arc and a debrief preview.
 
-Demo coupon codes (Intel Intercept): `5FM-SHINGWEDZI-42`, `BIRD-ROLLER-07`, `SCHOOL-RIVER-15`.
+Demo coupon codes (Intel Intercept): `5FM-RHINO-06`, `BIRD-MARULA-07`, `SCHOOL-WARDEN-04`, `TOTAL-FROST-09`, `UNION-CROSS-01`.
+
+## Kit room
+
+Every purchasable item funds the real SAWC K9 unit and gives a real hunt advantage: `reinforced-leash` (a second scent read a day), `pro-binoculars` (deeper map zoom), `ranger-boots` (reads reach further), `ranger-compass` (reads show the trail's compass direction), `monthly-healthcare` (a fit dog never draws a blank, cold reads come back faint), and five kit items that reveal a paid intel clue (`topo-map`, `gps-collar`, `ranger-gps`, `plane-flyover`, `helicopter-recon`). Dog choice shapes the scent read too: Scout and Dotty show direction; Banjo, Storm and Pepper widen the range. Logic in `src/lib/game.ts` (`scentRead`, `readShowsDirection`).
 
 ## Gameplay systems
 

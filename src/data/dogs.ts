@@ -7,7 +7,7 @@ export const DOGS: Dog[] = [
         name: "Storm",
         breed: "Belgian Malinois",
         role: "Apprehension & detection all-rounder",
-        effect: "Surfaces a bonus clue at the round midpoint (day 45)",
+        effect: "Drive and stamina: every scent read reaches a little further",
         personality: "Brave, fast, will protect you.",
         didYouKnow:
             "Malinois are the SAWC unit's apprehension specialists, fearless under pressure and quick to follow a handler's command.",
@@ -19,7 +19,7 @@ export const DOGS: Dog[] = [
         name: "Scout",
         breed: "Bloodhound (guest dog, cross-trains with SAWC)",
         role: "On-leash cold-spoor tracker",
-        effect: "Adds a compass pull to every scent read",
+        effect: "Reads the line: your scent reads show the trail's compass direction",
         personality: "Patient, methodical, a world-class nose.",
         didYouKnow:
             "Bloodhounds follow scent trails days old. They are used by the SANParks Kruger unit, so Scout joins you as a guest dog cross-training with SAWC.",
@@ -31,7 +31,7 @@ export const DOGS: Dog[] = [
         name: "Banjo",
         breed: "English Foxhound × American Bluetick Coonhound cross",
         role: "Free-running pack hound, off-leash sprinter",
-        effect: "More generous scent reads (a wider warm and fresh range)",
+        effect: "Free-running range: warm and fresh reads reach much further",
         personality: "Off-leash, fearless, runs at 40 km/h.",
         didYouKnow:
             "SAWC's free-running pack was donated by Texan houndsman Joe Braman in 2018, with the relocation funded by the Ivan Carter Wildlife Conservation Alliance. They track off-leash at up to 40 km/h.",
@@ -43,7 +43,7 @@ export const DOGS: Dog[] = [
         name: "Dotty",
         breed: "American (Black and Tan) Coonhound",
         role: "Senior pack matriarch, top off-leash hound",
-        effect: "Surfaces a pack-formation clue at day 30",
+        effect: "The old matriarch reads the line: reads show the trail's direction",
         personality: "Experienced, calm, the heart of the pack.",
         didYouKnow:
             "Dotty is a real SAWC dog: a four-year-old Coonhound and one of the unit's top off-leash hounds, who had a litter of 10 puppies in March 2026.",
@@ -55,7 +55,7 @@ export const DOGS: Dog[] = [
         name: "Pepper",
         breed: "English Springer Spaniel (guest dog, cross-trains with SAWC)",
         role: "Detection: rhino horn, ivory, ammunition",
-        effect: "Surfaces a contraband-intercept clue at day 14",
+        effect: "A fine detection nose: every scent read reaches further",
         personality: "Small, focused, finds what others miss.",
         didYouKnow:
             "Springer Spaniels sniff out horn, ivory and ammunition at park gates. Pepper joins you as a guest detection dog cross-training with SAWC.",

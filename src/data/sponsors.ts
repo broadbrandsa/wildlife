@@ -1,6 +1,6 @@
 import type { CouponCode, InKindPartner, Sponsor } from "./types";
 
-/** Three demo sponsors for the pitch build. Listed plainly on Our Allies. */
+/** Five demo sponsors for the pitch build. Listed plainly on Our Allies. */
 export const SPONSORS: Sponsor[] = [
     {
         id: "5fm",
@@ -9,7 +9,7 @@ export const SPONSORS: Sponsor[] = [
         fundedDescription: "Three months of food for the free-running pack",
     },
     {
-        id: "radio702",
+        id: "birding",
         name: "Bushveld Birding Club",
         fundedAmountZar: 6000,
         fundedDescription: "A field ranger's binocular and birding kit",
@@ -19,6 +19,18 @@ export const SPONSORS: Sponsor[] = [
         name: "Lowveld Primary School",
         fundedAmountZar: 4000,
         fundedDescription: "A week of healthcare for two of the dogs",
+    },
+    {
+        id: "totalenergies",
+        name: "TotalEnergies South Africa",
+        fundedAmountZar: 30000,
+        fundedDescription: "A month of aerial patrol fuel",
+    },
+    {
+        id: "capeunion",
+        name: "Cape Union Mart",
+        fundedAmountZar: 12000,
+        fundedDescription: "Field boots and packs for a ranger team",
     },
 ];
 
@@ -49,26 +61,40 @@ export const FOUNDING_DONORS = [
  */
 export const COUPON_CODES: CouponCode[] = [
     {
-        code: "5FM-SHINGWEDZI-42",
+        code: "5FM-RHINO-06",
         sponsorId: "5fm",
         unlockType: "clue",
-        payloadId: "sp-5fm",
+        payloadId: "s06",
         creditLine: "Funded by 5FM. Their support funded 3 months of food for the pack.",
         validUntil: "2026-12-31",
     },
     {
-        code: "BIRD-ROLLER-07",
-        sponsorId: "radio702",
+        code: "BIRD-MARULA-07",
+        sponsorId: "birding",
         unlockType: "clue",
-        payloadId: "sp-radio2",
+        payloadId: "s07",
         creditLine: "Funded by the Bushveld Birding Club. Their support funded a ranger's binoculars.",
     },
     {
-        code: "SCHOOL-RIVER-15",
+        code: "SCHOOL-WARDEN-04",
         sponsorId: "school",
         unlockType: "clue",
-        payloadId: "sp-school",
+        payloadId: "s04",
         creditLine: "Funded by Lowveld Primary School. Their support funded a week of dog healthcare.",
+    },
+    {
+        code: "TOTAL-FROST-09",
+        sponsorId: "totalenergies",
+        unlockType: "clue",
+        payloadId: "s09",
+        creditLine: "Funded by TotalEnergies South Africa. Their support funded a month of aerial patrol fuel.",
+    },
+    {
+        code: "UNION-CROSS-01",
+        sponsorId: "capeunion",
+        unlockType: "clue",
+        payloadId: "s01",
+        creditLine: "Funded by Cape Union Mart. Their support funded boots and packs for a ranger team.",
     },
 ];
 

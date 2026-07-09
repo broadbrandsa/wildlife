@@ -20,6 +20,9 @@ const CATEGORY_ICON: Record<string, string> = {
     cultural: "translate",
     operational: "binoculars",
     seasonal: "sun-horizon",
+    topographic: "mountains",
+    astronomical: "star",
+    synthesis: "puzzle-piece",
 };
 
 export function ClueCard({ clue, compact = false }: { clue: Clue; compact?: boolean }) {

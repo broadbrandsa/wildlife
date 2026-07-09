@@ -84,10 +84,13 @@ export type ClueCategory =
     | "historical"
     | "cultural"
     | "operational"
-    | "seasonal";
+    | "seasonal"
+    | "topographic"
+    | "astronomical"
+    | "synthesis";
 
 export type ClueSource = "free" | "equipment" | "sponsor" | "dog";
-export type ClueDifficulty = "zone" | "feature" | "landmark";
+export type ClueDifficulty = "region" | "zone" | "feature" | "landmark" | "pinpoint";
 /** Trail clues point toward the poacher. Elimination clues rule ground out. */
 export type ClueKind = "trail" | "elimination";
 
@@ -97,6 +100,8 @@ export interface Clue {
     category: ClueCategory;
     difficulty: ClueDifficulty;
     kind?: ClueKind;
+    /** Difficulty tier 1 (entry) to 5 (pinpoint). See the clue bank spreadsheet. */
+    tier?: number;
     /** Day in the round this clue releases (free and dog clues). */
     releaseDay?: number;
     /** For dog clues: the dog that surfaces this clue. */
