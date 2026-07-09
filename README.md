@@ -58,9 +58,18 @@ The demo is pinned to **Day 1** (`DEMO_DAY_OVERRIDE` in `src/data/round.ts`); se
 
 Demo coupon codes (Intel Intercept): `5FM-RHINO-06`, `BIRD-MARULA-07`, `SCHOOL-WARDEN-04`, `TOTAL-FROST-09`, `UNION-CROSS-01`.
 
+## The hunt loop: ranger, thirds and scent
+
+The park is split into three latitude thirds (north, central, south; the poacher is in the south). Your pin is your ranger: where you stand is also your guess. You may move the ranger once a day (twice with `ranger-boots`); a fresh move opens each round day. The dog reads the ground wherever the ranger stands:
+
+- Outside the poacher's third, the dog finds nothing (a cold read with a nudge to move on).
+- Inside it, the read is faint, warm or fresh by distance, plus a rough four-point bearing toward the suspect. `ranger-compass` (or a Scout / Dotty dog) sharpens that to an eight-point bearing; `monthly-healthcare` (or a Banjo / Storm / Pepper dog) widens the scent radius.
+
+Logic lives in `src/lib/game.ts`: `thirdOf`, `poacherThird`, and a third-aware `scentRead`. The store gates movement via `pinMovesToday` and `moveRanger`. The map draws faint third dividers (`showThirds` on `KrugerMap`).
+
 ## Kit room
 
-Every purchasable item funds the real SAWC K9 unit and gives a real hunt advantage: `reinforced-leash` (a second scent read a day), `pro-binoculars` (deeper map zoom), `ranger-boots` (reads reach further), `ranger-compass` (reads show the trail's compass direction), `monthly-healthcare` (a fit dog never draws a blank, cold reads come back faint), and five kit items that reveal a paid intel clue (`topo-map`, `gps-collar`, `ranger-gps`, `plane-flyover`, `helicopter-recon`). Each item has a `realWorldNote` surfaced behind a "What is this really?" disclosure in the shop, with a link to the in-app K9 Unit page. Dog choice shapes the scent read too: Scout and Dotty show direction; Banjo, Storm and Pepper widen the range. Logic in `src/lib/game.ts` (`scentRead`, `readShowsDirection`).
+Every purchasable item funds the real SAWC K9 unit and gives a real hunt advantage: `ranger-boots` (a second ranger move each day), `pro-binoculars` (deeper map zoom), `field-radio` (call HQ to reveal which third the scent is in), `ranger-compass` (a fine eight-point bearing), `monthly-healthcare` (a wider scent radius), and five kit items that reveal a paid intel clue (`topo-map`, `gps-collar`, `ranger-gps`, `plane-flyover`, `helicopter-recon`). Each item has a `realWorldNote` surfaced behind a "What is this really?" disclosure in the shop, with a link to the in-app K9 Unit page. Dog choice also shapes the read: Scout and Dotty sharpen the bearing; Banjo, Storm and Pepper widen the range.
 
 ## Field guides
 
@@ -70,15 +79,14 @@ The morning-patrol ritual was removed. The scent read now carries an always-visi
 
 ## Gameplay systems
 
-- **Scent reads** (`map`): once per round day, your dog checks the ground at your pin and answers in one of four tiers (cold / faint / warm / fresh). Scout adds a compass pull; Banjo widens the tiers. Uses `distanceKm` + `scentRead` in `src/lib/game.ts`.
-- **Dog effects**: each dog's advertised effect is real. Storm, Dotty and Pepper surface dog-instinct clues on set days; Scout and Banjo modify scent reads.
-- **Case board** (`journal`): tap a zone to cycle open → suspect → ruled out. The book icon opens the field guide.
+- **Scent reads** (`map`): see "The hunt loop" above. The dog reads the ranger's current spot, third-aware, live from `scentRead`.
+- **Dog effects**: each dog's advertised effect is real and shapes the scent read. Scout and Dotty sharpen the bearing; Banjo, Storm and Pepper widen the scent range.
+- **Case board** (`journal`): tap a zone to cycle open → suspect → ruled out. The book icon opens the field guide (locked until you own that guide).
 - **Field guide**: every zone's geology, vegetation, species and named places (from `src/data/zones.ts`), the toolkit that makes clue riddles solvable. Reachable from the map chips and case board.
-- **Morning patrol** (`map`): a daily log-in ritual with a rotating field note (`src/data/patrol.ts`) and a streak counter.
 - **Debrief** (`/debrief`): shown when the round ends (or via profile preview). Reveals the camp, scores your pin distance and awards a tracker rating.
 - **Prizes** (`/prizes`): how the round is won (closest locked pin, ties to the earliest lock) and the tiered prize table from `src/data/prizes.ts`: 1 grand safari prize, 5 getaway prizes, 20 gear prizes, with illustrative SA prize partners. Also carries the R500,000 round fundraising goal, echoed on the impact page. Entry is free and never tied to a donation (CPA section 36 note on the legal page).
 - **Community presence** (`src/lib/community.ts`): a deterministic v1 simulation of the national field of players, seeded off the round day (rangers hunting, pins locked). Shown on the map HUD and as debrief context. Replace with real aggregates once pins and donations are recorded server-side.
-- **Next-clue countdown** (`map` and `journal`): a mono line counting down to the next free or dog-instinct clue (`nextClueLabel` in `src/lib/game.ts`).
+- **Next-clue countdown** (`map` and `journal`): a mono line counting down to the next free clue (`nextClueLabel` in `src/lib/game.ts`).
 - **Share card** (`/debrief`): a 1080x1350 result card drawn client-side on a canvas (`src/lib/share-card.ts`), shared via the Web Share API where available, otherwise downloaded as a PNG.
 
 ## Real unit photography

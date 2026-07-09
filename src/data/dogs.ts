@@ -19,7 +19,7 @@ export const DOGS: Dog[] = [
         name: "Scout",
         breed: "Bloodhound (guest dog, cross-trains with SAWC)",
         role: "On-leash cold-spoor tracker",
-        effect: "Reads the line: your scent reads show the trail's compass direction",
+        effect: "Reads the line: your scent gives a sharper eight-point bearing",
         personality: "Patient, methodical, a world-class nose.",
         didYouKnow:
             "Bloodhounds follow scent trails days old. They are used by the SANParks Kruger unit, so Scout joins you as a guest dog cross-training with SAWC.",
@@ -43,7 +43,7 @@ export const DOGS: Dog[] = [
         name: "Dotty",
         breed: "American (Black and Tan) Coonhound",
         role: "Senior pack matriarch, top off-leash hound",
-        effect: "The old matriarch reads the line: reads show the trail's direction",
+        effect: "The old matriarch reads the line: your scent gives a sharper bearing",
         personality: "Experienced, calm, the heart of the pack.",
         didYouKnow:
             "Dotty is a real SAWC dog: a four-year-old Coonhound and one of the unit's top off-leash hounds, who had a litter of 10 puppies in March 2026.",

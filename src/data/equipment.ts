@@ -9,11 +9,11 @@ import { ZONES } from "./zones";
  * disclosure in the shop with a link to the in-app K9 Unit page.
  *
  * Hunt mechanics, one per item:
- *   - reinforced-leash  : a second scent read each day
+ *   - ranger-boots      : move your ranger a second time each day
  *   - pro-binoculars    : deeper map zoom for a more precise pin
- *   - ranger-boots      : your reads reach further (cover more ground)
- *   - ranger-compass    : reads show the compass direction of the trail
- *   - monthly-healthcare: a fit dog never draws a blank (cold reads come back faint)
+ *   - field-radio       : call HQ to reveal which third the scent is in
+ *   - ranger-compass    : a fine eight-point bearing on the scent
+ *   - monthly-healthcare: a fit dog's nose reaches further (wider scent radius)
  *   - five kit items with `unlocksClueId` reveal a paid intel clue
  */
 export const EQUIPMENT: Equipment[] = [
@@ -38,17 +38,6 @@ export const EQUIPMENT: Equipment[] = [
         fundedEquivalent: "Included",
         icon: "map-trifold",
         realWorldNote: "Handlers and rangers plan every deployment off detailed maps of their section of the park.",
-    },
-    {
-        id: "reinforced-leash",
-        name: "Tracking leash and harness",
-        tier: "hunt",
-        priceZar: 50,
-        description: "A heavy-duty Rogz leash and tracking harness for rough country.",
-        effect: "Lets your dog take a second scent read each day, so you can test two pins before the sun is high.",
-        fundedEquivalent: "A tracking leash and harness for a handler",
-        icon: "link",
-        realWorldNote: "On-leash trackers work a long line and harness. On a cold spoor a good dog can pull a handler along for hours.",
     },
     {
         id: "pro-binoculars",
@@ -86,12 +75,23 @@ export const EQUIPMENT: Equipment[] = [
         realWorldNote: "SAWC's free-running hounds wear T5 GPS collars so handlers can follow them from the vehicle or the helicopter.",
     },
     {
+        id: "field-radio",
+        name: "Field radio",
+        tier: "hunt",
+        priceZar: 300,
+        description: "A two-way VHF radio to reach the K9 operations room.",
+        effect: "Call HQ to hear where other ranger teams have picked up a scent, revealing which third of the park to head for.",
+        fundedEquivalent: "A handheld radio for a field team",
+        icon: "broadcast",
+        realWorldNote: "Two-way radios keep foot teams, the operations room and the airwing in constant contact during a follow-up. Coordination is everything.",
+    },
+    {
         id: "ranger-boots",
         name: "Ranger patrol boots",
         tier: "hunt",
         priceZar: 350,
         description: "Tough boots for a handler covering ground on foot all day.",
-        effect: "Your team covers more ground, so every scent read reaches further: warm and fresh trails show from a wider radius.",
+        effect: "Fresh legs cover more ground, so you can move your ranger a second time in the same day.",
         fundedEquivalent: "A pair of field boots for a ranger",
         icon: "boot",
         realWorldNote: "Field rangers patrol on foot for days at a time. Sound boots are basic, vital kit for the people behind the dogs.",
@@ -113,7 +113,7 @@ export const EQUIPMENT: Equipment[] = [
         tier: "care",
         priceZar: 500,
         description: "Vet visits, vaccinations and parasite control for a month.",
-        effect: "A fit dog is never off the trail: your scent reads never draw a total blank, so a cold read still comes back as at least a faint trail.",
+        effect: "A fit, well-conditioned dog works a wider nose: warm and fresh scent reaches you from further out.",
         fundedEquivalent: "One dog's healthcare for a month",
         icon: "first-aid-kit",
         realWorldNote: "SAWC budgets vet care, vaccinations, parasite control and supplements for every dog, every month, at about R500 a dog.",

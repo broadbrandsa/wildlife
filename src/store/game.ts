@@ -6,7 +6,6 @@ import { persist } from "zustand/middleware";
 import { CODE_BY_VALUE, EQUIPMENT_BY_ID } from "@/data";
 import type { ZoneId } from "@/data";
 import { currentDay } from "@/lib/game";
-import type { Direction, ScentTier } from "@/lib/game";
 import { receiptNumber } from "@/lib/format";
 
 export interface Player {
@@ -43,15 +42,6 @@ export type RedeemResult =
 /** Case-board verdict a player has recorded against a zone. */
 export type ZoneMark = "suspect" | "eliminated";
 
-/** The dog's most recent verdict on the pin. One read per round day. */
-export interface ScentRead {
-    day: number;
-    tier: ScentTier;
-    direction: Direction;
-    x: number;
-    y: number;
-}
-
 interface GameState {
     hasHydrated: boolean;
     player: Player | null;
@@ -65,16 +55,16 @@ interface GameState {
     donationsTotal: number;
     notifyAsked: boolean;
     zoneMarks: Partial<Record<ZoneId, ZoneMark>>;
-    lastScentRead: ScentRead | null;
-    /** How many scent reads have been taken on a given round day. */
-    scentReadsToday: { day: number; count: number } | null;
+    /** How many times the ranger has been moved on a given round day. */
+    pinMovesToday: { day: number; count: number } | null;
     /** Demo-only day override, driven by the profile page scrubber. */
     demoDay: number | null;
 
     setHasHydrated: (v: boolean) => void;
     setPlayer: (player: Player) => void;
     updatePlayer: (patch: Partial<Player>) => void;
-    setPin: (x: number, y: number) => void;
+    /** Move the ranger (which is also your guess). Counts against the day's moves. */
+    moveRanger: (x: number, y: number, day: number) => void;
     lockPin: () => void;
     purchase: (equipmentId: string) => Donation;
     grantEquipment: (equipmentId: string) => void;
@@ -83,7 +73,6 @@ interface GameState {
     redeemCode: (raw: string) => RedeemResult;
     setNotifyAsked: () => void;
     cycleZoneMark: (zoneId: ZoneId) => void;
-    recordScentRead: (read: ScentRead) => void;
     setDemoDay: (day: number | null) => void;
     reset: () => void;
 }
@@ -102,8 +91,7 @@ const initial = {
     donationsTotal: 0,
     notifyAsked: false,
     zoneMarks: {} as Partial<Record<ZoneId, ZoneMark>>,
-    lastScentRead: null as ScentRead | null,
-    scentReadsToday: null as { day: number; count: number } | null,
+    pinMovesToday: null as { day: number; count: number } | null,
     demoDay: null as number | null,
 };
 
@@ -118,10 +106,15 @@ export const useGameStore = create<GameState>()(
             setPlayer: (player) => set({ player }),
             updatePlayer: (patch) => set((s) => (s.player ? { player: { ...s.player, ...patch } } : {})),
 
-            setPin: (x, y) =>
+            moveRanger: (x, y, day) =>
                 set((s) => {
                     if (s.pin?.locked) return {};
-                    return { pin: { x, y, updatedAt: new Date().toISOString(), locked: false } };
+                    const prior = s.pinMovesToday;
+                    const count = prior && prior.day === day ? prior.count + 1 : 1;
+                    return {
+                        pin: { x, y, updatedAt: new Date().toISOString(), locked: false },
+                        pinMovesToday: { day, count },
+                    };
                 }),
 
             lockPin: () => set((s) => (s.pin ? { pin: { ...s.pin, locked: true } } : {})),
@@ -208,13 +201,6 @@ export const useGameStore = create<GameState>()(
                     if (next) zoneMarks[zoneId] = next;
                     else delete zoneMarks[zoneId];
                     return { zoneMarks };
-                }),
-
-            recordScentRead: (read) =>
-                set((s) => {
-                    const prior = s.scentReadsToday;
-                    const count = prior && prior.day === read.day ? prior.count + 1 : 1;
-                    return { lastScentRead: read, scentReadsToday: { day: read.day, count } };
                 }),
 
             setDemoDay: (day) => set({ demoDay: day }),

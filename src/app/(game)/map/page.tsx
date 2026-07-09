@@ -13,12 +13,14 @@ import { CLUE_BY_ID, CLUES, DOG_BY_ID, RANGER_BY_ID, ROUND, ZONES, ZONE_BY_ID } 
 import type { Zone } from "@/data";
 import {
     SCENT_TEXT,
+    THIRD_LABEL,
     availableClueIds,
     daysRemaining,
     isRoundOver,
     nextClueLabel,
-    readShowsDirection,
+    poacherThird,
     scentRead,
+    thirdOf,
     zoneAtPoint,
 } from "@/lib/game";
 import type { ScentTier } from "@/lib/game";
@@ -39,14 +41,12 @@ function MapInner() {
 
     const player = useGameStore((s) => s.player);
     const pin = useGameStore((s) => s.pin);
-    const setPin = useGameStore((s) => s.setPin);
+    const moveRanger = useGameStore((s) => s.moveRanger);
     const lockPin = useGameStore((s) => s.lockPin);
     const cluesUnlocked = useGameStore((s) => s.cluesUnlocked);
     const inventory = useGameStore((s) => s.inventory);
     const fieldGuides = useGameStore((s) => s.fieldGuides);
-    const lastScentRead = useGameStore((s) => s.lastScentRead);
-    const scentReadsToday = useGameStore((s) => s.scentReadsToday);
-    const recordScentRead = useGameStore((s) => s.recordScentRead);
+    const pinMovesToday = useGameStore((s) => s.pinMovesToday);
     const campaignTotal = useCampaignTotal();
 
     const [dismissed, setDismissed] = useState(false);
@@ -75,22 +75,34 @@ function MapInner() {
     const dogName = player?.dogName ?? dog?.name ?? "your dog";
 
     const pinZone = pin ? ZONE_BY_ID[zoneAtPoint(pin)] : null;
-    const readTakenToday = lastScentRead?.day === day;
-    const maxReads = inventory.includes("reinforced-leash") ? 2 : 1;
-    const readsToday = scentReadsToday?.day === day ? scentReadsToday.count : 0;
-    const canRead = readsToday < maxReads;
     const clueCountdown = nextClueLabel(day, player?.dogId);
 
-    const showsDirection = readShowsDirection(player?.dogId, inventory.includes("ranger-compass"));
+    // Movement: the ranger (your guess) may move once a day, twice with boots.
+    const maxMoves = inventory.includes("ranger-boots") ? 2 : 1;
+    const movesToday = pinMovesToday?.day === day ? pinMovesToday.count : 0;
+    const canMove = !pin?.locked && movesToday < maxMoves;
 
-    const onAskForRead = () => {
-        if (!pin || !canRead) return;
-        const result = scentRead(pin, {
-            dogId: player?.dogId,
-            boots: inventory.includes("ranger-boots"),
-            healthy: inventory.includes("monthly-healthcare"),
-        });
-        recordScentRead({ day, tier: result.tier, direction: result.direction, x: pin.x, y: pin.y });
+    // The dog reads the ground wherever the ranger currently stands.
+    const read = useMemo(
+        () =>
+            pin
+                ? scentRead(pin, {
+                      dogId: player?.dogId,
+                      range: inventory.includes("monthly-healthcare"),
+                      compass: inventory.includes("ranger-compass"),
+                  })
+                : null,
+        [pin, player?.dogId, inventory],
+    );
+
+    // Field radio: HQ tells you which third the scent is in.
+    const hasRadio = inventory.includes("field-radio");
+    const targetThird = poacherThird();
+    const rangerThird = pin ? thirdOf(pin) : null;
+
+    const onPlace = (x: number, y: number) => {
+        if (!canMove && pin) return; // out of moves today; existing pin stays put
+        moveRanger(x, y, day);
     };
 
     const onLockTap = () => {
@@ -152,7 +164,7 @@ function MapInner() {
 
             {/* Map */}
             <div style={{ position: "relative", height: "min(52dvh, 460px)", background: "radial-gradient(120% 110% at 50% 0%, #2C4A39 0%, #16110A 92%)" }}>
-                <KrugerMap pin={pin} onPlace={(x, y) => setPin(x, y)} maxScale={inventory.includes("pro-binoculars") ? 8 : 4} />
+                <KrugerMap pin={pin} onPlace={onPlace} maxScale={inventory.includes("pro-binoculars") ? 8 : 4} showThirds />
                 {(ranger || dog) && (
                     <button
                         onClick={() => router.push("/profile")}
@@ -268,24 +280,24 @@ function MapInner() {
                     }}
                 >
                     <span style={{ flex: "none", width: 40, height: 40, borderRadius: "var(--radius-pill)", background: pin ? "var(--clay-100)" : "var(--surface-sunken)", color: pin ? "var(--clay-600)" : "var(--text-muted)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>
-                        <i className={`ph${pin ? "-fill" : ""} ph-${pin?.locked ? "lock-simple" : "map-pin"}`} />
+                        <i className={`ph${pin ? "-fill" : ""} ph-${pin?.locked ? "lock-simple" : "person-simple-walk"}`} />
                     </span>
                     <div style={{ flex: 1 }}>
                         <div style={{ fontWeight: 700, fontSize: "0.92rem" }}>
-                            {!pin ? "No pin dropped yet" : pin.locked ? "Pin locked in" : "Pin dropped"}
+                            {!pin ? "Place your ranger" : pin.locked ? "Answer locked in" : `${rangerName} on patrol`}
                         </div>
                         <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
                             {!pin
-                                ? "Tap the map to place your guess."
+                                ? "Tap the map to send your ranger to a spot. That spot is also your guess."
                                 : pinZone
-                                  ? `Zone ${pinZone.number} · ${pinZone.name}${pin.locked ? " · locked for the round" : ""}`
-                                  : pin.locked
-                                    ? "Locked for the round."
-                                    : "Tap the map to move it, any time before lock."}
+                                  ? `${THIRD_LABEL[rangerThird ?? "south"].replace("the ", "")} · zone ${pinZone.number}, ${pinZone.name}${pin.locked ? " · locked for the round" : ""}`
+                                  : "Locked for the round."}
                         </div>
                         {pin && !pin.locked && (
                             <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)", marginTop: 4 }}>
-                                Ties go to the earliest locked pin, so lock in when you are sure.
+                                {canMove
+                                    ? `You can move ${maxMoves - movesToday} more time${maxMoves - movesToday === 1 ? "" : "s"} today. Ties go to the earliest lock, so lock in when sure.`
+                                    : "You have moved as far as you can today. Lock in, or move again tomorrow."}
                             </div>
                         )}
                     </div>
@@ -296,8 +308,8 @@ function MapInner() {
                     )}
                 </div>
 
-                {/* Scent read: the dog's daily verdict on your pin */}
-                {pin && !roundOver && (
+                {/* Scent read: the dog reads the ground where your ranger stands */}
+                {pin && read && !roundOver && (
                     <div
                         style={{
                             background: "var(--surface-card)",
@@ -311,36 +323,37 @@ function MapInner() {
                             <span style={{ display: "inline-flex", alignItems: "center", gap: 8, fontFamily: "var(--font-mono)", fontSize: "0.64rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-accent)" }}>
                                 <i className="ph ph-paw-print" /> Scent read
                             </span>
-                            <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-                                {readTakenToday && lastScentRead && (
-                                    <Tag tone={TIER_META[lastScentRead.tier].tone} size="sm">
-                                        <i className={`ph ph-${TIER_META[lastScentRead.tier].icon}`} style={{ marginRight: 4 }} />
-                                        {TIER_META[lastScentRead.tier].label}
-                                    </Tag>
-                                )}
-                                {canRead && (
-                                    <Button size="sm" onClick={onAskForRead}>
-                                        {readTakenToday ? "Ask again" : `Ask ${dogName}`}
-                                    </Button>
-                                )}
-                            </span>
+                            <Tag tone={TIER_META[read.tier].tone} size="sm">
+                                <i className={`ph ph-${TIER_META[read.tier].icon}`} style={{ marginRight: 4 }} />
+                                {read.inThird ? TIER_META[read.tier].label : "Nothing here"}
+                            </Tag>
                         </div>
                         <p style={{ margin: "0.4rem 0 0", fontSize: "0.78rem", lineHeight: 1.5, color: "var(--text-muted)" }}>
-                            Once a day, {dogName} checks the ground under your pin and reads how close the trail is: cold, faint, warm or fresh. Move the pin and read again tomorrow to close in.
+                            {dogName} reads the ground wherever your ranger stands. The dog only picks up the trail in the third of the park where the suspect is hiding. Move your ranger to hunt for the scent, then close in.
                         </p>
                         <p style={{ margin: "var(--space-3) 0 0", fontFamily: "var(--font-serif)", fontSize: "0.98rem", lineHeight: 1.5, color: "var(--sand-900)" }}>
-                            {readTakenToday && lastScentRead
-                                ? SCENT_TEXT[lastScentRead.tier].replace("{dog}", dogName) +
-                                  (lastScentRead.tier !== "hot" && showsDirection
-                                      ? ` The trail pulls ${lastScentRead.direction}.`
-                                      : "")
-                                : `Tap "Ask ${dogName}" to send your dog to the pin.`}
+                            {SCENT_TEXT[read.tier].replace("{dog}", dogName) +
+                                (read.inThird && read.tier !== "hot"
+                                    ? ` The trail pulls ${read.fine ? read.direction : read.rough}.`
+                                    : "")}
                         </p>
-                        {readTakenToday && (
-                            <div style={{ marginTop: "var(--space-2)", fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.08em", color: "var(--text-muted)" }}>
-                                {maxReads > 1
-                                    ? `READS TODAY: ${readsToday} OF ${maxReads}`
-                                    : `READ TAKEN · ${dogName.toUpperCase()} RESTS UNTIL TOMORROW`}
+                        {hasRadio && (
+                            <div
+                                style={{
+                                    marginTop: "var(--space-3)",
+                                    display: "flex",
+                                    gap: 8,
+                                    alignItems: "flex-start",
+                                    background: "var(--ochre-100)",
+                                    border: "1px solid var(--ochre-200)",
+                                    borderRadius: "var(--radius-sm)",
+                                    padding: "0.55rem 0.7rem",
+                                }}
+                            >
+                                <i className="ph ph-broadcast" style={{ color: "var(--ochre-700)", marginTop: 2 }} />
+                                <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)", lineHeight: 1.5 }}>
+                                    HQ radios in: other teams place the freshest scent in {THIRD_LABEL[targetThird]} of the park.
+                                </span>
                             </div>
                         )}
                     </div>

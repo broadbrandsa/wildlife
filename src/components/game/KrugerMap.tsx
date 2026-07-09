@@ -52,9 +52,11 @@ interface KrugerMapProps {
     target?: { x: number; y: number } | null;
     /** Maximum pinch-zoom. Pro binoculars lift this from 4 to 8. */
     maxScale?: number;
+    /** Draw the faint north / central / south third dividers and labels. */
+    showThirds?: boolean;
 }
 
-export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, target = null, maxScale = 4 }: KrugerMapProps) {
+export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, target = null, maxScale = 4, showThirds = false }: KrugerMapProps) {
     const down = useRef<{ x: number; y: number } | null>(null);
 
     const handlePointerDown = (e: React.PointerEvent) => {
@@ -130,6 +132,29 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                             ].map(([cx, cy], i) => (
                                 <circle key={i} cx={cx} cy={cy} r="6" fill="#B7AB92" opacity={0.7} />
                             ))}
+
+                            {/* three thirds: faint dividers + labels */}
+                            {showThirds && (
+                                <g>
+                                    <line x1="0" y1={VH / 3} x2={VW} y2={VH / 3} stroke="rgba(33,28,20,0.28)" strokeWidth="1.2" strokeDasharray="5 5" />
+                                    <line x1="0" y1={(VH * 2) / 3} x2={VW} y2={(VH * 2) / 3} stroke="rgba(33,28,20,0.28)" strokeWidth="1.2" strokeDasharray="5 5" />
+                                    {[
+                                        { label: "NORTH", y: VH / 6 },
+                                        { label: "CENTRAL", y: VH / 2 },
+                                        { label: "SOUTH", y: (VH * 5) / 6 },
+                                    ].map((t) => (
+                                        <text
+                                            key={t.label}
+                                            x={296}
+                                            y={t.y}
+                                            textAnchor="end"
+                                            style={{ fontFamily: "var(--font-mono)", fontSize: 8, letterSpacing: "0.18em", fill: "rgba(33,28,20,0.35)" }}
+                                        >
+                                            {t.label}
+                                        </text>
+                                    ))}
+                                </g>
+                            )}
                         </g>
 
                         {/* park hairline */}

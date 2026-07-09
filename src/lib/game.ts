@@ -109,65 +109,99 @@ export function zoneAtPoint(p: MapPoint): ZoneId {
 }
 
 // ---------------------------------------------------------------------------
-// Scent reads (the dog's daily verdict on your pin)
+// The park in thirds
+
+export type Third = "north" | "central" | "south";
+
+/** Which latitude third a normalised point falls in (y: 0 north to 1 south). */
+export function thirdOf(p: MapPoint): Third {
+    if (p.y < 1 / 3) return "north";
+    if (p.y < 2 / 3) return "central";
+    return "south";
+}
+
+/** The third the poacher is hiding in this round. */
+export function poacherThird(): Third {
+    return thirdOf(ROUND.poacher);
+}
+
+export const THIRD_LABEL: Record<Third, string> = {
+    north: "the northern third",
+    central: "the central third",
+    south: "the southern third",
+};
+
+// ---------------------------------------------------------------------------
+// Scent reads (the dog reads the ground where your ranger stands)
 
 export type ScentTier = "cold" | "faint" | "warm" | "hot";
 
 export type Direction = "north" | "north-east" | "east" | "south-east" | "south" | "south-west" | "west" | "north-west";
+export type RoughDirection = "north" | "east" | "south" | "west";
 
 export interface ScentReadResult {
+    /** Is the ranger standing in the poacher's third? Outside it, the dog finds nothing. */
+    inThird: boolean;
     tier: ScentTier;
-    /** Compass pull toward the target. Only shown to Scout handlers. */
+    /** Eight-point pull toward the poacher (only meaningful when inThird). */
     direction: Direction;
+    /** Four-point pull, shown to rangers without a compass or a line-reading dog. */
+    rough: RoughDirection;
+    /** Whether the fine eight-point bearing should be shown (compass or dog). */
+    fine: boolean;
 }
 
-const TIER_KM: Record<ScentTier, number> = { hot: 20, warm: 50, faint: 110, cold: Infinity };
+/** Distance thresholds inside the poacher's third. Base tuning; kit/dog widen them. */
+const TIER_KM = { hot: 15, warm: 45 };
 
-/** Dogs whose nose or range widens every scent read (warm and fresh reach further). */
+/** Dogs whose nose widens the scent range (warm and fresh reach further). */
 const WIDE_RANGE_DOGS = new Set(["banjo", "storm", "pepper"]);
-/** Dogs that read the line, so the read shows a compass direction. */
+/** Dogs that read the line, so the read shows a fine compass bearing. */
 const DIRECTION_DOGS = new Set(["scout", "dotty"]);
 
 export interface ScentReadOptions {
     dogId?: string | null;
-    /** Ranger boots: your reads reach further (cover more ground). */
-    boots?: boolean;
-    /** Monthly healthcare: a fit dog never draws a blank, so cold reads come back faint. */
-    healthy?: boolean;
+    /** Monthly healthcare: a fit dog's nose reaches further (wider tier radius). */
+    range?: boolean;
+    /** Ranger's compass: show the fine eight-point bearing. */
+    compass?: boolean;
 }
 
 export function scentRead(pin: MapPoint, opts: ScentReadOptions = {}): ScentReadResult {
-    const { dogId, boots, healthy } = opts;
-    const dist = distanceKm(pin, ROUND.poacher);
-    let bonus = 1;
-    if (dogId && WIDE_RANGE_DOGS.has(dogId)) bonus *= 1.3;
-    if (boots) bonus *= 1.25;
-
-    let tier: ScentTier = "cold";
-    if (dist <= TIER_KM.hot * bonus) tier = "hot";
-    else if (dist <= TIER_KM.warm * bonus) tier = "warm";
-    else if (dist <= TIER_KM.faint * bonus) tier = "faint";
-    // A fit, well-cared-for dog always brings back something.
-    if (healthy && tier === "cold") tier = "faint";
+    const { dogId, range, compass } = opts;
+    const inThird = thirdOf(pin) === poacherThird();
 
     const dx = (ROUND.poacher.x - pin.x) * 90;
     const dy = (ROUND.poacher.y - pin.y) * 360;
     const angle = (Math.atan2(dx, -dy) * 180) / Math.PI; // 0 = north, clockwise
     const dirs: Direction[] = ["north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west"];
+    const roughs: RoughDirection[] = ["north", "east", "south", "west"];
     const direction = dirs[Math.round(((angle + 360) % 360) / 45) % 8];
+    const rough = roughs[Math.round(((angle + 360) % 360) / 90) % 4];
+    const fine = Boolean(compass || (dogId && DIRECTION_DOGS.has(dogId)));
 
-    return { tier, direction };
-}
+    if (!inThird) {
+        // Wrong third: the dog finds nothing.
+        return { inThird: false, tier: "cold", direction, rough, fine };
+    }
 
-/** Whether a read should surface a compass direction, given the dog and kit. */
-export function readShowsDirection(dogId?: string | null, hasCompass?: boolean): boolean {
-    return Boolean(hasCompass || (dogId && DIRECTION_DOGS.has(dogId)));
+    let bonus = 1;
+    if (dogId && WIDE_RANGE_DOGS.has(dogId)) bonus *= 1.25;
+    if (range) bonus *= 1.25;
+
+    const dist = distanceKm(pin, ROUND.poacher);
+    // Inside the right third the dog always has something: floor at faint.
+    let tier: ScentTier = "faint";
+    if (dist <= TIER_KM.hot * bonus) tier = "hot";
+    else if (dist <= TIER_KM.warm * bonus) tier = "warm";
+
+    return { inThird: true, tier, direction, rough, fine };
 }
 
 /** Field-ranger voice for each tier. `{dog}` is replaced with the dog's name. */
 export const SCENT_TEXT: Record<ScentTier, string> = {
-    cold: "{dog} casts wide, circles twice and lies down. Nothing here. This ground is cold.",
-    faint: "{dog} lifts a nose to the wind and holds it a moment. Something, but old and far away.",
+    cold: "{dog} casts wide, circles twice and lies down. Nothing here. The scent is not in this part of the park. Move your ranger to another third and try again.",
+    faint: "{dog} lifts a nose to the wind and holds it a moment. The trail is in this part of the park, but old and far off.",
     warm: "{dog} works the ground in tightening loops, tail up. The trail has been through here.",
     hot: "{dog} freezes, then pulls hard against the lead. Fresh sign. You are close.",
 };
