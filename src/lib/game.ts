@@ -58,35 +58,38 @@ export function nextClueLabel(day: number): string {
 }
 
 /**
- * Stylised distance from a normalised pin to a normalised target, scaled to
- * Kruger's real dimensions (~90 km wide east-west, ~360 km north-south).
- * Not a true projection; the map is illustration, not a survey.
+ * Distance from a normalised map point to a normalised target. The map is a
+ * real linear projection of Kruger (see map-geometry.ts): the frame spans
+ * about 130 km east-west and 366 km north-south, so distances are close to
+ * true kilometres.
  */
 export function distanceKm(a: MapPoint, b: MapPoint): number {
-    const dxKm = (a.x - b.x) * 90;
-    const dyKm = (a.y - b.y) * 360;
+    const dxKm = (a.x - b.x) * 130;
+    const dyKm = (a.y - b.y) * 366;
     return Math.hypot(dxKm, dyKm);
 }
 
 // ---------------------------------------------------------------------------
-// Zones on the stylised map
+// Zones on the map (real geography; edges follow the bounding rivers)
 
 /** Horizontal band each zone occupies in normalised map space (from KrugerMap). */
 const ZONE_BANDS: { id: ZoneId; y0: number; y1: number }[] = [
-    { id: "far-north", y0: 0, y1: 0.147 },
-    { id: "punda-sandveld", y0: 0.147, y1: 0.242 },
-    { id: "mopane-shingwedzi", y0: 0.242, y1: 0.395 },
-    { id: "letaba-olifants", y0: 0.395, y1: 0.55 },
-    { id: "central-basalt", y0: 0.55, y1: 0.718 },
-    { id: "southern-sabie", y0: 0.718, y1: 0.874 },
-    { id: "sw-granite", y0: 0.874, y1: 1 },
+    { id: "far-north", y0: 0, y1: 0.097 }, // to just south of the Luvuvhu
+    { id: "punda-sandveld", y0: 0.097, y1: 0.218 },
+    { id: "mopane-shingwedzi", y0: 0.218, y1: 0.474 }, // to the Letaba
+    { id: "letaba-olifants", y0: 0.474, y1: 0.54 }, // between the two rivers
+    { id: "central-basalt", y0: 0.54, y1: 0.749 }, // to the Tshokwane line
 ];
+/** South of the Tshokwane line the park splits east/west at this x. */
+const SOUTH_Y = 0.749;
+const SOUTH_SPLIT_X = 0.52;
 
 /** Which zone a normalised map point falls in (Lebombo overlays the east). */
 export function zoneAtPoint(p: MapPoint): ZoneId {
-    if (p.x > 0.74 && p.y > 0.395 && p.y < 0.83) return "lebombo";
+    if (p.x > 0.86 && p.y > 0.5 && p.y < 0.86) return "lebombo";
+    if (p.y >= SOUTH_Y) return p.x < SOUTH_SPLIT_X ? "sw-granite" : "southern-sabie";
     const band = ZONE_BANDS.find((b) => p.y >= b.y0 && p.y < b.y1);
-    return band?.id ?? "sw-granite";
+    return band?.id ?? "far-north";
 }
 
 // ---------------------------------------------------------------------------
@@ -152,8 +155,8 @@ export function scentRead(pin: MapPoint, opts: ScentReadOptions = {}): ScentRead
     const { dogId, range, compass } = opts;
     const inThird = thirdOf(pin) === poacherThird();
 
-    const dx = (ROUND.poacher.x - pin.x) * 90;
-    const dy = (ROUND.poacher.y - pin.y) * 360;
+    const dx = (ROUND.poacher.x - pin.x) * 130;
+    const dy = (ROUND.poacher.y - pin.y) * 366;
     const angle = (Math.atan2(dx, -dy) * 180) / Math.PI; // 0 = north, clockwise
     const dirs: Direction[] = ["north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west"];
     const roughs: RoughDirection[] = ["north", "east", "south", "west"];

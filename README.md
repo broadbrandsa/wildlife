@@ -11,7 +11,7 @@ Built on the **Kruger Wild** design system. This is the v1 prototype: a real, wo
 - Fonts: **Spectral** (serif), **Hanken Grotesk** (UI), **Space Mono** (data) via Google Fonts
 - Icons: **Phosphor** (web font, loaded in `layout.tsx`)
 - State: **Zustand** + `persist` (localStorage = the v1 mock backend)
-- Map: stylised SVG + `react-zoom-pan-pinch`
+- Map: real Kruger geography (OSM-derived SVG, see `tools/build-map.py`) + `react-zoom-pan-pinch`
 - Hosting: **Vercel**
 
 ## Run it

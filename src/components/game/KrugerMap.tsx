@@ -3,45 +3,30 @@
 import { useRef } from "react";
 import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
 
-import { ROUND, ZONES } from "@/data";
+import { ZONES } from "@/data";
 import type { ZoneId } from "@/data";
+import { CAMPS, K9_BASE, LANDMARKS, MAP_H, MAP_W, PARK_PATH, RIVER_PATHS } from "./map-geometry";
 
-const VW = 360;
-const VH = 760;
+const VW = MAP_W;
+const VH = MAP_H;
 
-// Park outline (stylised oblong, narrower at the poles).
-const PARK =
-    "M150,16 C120,20 96,42 90,92 C72,150 56,212 62,282 C52,362 56,462 72,542 C82,612 96,680 130,724 C160,748 212,748 246,728 C286,704 300,640 304,560 C312,470 308,380 300,300 C296,230 300,150 280,96 C266,56 230,18 200,16 Z";
-
-// Horizontal zone bands within the park (viewBox coords).
+/**
+ * Game zone fills, in viewBox px. Band edges follow the real rivers that
+ * bound each zone (Luvuvhu, Letaba, Olifants, the Tshokwane line) and MUST
+ * stay in step with ZONE_BANDS + zoneAtPoint in src/lib/game.ts.
+ */
 const BANDS: { id: ZoneId; y: number; h: number; fill: string }[] = [
-    { id: "far-north", y: 16, h: 96, fill: "#9DBDB8" },
-    { id: "punda-sandveld", y: 112, h: 72, fill: "#EAD3A6" },
-    { id: "mopane-shingwedzi", y: 184, h: 116, fill: "#E3B79F" },
-    { id: "letaba-olifants", y: 300, h: 118, fill: "#A9C0A5" },
-    { id: "central-basalt", y: 418, h: 128, fill: "#E8C98A" },
-    { id: "southern-sabie", y: 546, h: 118, fill: "#BBCBA9" },
-    { id: "sw-granite", y: 664, h: 96, fill: "#D2C7B2" },
+    { id: "far-north", y: 0, h: 73.7, fill: "#9DBDB8" },
+    { id: "punda-sandveld", y: 73.7, h: 92, fill: "#EAD3A6" },
+    { id: "mopane-shingwedzi", y: 165.7, h: 194.5, fill: "#E3B79F" },
+    { id: "letaba-olifants", y: 360.2, h: 50.2, fill: "#A9C0A5" },
+    { id: "central-basalt", y: 410.4, h: 158.8, fill: "#E8C98A" },
 ];
-
-// East-flowing rivers (west → east edge, drifting south).
-const RIVERS = [
-    "M86,78 C150,70 220,96 306,96",
-    "M70,214 C150,208 230,232 306,236",
-    "M66,372 C150,366 232,392 308,392",
-    "M86,470 C160,466 232,486 304,486",
-    "M92,584 C160,580 232,598 300,600",
-];
-
-const CAMPS: { x: number; y: number; label: string }[] = [
-    { x: 200, y: 70, label: "Pafuri" },
-    { x: 150, y: 150, label: "Punda" },
-    { x: 196, y: 250, label: "Shingwedzi" },
-    { x: 214, y: 388, label: "Letaba" },
-    { x: 168, y: 470, label: "Satara" },
-    { x: 186, y: 600, label: "Skukuza" },
-    { x: 140, y: 700, label: "Pretoriuskop" },
-];
+/** The southern block splits east/west at this x (see zoneAtPoint). */
+const SOUTH_Y = 569.2;
+const SOUTH_SPLIT_X = 187.2;
+/** Lebombo ridge overlay along the Mozambique border. */
+const LEBOMBO = { x: 309.6, y0: 380, y1: 653.6 };
 
 interface KrugerMapProps {
     pin: { x: number; y: number; locked?: boolean } | null;
@@ -74,6 +59,8 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
         onPlace(x, y);
     };
 
+    const dimmed = (id: ZoneId) => revealZones.length > 0 && !revealZones.includes(id);
+
     return (
         <TransformWrapper minScale={1} maxScale={maxScale} doubleClick={{ mode: "zoomIn" }} centerOnInit>
             <TransformComponent
@@ -91,92 +78,99 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                     <svg viewBox={`0 0 ${VW} ${VH}`} width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
                         <defs>
                             <clipPath id="park-clip">
-                                <path d={PARK} />
+                                <path d={PARK_PATH} />
                             </clipPath>
                         </defs>
 
                         {/* soft halo behind the park so it reads as land in the veld */}
-                        <path d={PARK} fill="#11201A" transform="translate(0,6)" opacity={0.55} />
+                        <path d={PARK_PATH} fill="#11201A" transform="translate(2,5)" opacity={0.5} />
 
                         {/* park body */}
                         <g clipPath="url(#park-clip)">
-                            {BANDS.map((b) => {
-                                const dim = revealZones.length > 0 && !revealZones.includes(b.id);
-                                return (
-                                    <rect
-                                        key={b.id}
-                                        x="0"
-                                        y={b.y}
-                                        width={VW}
-                                        height={b.h}
-                                        fill={b.fill}
-                                        opacity={dim ? 0.4 : 1}
-                                    />
-                                );
-                            })}
+                            {BANDS.map((b) => (
+                                <rect key={b.id} x="0" y={b.y} width={VW} height={b.h} fill={b.fill} opacity={dimmed(b.id) ? 0.4 : 1} />
+                            ))}
+                            {/* southern block: granite south-west and the Sabie corridor east */}
+                            <rect x="0" y={SOUTH_Y} width={SOUTH_SPLIT_X} height={VH - SOUTH_Y} fill="#D2C7B2" opacity={dimmed("sw-granite") ? 0.4 : 1} />
+                            <rect x={SOUTH_SPLIT_X} y={SOUTH_Y} width={VW - SOUTH_SPLIT_X} height={VH - SOUTH_Y} fill="#BBCBA9" opacity={dimmed("southern-sabie") ? 0.4 : 1} />
 
-                            {/* Lebombo rhyolite ridge along the eastern border */}
-                            <path
-                                d="M286,300 C300,360 304,440 300,520 C298,560 292,600 282,628 L266,624 C276,580 282,520 282,460 C282,400 278,348 270,306 Z"
+                            {/* Lebombo rhyolite ridge along the Mozambique border */}
+                            <rect
+                                x={LEBOMBO.x}
+                                y={LEBOMBO.y0}
+                                width={VW - LEBOMBO.x}
+                                height={LEBOMBO.y1 - LEBOMBO.y0}
                                 fill="#C66A47"
-                                opacity={revealZones.length > 0 && !revealZones.includes("lebombo") ? 0.4 : 0.92}
+                                opacity={dimmed("lebombo") ? 0.4 : 0.9}
                             />
 
-                            {/* rivers */}
-                            {RIVERS.map((d, i) => (
-                                <path key={i} d={d} stroke="#4C7572" strokeWidth="3.5" fill="none" strokeLinecap="round" opacity={0.85} />
-                            ))}
-
-                            {/* faint koppie texture in the granite SW */}
+                            {/* koppie texture in the granite south-west */}
                             {[
-                                [120, 690],
-                                [150, 705],
-                                [110, 715],
+                                [104, 640],
+                                [128, 652],
+                                [96, 664],
+                                [140, 676],
+                                [116, 690],
                             ].map(([cx, cy], i) => (
-                                <circle key={i} cx={cx} cy={cy} r="6" fill="#B7AB92" opacity={0.7} />
+                                <circle key={i} cx={cx} cy={cy} r="4.5" fill="#B7AB92" opacity={0.75} />
                             ))}
 
-                            {/* three thirds: faint dividers + labels */}
+                            {/* rivers: soft riverine corridor under the main channels */}
+                            {RIVER_PATHS.filter((r) => r.tier === 1).map((r, i) => (
+                                <path key={`u${i}`} d={r.d} stroke="#7FA08C" strokeWidth="6" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity={0.35} />
+                            ))}
+                            {RIVER_PATHS.map((r, i) => (
+                                <path
+                                    key={i}
+                                    d={r.d}
+                                    stroke="#4C7572"
+                                    strokeWidth={r.tier === 1 ? 2.4 : 1.2}
+                                    fill="none"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    opacity={r.tier === 1 ? 0.95 : 0.6}
+                                />
+                            ))}
+
+                            {/* three thirds: faint dividers */}
                             {showThirds && (
                                 <g>
-                                    <line x1="0" y1={VH / 3} x2={VW} y2={VH / 3} stroke="rgba(33,28,20,0.28)" strokeWidth="1.2" strokeDasharray="5 5" />
-                                    <line x1="0" y1={(VH * 2) / 3} x2={VW} y2={(VH * 2) / 3} stroke="rgba(33,28,20,0.28)" strokeWidth="1.2" strokeDasharray="5 5" />
-                                    {[
-                                        { label: "NORTH", y: VH / 6 },
-                                        { label: "CENTRAL", y: VH / 2 },
-                                        { label: "SOUTH", y: (VH * 5) / 6 },
-                                    ].map((t) => (
-                                        <text
-                                            key={t.label}
-                                            x={296}
-                                            y={t.y}
-                                            textAnchor="end"
-                                            style={{ fontFamily: "var(--font-mono)", fontSize: 8, letterSpacing: "0.18em", fill: "rgba(33,28,20,0.35)" }}
-                                        >
-                                            {t.label}
-                                        </text>
-                                    ))}
+                                    <line x1="0" y1={VH / 3} x2={VW} y2={VH / 3} stroke="rgba(33,28,20,0.3)" strokeWidth="1.2" strokeDasharray="5 5" />
+                                    <line x1="0" y1={(VH * 2) / 3} x2={VW} y2={(VH * 2) / 3} stroke="rgba(33,28,20,0.3)" strokeWidth="1.2" strokeDasharray="5 5" />
                                 </g>
                             )}
                         </g>
 
+                        {/* third labels sit in the west, clear of the Lebombo */}
+                        {showThirds &&
+                            [
+                                { label: "NORTH", y: VH / 6 },
+                                { label: "CENTRAL", y: VH / 2 },
+                                { label: "SOUTH", y: (VH * 5) / 6 },
+                            ].map((t) => (
+                                <text
+                                    key={t.label}
+                                    x={10}
+                                    y={t.y}
+                                    textAnchor="start"
+                                    style={{ fontFamily: "var(--font-mono)", fontSize: 8, letterSpacing: "0.18em", fill: "rgba(245,239,226,0.45)" }}
+                                >
+                                    {t.label}
+                                </text>
+                            ))}
+
                         {/* park hairline */}
-                        <path d={PARK} fill="none" stroke="rgba(33,28,20,0.25)" strokeWidth="1.5" />
+                        <path d={PARK_PATH} fill="none" stroke="rgba(33,28,20,0.4)" strokeWidth="1.4" />
 
                         {/* camp dots + labels */}
                         {CAMPS.map((c) => (
                             <g key={c.label}>
-                                <circle cx={c.x} cy={c.y} r="2.6" fill="#211C14" opacity={0.55} />
+                                <circle cx={c.x} cy={c.y} r="2.4" fill="#211C14" opacity={0.6} />
                                 {showLabels && (
                                     <text
-                                        x={c.x + 6}
+                                        x={c.x + 5}
                                         y={c.y + 3}
-                                        style={{
-                                            fontFamily: "var(--font-mono)",
-                                            fontSize: 8,
-                                            letterSpacing: "0.06em",
-                                            fill: "rgba(33,28,20,0.6)",
-                                        }}
+                                        style={{ fontFamily: "var(--font-mono)", fontSize: 7.5, letterSpacing: "0.05em", fill: "rgba(33,28,20,0.62)" }}
                                     >
                                         {c.label}
                                     </text>
@@ -184,7 +178,22 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                             </g>
                         ))}
 
-                        {/* zone names */}
+                        {/* named landmarks (small diamonds) */}
+                        {showLabels &&
+                            LANDMARKS.map((l) => (
+                                <g key={l.label}>
+                                    <rect x={l.x - 2.4} y={l.y - 2.4} width="4.8" height="4.8" transform={`rotate(45 ${l.x} ${l.y})`} fill="#9A3F26" opacity={0.8} />
+                                    <text
+                                        x={l.x + 5}
+                                        y={l.y + 3}
+                                        style={{ fontFamily: "var(--font-mono)", fontSize: 6.5, letterSpacing: "0.05em", fill: "rgba(33,28,20,0.5)" }}
+                                    >
+                                        {l.label}
+                                    </text>
+                                </g>
+                            ))}
+
+                        {/* zone numbers */}
                         {showLabels &&
                             ZONES.map((z) => (
                                 <text
@@ -194,10 +203,10 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                                     textAnchor="middle"
                                     style={{
                                         fontFamily: "var(--font-mono)",
-                                        fontSize: 7.5,
-                                        letterSpacing: "0.14em",
-                                        textTransform: "uppercase",
-                                        fill: "rgba(33,28,20,0.42)",
+                                        fontSize: 9,
+                                        fontWeight: 700,
+                                        letterSpacing: "0.1em",
+                                        fill: "rgba(33,28,20,0.45)",
                                         pointerEvents: "none",
                                     }}
                                 >
@@ -205,12 +214,12 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                                 </text>
                             ))}
 
-                        {/* SAWC K9 base marker, west of Orpen */}
+                        {/* SAWC K9 base, west of Orpen outside the boundary */}
                         <g>
-                            <circle cx={0.06 * VW} cy={0.55 * VH} r="5" fill="#395C47" stroke="#fff" strokeWidth="1.5" />
+                            <circle cx={K9_BASE.x} cy={K9_BASE.y} r="4.5" fill="#395C47" stroke="#fff" strokeWidth="1.4" />
                             <text
-                                x={0.06 * VW}
-                                y={0.55 * VH + 16}
+                                x={K9_BASE.x}
+                                y={K9_BASE.y + 14}
                                 textAnchor="middle"
                                 style={{ fontFamily: "var(--font-mono)", fontSize: 6.5, letterSpacing: "0.1em", fill: "var(--sand-50)" }}
                             >

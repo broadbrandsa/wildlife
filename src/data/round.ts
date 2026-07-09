@@ -19,8 +19,10 @@ export const ROUND: Round = {
     durationDays: 90,
     // Production note: poacher coords are server-only and never shipped to the
     // client. Held here for the offline v1 prototype only.
-    // x: 0 (west) to 1 (east); y: 0 (north) to 1 (south). Falls in Zone 7.
-    poacher: { x: 0.5, y: 0.81 },
+    // x: 0 (west) to 1 (east); y: 0 (north) to 1 (south). This is the real
+    // projected position of Mathekenyane (-25.1128, 31.5306) on the map
+    // built in components/game/map-geometry.ts. Falls in Zone 7.
+    poacher: { x: 0.555, y: 0.859 },
     poacherZoneId: "southern-sabie",
     poacherFeature: "a lone granite lookout dome south of Skukuza",
 };

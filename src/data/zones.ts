@@ -12,7 +12,7 @@ export const ZONES: Zone[] = [
         signatureSpecies: "Samango monkey, Sharpe's grysbok, Pel's fishing owl",
         namedFeatures: "Pafuri, Crook's Corner, Lanner Gorge, Thulamela",
         signatureClue: "A samango monkey barked from a yellow-barked tree above the confluence of three countries.",
-        centroid: { x: 0.52, y: 0.07 },
+        centroid: { x: 0.24, y: 0.07 },
         wash: "dawn",
     },
     {
@@ -25,7 +25,7 @@ export const ZONES: Zone[] = [
         signatureSpecies: "Eland, roan, tsessebe, racket-tailed roller",
         namedFeatures: "Punda Maria, Mahonie Loop, Makahane Ruins",
         signatureClue: "The dogs found tracks along a loop road named for an ironwood, near a camp whose name means striped donkey.",
-        centroid: { x: 0.4, y: 0.18 },
+        centroid: { x: 0.22, y: 0.18 },
         wash: "savanna",
     },
     {
@@ -38,7 +38,7 @@ export const ZONES: Zone[] = [
         signatureSpecies: "Elephant herds, tsessebe, roan, bateleur",
         namedFeatures: "Red Rocks, Kanniedood Dam, Shingwedzi, Mopani",
         signatureClue: "Iron-red boulders rose above the Shingwedzi where elephants cooled in the river below.",
-        centroid: { x: 0.51, y: 0.31 },
+        centroid: { x: 0.38, y: 0.33 },
         wash: "clay",
     },
     {
@@ -51,7 +51,7 @@ export const ZONES: Zone[] = [
         signatureSpecies: "Elephant, hippo, Verreaux's eagle, tigerfish",
         namedFeatures: "Olifants camp, Letaba, Engelhard Dam, Olifants Gorge",
         signatureClue: "From a camp high above a gorge, the K9 team spotted smoke where two rivers finally meet.",
-        centroid: { x: 0.6, y: 0.46 },
+        centroid: { x: 0.42, y: 0.51 },
         wash: "bushveld",
     },
     {
@@ -64,7 +64,7 @@ export const ZONES: Zone[] = [
         signatureSpecies: "Lion (highest density), cheetah, kori bustard",
         namedFeatures: "Satara, Orpen, Nsemani Dam, S100, Mananga Loop",
         signatureClue: "The pride roared on the black basalt plain east of the camp surveyors named Seventeen.",
-        centroid: { x: 0.45, y: 0.59 },
+        centroid: { x: 0.55, y: 0.65 },
         wash: "savanna",
     },
     {
@@ -77,7 +77,7 @@ export const ZONES: Zone[] = [
         signatureSpecies: "Klipspringer, Verreaux's eagle, leopard on kopjes",
         namedFeatures: "Nwanetsi, Singita Lebombo, Giriyondo border gate",
         signatureClue: "Klipspringers whistled on rhyolite boulders as the border fence shimmered in the distance.",
-        centroid: { x: 0.83, y: 0.54 },
+        centroid: { x: 0.91, y: 0.62 },
         wash: "clay",
     },
     {
@@ -90,7 +90,7 @@ export const ZONES: Zone[] = [
         signatureSpecies: "Leopard (very high), narina trogon, saddle-billed stork",
         namedFeatures: "Skukuza, Lower Sabie, Mathekenyane and Shirimantanga koppies, Sunset Dam, H4-1",
         signatureClue: "A lone bald granite dome rises south of the sweeping-warden's camp, west of the fearful river.",
-        centroid: { x: 0.51, y: 0.75 },
+        centroid: { x: 0.68, y: 0.80 },
         wash: "dawn",
     },
     {
@@ -103,7 +103,7 @@ export const ZONES: Zone[] = [
         signatureSpecies: "Sable antelope (best population), mountain reedbuck, oribi",
         namedFeatures: "Pretoriuskop, Berg-en-Dal, Malelane, Afsaal, Albasini Ruins",
         signatureClue: "Sable bulls grazed under silver-leaf trees in the camp where Jock of the Bushveld once travelled.",
-        centroid: { x: 0.33, y: 0.89 },
+        centroid: { x: 0.37, y: 0.93 },
         wash: "bushveld",
     },
 ];
