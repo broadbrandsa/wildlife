@@ -57,9 +57,9 @@ function MapInner() {
     const roundOver = isRoundOver(day);
 
     const available = useMemo(() => {
-        const ids = availableClueIds(cluesUnlocked, day, player?.dogId);
+        const ids = availableClueIds(cluesUnlocked, day);
         return CLUES.filter((c) => ids.has(c.id));
-    }, [cluesUnlocked, day, player?.dogId]);
+    }, [cluesUnlocked, day]);
 
     // Latest / most specific clue to surface on the HUD.
     const latest = useMemo(() => {
@@ -75,7 +75,7 @@ function MapInner() {
     const dogName = player?.dogName ?? dog?.name ?? "your dog";
 
     const pinZone = pin ? ZONE_BY_ID[zoneAtPoint(pin)] : null;
-    const clueCountdown = nextClueLabel(day, player?.dogId);
+    const clueCountdown = nextClueLabel(day);
 
     // Movement: the ranger (your guess) may move once a day, twice with boots.
     const maxMoves = inventory.includes("ranger-boots") ? 2 : 1;

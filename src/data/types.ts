@@ -93,7 +93,7 @@ export type ClueCategory =
     | "astronomical"
     | "synthesis";
 
-export type ClueSource = "free" | "equipment" | "sponsor" | "dog";
+export type ClueSource = "free" | "equipment" | "sponsor";
 export type ClueDifficulty = "region" | "zone" | "feature" | "landmark" | "pinpoint";
 /** Trail clues point toward the poacher. Elimination clues rule ground out. */
 export type ClueKind = "trail" | "elimination";
@@ -106,10 +106,8 @@ export interface Clue {
     kind?: ClueKind;
     /** Difficulty tier 1 (entry) to 5 (pinpoint). See the clue bank spreadsheet. */
     tier?: number;
-    /** Day in the round this clue releases (free and dog clues). */
+    /** Day in the round this free clue releases. */
     releaseDay?: number;
-    /** For dog clues: the dog that surfaces this clue. */
-    dogId?: string;
     /** Zone this clue is about (the target zone, or the zone it rules out). */
     zoneId: ZoneId;
     body: string;

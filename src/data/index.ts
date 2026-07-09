@@ -3,7 +3,7 @@ export { ZONES, ZONE_BY_ID } from "./zones";
 export { DOGS, DOG_BY_ID } from "./dogs";
 export { RANGERS, RANGER_BY_ID } from "./rangers";
 export { EQUIPMENT, GUIDES, PURCHASABLES, EQUIPMENT_BY_ID } from "./equipment";
-export { CLUES, CLUE_BY_ID, FREE_CLUES, DOG_CLUES } from "./clues";
+export { CLUES, CLUE_BY_ID, FREE_CLUES } from "./clues";
 export {
     PRIZE_TIERS,
     EVERY_PLAYER_LINE,

@@ -413,4 +413,3 @@ export const CLUE_BY_ID: Record<string, Clue> = Object.fromEntries(CLUES.map((c)
 export const FREE_CLUES = CLUES.filter((c) => c.source === "free");
 
 /** Dog-instinct clues are retired; dog choice now shapes the scent read instead. */
-export const DOG_CLUES = CLUES.filter((c) => c.source === "dog");

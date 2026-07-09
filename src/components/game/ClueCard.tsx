@@ -7,7 +7,6 @@ const SOURCE_META: Record<Clue["source"], { label: string; icon: string; tone: "
     free: { label: "Field clue", icon: "tree", tone: "teal" },
     equipment: { label: "Kit intel", icon: "binoculars", tone: "ochre" },
     sponsor: { label: "Intel intercept", icon: "radio", tone: "clay" },
-    dog: { label: "Dog instinct", icon: "paw-print", tone: "green" },
 };
 
 const CATEGORY_ICON: Record<string, string> = {

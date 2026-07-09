@@ -6,22 +6,20 @@ import { useMemo, useState } from "react";
 import { Eyebrow } from "@/components/ds";
 import { ClueCard } from "@/components/game/ClueCard";
 import { ZoneSheet } from "@/components/game/ZoneSheet";
-import { CLUES, DOG_BY_ID, EQUIPMENT, ZONES } from "@/data";
+import { CLUES, EQUIPMENT, ZONES } from "@/data";
 import type { Clue, Zone } from "@/data";
-import { availableClueIds, isDogClueReleased, isFreeClueReleased, nextClueLabel } from "@/lib/game";
+import { availableClueIds, isFreeClueReleased, nextClueLabel } from "@/lib/game";
 import { useCurrentDay, useGameStore } from "@/store/game";
 
 const ITEM_FOR_CLUE: Record<string, { id: string; name: string }> = Object.fromEntries(
     EQUIPMENT.filter((e) => e.unlocksClueId).map((e) => [e.unlocksClueId as string, { id: e.id, name: e.name }]),
 );
 
-function LockedRow({ clue, dogName, onAction }: { clue: Clue; dogName?: string; onAction: () => void }) {
+function LockedRow({ clue, onAction }: { clue: Clue; onAction: () => void }) {
     let label = "Locked";
     let action = "";
     if (clue.source === "free" && clue.releaseDay) {
         label = `Releases on day ${clue.releaseDay}`;
-    } else if (clue.source === "dog" && clue.releaseDay) {
-        label = `${dogName ?? "Your dog"} will surface this on day ${clue.releaseDay}`;
     } else if (clue.source === "equipment") {
         const item = ITEM_FOR_CLUE[clue.id];
         label = item ? `Unlock with ${item.name}` : "Unlock with kit";
@@ -47,10 +45,10 @@ function LockedRow({ clue, dogName, onAction }: { clue: Clue; dogName?: string; 
                 padding: "var(--space-4)",
             }}
         >
-            <i className={`ph ph-${clue.source === "dog" ? "paw-print" : "lock-simple"}`} style={{ fontSize: 20, color: "var(--text-muted)" }} />
+            <i className="ph ph-lock-simple" style={{ fontSize: 20, color: "var(--text-muted)" }} />
             <div style={{ flex: 1 }}>
                 <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-muted)" }}>
-                    {clue.source === "free" ? "Field clue" : clue.source === "equipment" ? "Kit intel" : clue.source === "dog" ? "Dog instinct" : "Intel intercept"}
+                    {clue.source === "free" ? "Field clue" : clue.source === "equipment" ? "Kit intel" : "Intel intercept"}
                 </div>
                 <div style={{ fontSize: "0.88rem", color: "var(--text-secondary)", marginTop: 2 }}>{label}</div>
             </div>
@@ -122,30 +120,23 @@ function CaseRow({ zone, owned, onOpenGuide, onLockedGuide }: { zone: Zone; owne
 
 export default function JournalPage() {
     const router = useRouter();
-    const player = useGameStore((s) => s.player);
     const cluesUnlocked = useGameStore((s) => s.cluesUnlocked);
     const day = useCurrentDay();
     const [guideZone, setGuideZone] = useState<Zone | null>(null);
 
-    const dogName = player?.dogName ?? (player ? DOG_BY_ID[player.dogId]?.name : undefined);
-
     const { available, locked } = useMemo(() => {
-        const ids = availableClueIds(cluesUnlocked, day, player?.dogId);
-        const visible = CLUES.filter((c) => c.source !== "dog" || c.dogId === player?.dogId);
-        const available = [...visible.filter((c) => ids.has(c.id))].sort(
+        const ids = availableClueIds(cluesUnlocked, day);
+        const available = [...CLUES.filter((c) => ids.has(c.id))].sort(
             (a, b) => (b.releaseDay ?? 999) - (a.releaseDay ?? 999),
         );
-        const locked = visible.filter(
-            (c) => !ids.has(c.id) && !isFreeClueReleased(c, day) && !isDogClueReleased(c, day, player?.dogId),
-        );
-        // order locked: upcoming free/dog by day, then equipment, then sponsor
+        const locked = CLUES.filter((c) => !ids.has(c.id) && !isFreeClueReleased(c, day));
+        // order locked: upcoming free by day, then equipment, then sponsor
         locked.sort((a, b) => {
-            const rank = (c: Clue) =>
-                c.source === "free" || c.source === "dog" ? (c.releaseDay ?? 0) : c.source === "equipment" ? 1000 : 2000;
+            const rank = (c: Clue) => (c.source === "free" ? (c.releaseDay ?? 0) : c.source === "equipment" ? 1000 : 2000);
             return rank(a) - rank(b);
         });
         return { available, locked };
-    }, [cluesUnlocked, day, player?.dogId]);
+    }, [cluesUnlocked, day]);
 
     const marks = useGameStore((s) => s.zoneMarks);
     const fieldGuides = useGameStore((s) => s.fieldGuides);
@@ -159,7 +150,7 @@ export default function JournalPage() {
                 {available.length} clue{available.length === 1 ? "" : "s"} in hand · {locked.length} still to come.
             </p>
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: "var(--space-2)", fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-muted)" }}>
-                <i className="ph ph-timer" /> {nextClueLabel(day, player?.dogId)}
+                <i className="ph ph-timer" /> {nextClueLabel(day)}
             </div>
 
             {/* Case board */}
@@ -202,7 +193,6 @@ export default function JournalPage() {
                             <LockedRow
                                 key={c.id}
                                 clue={c}
-                                dogName={dogName}
                                 onAction={() => router.push(c.source === "sponsor" ? "/codes" : "/shop")}
                             />
                         ))}

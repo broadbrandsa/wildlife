@@ -28,49 +28,30 @@ export function isFreeClueReleased(clue: Clue, day: number): boolean {
     return clue.source === "free" && clue.releaseDay != null && clue.releaseDay <= day;
 }
 
-/** A dog clue is available if it belongs to your dog and its day has arrived. */
-export function isDogClueReleased(clue: Clue, day: number, dogId?: string | null): boolean {
-    return (
-        clue.source === "dog" &&
-        clue.dogId != null &&
-        clue.dogId === dogId &&
-        clue.releaseDay != null &&
-        clue.releaseDay <= day
-    );
-}
-
 /**
  * The set of clue ids a player can currently read: time-released free clues,
- * the chosen dog's instinct clues, plus any unlocked via equipment purchases
- * or redeemed sponsor codes.
+ * plus any unlocked via equipment purchases or redeemed sponsor codes.
  */
-export function availableClueIds(unlocked: string[], day: number, dogId?: string | null): Set<string> {
+export function availableClueIds(unlocked: string[], day: number): Set<string> {
     const ids = new Set<string>(unlocked);
     for (const clue of CLUES) {
         if (isFreeClueReleased(clue, day)) ids.add(clue.id);
-        if (isDogClueReleased(clue, day, dogId)) ids.add(clue.id);
     }
     return ids;
 }
 
-/**
- * Days until the next time-released clue lands (a free clue, or one of the
- * chosen dog's instinct clues). Returns null once every timed clue is out.
- */
-export function nextClueDays(day: number, dogId?: string | null): number | null {
-    const upcoming = CLUES.filter(
-        (c) =>
-            c.releaseDay != null &&
-            c.releaseDay > day &&
-            (c.source === "free" || (c.source === "dog" && c.dogId === dogId)),
-    ).map((c) => c.releaseDay as number);
+/** Days until the next free clue lands. Returns null once every timed clue is out. */
+export function nextClueDays(day: number): number | null {
+    const upcoming = CLUES.filter((c) => c.releaseDay != null && c.releaseDay > day && c.source === "free").map(
+        (c) => c.releaseDay as number,
+    );
     if (upcoming.length === 0) return null;
     return Math.min(...upcoming) - day;
 }
 
 /** Mono countdown copy for the next clue. */
-export function nextClueLabel(day: number, dogId?: string | null): string {
-    const days = nextClueDays(day, dogId);
+export function nextClueLabel(day: number): string {
+    const days = nextClueDays(day);
     if (days == null) return "ALL FIELD CLUES RELEASED";
     if (days <= 1) return "NEW CLUE TOMORROW";
     return `NEXT CLUE IN ${days} DAYS`;
