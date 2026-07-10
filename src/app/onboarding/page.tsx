@@ -12,9 +12,10 @@ import { useGameStore } from "@/store/game";
 const THIS_YEAR = 2026;
 
 const ORIGIN = [
-    "There has been an incursion overnight on the western boundary.",
-    "We have a fresh scent. The ranger team is grounded in fog. You and your dog are our best chance.",
-    "Drop a pin where you think the suspect is hiding. Closest guess at round end gets the team in there.",
+    "Poachers crossed the western boundary in the dark. One of them is still inside the park, lying up somewhere in the bush.",
+    "The ranger teams are grounded in fog and the aircraft cannot fly. Until it lifts, you and your dog are the only ones who can work this scent.",
+    "The trail shows itself slowly. Across the round, clues come in from the field: the rock underfoot, the rivers, the plants, radio traffic from other teams. Read them, and your dog tells you how close the scent runs.",
+    "Drop your pin where you think the suspect is hiding, then move in as the trail sharpens. Lock in when you are sure. The closest pin when the round closes puts the real team on the ground, and every move funds the dogs who do this for real.",
     "Welcome to the K9 Unit.",
     "First, choose your ranger. Then, choose your dog.",
 ];
