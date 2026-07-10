@@ -71,6 +71,21 @@ ol {
     animation: kw-pin-drop 520ms var(--ease-out) backwards;
 }
 
+/* the spotting card: settles in from below like a card dealt onto the table */
+@keyframes kw-card-pop {
+    0% {
+        transform: translateY(28px) scale(0.92);
+        opacity: 0;
+    }
+    100% {
+        transform: none;
+        opacity: 1;
+    }
+}
+.kw-card-pop {
+    animation: kw-card-pop 420ms var(--ease-out) backwards;
+}
+
 /* pressed feedback for floating map controls: quick, calm, transform-only */
 .kw-press {
     transition: transform 120ms var(--ease-out);
@@ -91,7 +106,8 @@ ol {
 @media (prefers-reduced-motion: reduce) {
     .kw-rise,
     .kw-pin-drop,
-    .kw-spin {
+    .kw-spin,
+    .kw-card-pop {
         animation: none;
     }
 }

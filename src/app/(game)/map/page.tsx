@@ -9,8 +9,8 @@ import { ClueCard } from "@/components/game/ClueCard";
 import { ImpactHighlight, useCampaignTotal } from "@/components/game/impact";
 import { KrugerMap } from "@/components/game/KrugerMap";
 import { ZoneSheet } from "@/components/game/ZoneSheet";
-import { CLUE_BY_ID, CLUES, DOG_BY_ID, RANGER_BY_ID, ROUND, ZONES, ZONE_BY_ID } from "@/data";
-import type { Zone } from "@/data";
+import { CLUE_BY_ID, CLUES, DOG_BY_ID, RANGER_BY_ID, ROUND, SPECIES, ZONES, ZONE_BY_ID } from "@/data";
+import type { Species, Zone } from "@/data";
 import {
     EXTRA_MOVE_DOGS,
     SCENT_TEXT,
@@ -24,9 +24,11 @@ import {
     nextClueLabel,
     poacherThird,
     scentRead,
+    thirdOf,
     tierRank,
     zoneAtPoint,
 } from "@/lib/game";
+import { RARITY_META, rollSpot } from "@/lib/spotting";
 import type { ScentTier } from "@/lib/game";
 import { NEAR_TARGET_KM, rangersHunting, rangersNearTarget } from "@/lib/community";
 import { CAMP_HOUR, PHASE_META, PHASE_SKY, formatClock, isDusk, isNight, phaseForHour } from "@/lib/daytime";
@@ -40,7 +42,7 @@ const TIER_META: Record<ScentTier, { label: string; tone: "neutral" | "teal" | "
     hot: { label: "Fresh sign", tone: "clay", icon: "paw-print" },
 };
 
-type SheetId = "status" | "ranger" | "dog" | "clue" | "guides" | "bakkie" | "night";
+type SheetId = "status" | "ranger" | "dog" | "clue" | "guides" | "bakkie" | "night" | "spots";
 
 /** Small clay notification dot pinned to a corner of its parent. */
 function NDot() {
@@ -184,6 +186,8 @@ function MapInner() {
     const zoneMarks = useGameStore((s) => s.zoneMarks);
     const ruleOutZone = useGameStore((s) => s.ruleOutZone);
     const trail = useGameStore((s) => s.trail);
+    const sightings = useGameStore((s) => s.sightings);
+    const recordSighting = useGameStore((s) => s.recordSighting);
     const campaignTotal = useCampaignTotal();
 
     const [dismissed, setDismissed] = useState(false);
@@ -196,6 +200,8 @@ function MapInner() {
     const [truckDest, setTruckDest] = useState<{ x: number; y: number } | null>(null);
     // Which elimination clue was just marked on the case board (confirmation line).
     const [markedClueId, setMarkedClueId] = useState<string | null>(null);
+    // The species just spotted (or a collection card being read).
+    const [spot, setSpot] = useState<{ species: Species; isNew: boolean; count: number } | null>(null);
     const day = useCurrentDay();
     const roundOver = isRoundOver(day);
 
@@ -308,10 +314,21 @@ function MapInner() {
     const dogDot = Boolean(pin && pin.updatedAt !== scentSeenAt);
     const newClueToday = CLUES.some((c) => c.source === "free" && c.releaseDay === day) && cluesSeenDay !== day;
 
+    // Every move turns up one species from the ground the ranger now stands on.
+    const spotAtCurrentPin = () => {
+        const p = useGameStore.getState().pin;
+        if (!p) return;
+        const species = rollSpot(thirdOf(p));
+        const priorCount = useGameStore.getState().sightings.filter((s) => s.speciesId === species.id).length;
+        recordSighting(species.id, day);
+        setSpot({ species, isNew: priorCount === 0, count: priorCount + 1 });
+    };
+
     const onPlace = (x: number, y: number) => {
         if (!canMove && pin) return; // out of moves today; existing pin stays put
         const firstPin = fieldGuides.length === 0;
         moveRanger(x, y, day);
+        spotAtCurrentPin();
         // Your first field guide is free: unlock it for the ground you first pin,
         // then bring it up so the player reads it and learns they can unlock more.
         if (firstPin) {
@@ -354,7 +371,10 @@ function MapInner() {
     const onPickDestination = (x: number, y: number) => setTruckDest({ x, y });
 
     const confirmRide = () => {
-        if (truckDest) rideTruck(truckDest.x, truckDest.y, day);
+        if (truckDest) {
+            rideTruck(truckDest.x, truckDest.y, day);
+            spotAtCurrentPin();
+        }
         setTruckDest(null);
         setTruckMode(false);
     };
@@ -451,11 +471,12 @@ function MapInner() {
                 </button>
             </div>
 
-            {/* right dock: field clue, field guides and the radio, on the same gutter as the rest */}
-            <div style={{ position: "absolute", right: "var(--gutter)", top: "46%", transform: "translateY(-50%)", display: "flex", flexDirection: "column", gap: 10 }}>
+            {/* right dock: field clue, field guides, bakkie, spots and radio, on the same gutter as the rest */}
+            <div style={{ position: "absolute", right: "var(--gutter)", top: "44%", transform: "translateY(-50%)", display: "flex", flexDirection: "column", gap: 10 }}>
                 <DockTab icon="notebook" label="Clue" dot={newClueToday} onClick={openClueSheet} />
                 <DockTab icon="book-open-text" label="Guides" onClick={() => setSheet("guides")} />
                 <DockTab icon="truck" label="Bakkie" onClick={() => setSheet("bakkie")} />
+                <DockTab icon="binoculars" label="Spots" onClick={() => setSheet("spots")} />
                 <DockTab icon="radio" label="Radio" onClick={() => router.push("/codes")} />
             </div>
 
@@ -854,6 +875,76 @@ function MapInner() {
                 </Sheet>
             )}
 
+            {sheet === "spots" && (
+                <Sheet onClose={() => setSheet(null)}>
+                    <Eyebrow rule>Spotting log</Eyebrow>
+                    {(() => {
+                        const spotted = new Set(sightings.map((s) => s.speciesId));
+                        return (
+                            <>
+                                <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.72rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-primary)", fontWeight: 700, margin: "var(--space-3) 0 0" }}>
+                                    {spotted.size} of {SPECIES.length} species spotted
+                                </div>
+                                <p style={{ fontSize: "0.82rem", color: "var(--text-muted)", margin: "0.3rem 0 0", lineHeight: 1.5 }}>
+                                    Every move, {dogName} puts something up. Common sightings fill the log, rare ones are a good day, and a once in a lifetime sighting is linked to prizes at round end.
+                                </p>
+                                {(["north", "central", "south"] as const).map((region) => (
+                                    <div key={region} style={{ marginTop: "var(--space-5)" }}>
+                                        <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--text-accent)", marginBottom: "var(--space-2)" }}>
+                                            {region === "north" ? "Northern Kruger" : region === "central" ? "Central Kruger" : "Southern Kruger"} ·{" "}
+                                            {SPECIES.filter((s) => s.region === region && spotted.has(s.id)).length}/20
+                                        </div>
+                                        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "var(--space-2)" }}>
+                                            {SPECIES.filter((s) => s.region === region).map((s) => {
+                                                const seen = spotted.has(s.id);
+                                                return (
+                                                    <button
+                                                        key={s.id}
+                                                        onClick={() =>
+                                                            seen &&
+                                                            setSpot({
+                                                                species: s,
+                                                                isNew: false,
+                                                                count: sightings.filter((x) => x.speciesId === s.id).length,
+                                                            })
+                                                        }
+                                                        aria-label={seen ? s.name : "Not yet spotted"}
+                                                        style={{
+                                                            position: "relative",
+                                                            aspectRatio: "1",
+                                                            borderRadius: "var(--radius-md)",
+                                                            overflow: "hidden",
+                                                            border: `1px solid ${s.rarity === "oialt" && seen ? "var(--clay-500)" : "var(--border-subtle)"}`,
+                                                            background: "var(--surface-sunken)",
+                                                            cursor: seen ? "pointer" : "default",
+                                                            padding: 0,
+                                                        }}
+                                                    >
+                                                        {seen ? (
+                                                            <Image src={s.photo} alt={s.name} fill sizes="90px" style={{ objectFit: "cover" }} />
+                                                        ) : (
+                                                            <span style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)" }}>
+                                                                <i className="ph ph-question" style={{ fontSize: 18 }} />
+                                                            </span>
+                                                        )}
+                                                        {seen && s.rarity !== "common" && (
+                                                            <i
+                                                                className={`ph-fill ph-${RARITY_META[s.rarity].icon}`}
+                                                                style={{ position: "absolute", top: 3, right: 3, fontSize: 11, color: "var(--sand-50)", filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.5))" }}
+                                                            />
+                                                        )}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                ))}
+                            </>
+                        );
+                    })()}
+                </Sheet>
+            )}
+
             {sheet === "night" && (
                 <Sheet onClose={() => setSheet(null)}>
                     <Eyebrow rule>Nights in the Kruger</Eyebrow>
@@ -1014,6 +1105,61 @@ function MapInner() {
                             <Button size="lg" fullWidth variant="ghost" onClick={cancelRide}>
                                 Stay on foot
                             </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* the spotting card: dealt onto the table as the ranger arrives */}
+            {spot && (
+                <div
+                    style={{ position: "fixed", inset: 0, zIndex: 70, display: "flex", alignItems: "center", justifyContent: "center", padding: "var(--gutter)", background: "var(--bg-overlay, rgba(17,32,26,0.6))" }}
+                    onClick={() => setSpot(null)}
+                >
+                    <div
+                        className="kw-card-pop"
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                            width: "100%",
+                            maxWidth: 400,
+                            background: "var(--surface-page)",
+                            borderRadius: "var(--radius-2xl)",
+                            overflow: "hidden",
+                            boxShadow: "var(--shadow-xl)",
+                            border: spot.species.rarity === "oialt" ? "2px solid var(--clay-500)" : "1px solid var(--border-subtle)",
+                        }}
+                    >
+                        <div style={{ position: "relative", aspectRatio: "16 / 10", background: "var(--sand-100)" }}>
+                            <Image src={spot.species.photo} alt={spot.species.name} fill sizes="400px" style={{ objectFit: "cover" }} />
+                            <span style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(24,45,35,0) 55%, rgba(24,45,35,0.45) 100%)" }} />
+                            <span style={{ position: "absolute", left: 14, bottom: 10, fontFamily: "var(--font-mono)", fontSize: "0.6rem", letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--sand-50)" }}>
+                                Spotted · {spot.species.type}
+                            </span>
+                        </div>
+                        <div style={{ padding: "var(--space-5) var(--space-5) var(--space-6)" }}>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-3)" }}>
+                                <h2 style={{ fontSize: "var(--text-h4)", margin: 0 }}>{spot.species.name}</h2>
+                                <Tag tone={RARITY_META[spot.species.rarity].tone} size="sm">
+                                    <i className={`ph-fill ph-${RARITY_META[spot.species.rarity].icon}`} style={{ marginRight: 4 }} />
+                                    {RARITY_META[spot.species.rarity].label}
+                                </Tag>
+                            </div>
+                            <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: 1.55, margin: "var(--space-3) 0 0" }}>
+                                {spot.species.info}
+                            </p>
+                            {spot.species.rarity === "oialt" && (
+                                <p style={{ fontSize: "0.82rem", color: "var(--clay-600)", fontWeight: 600, lineHeight: 1.5, margin: "var(--space-3) 0 0" }}>
+                                    A once in a lifetime sighting. Hold onto this card: sightings like this one are linked to prizes when the round closes.
+                                </p>
+                            )}
+                            <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--text-muted)", marginTop: "var(--space-4)" }}>
+                                {spot.isNew ? "New in your collection" : `Sighting no. ${spot.count}`}
+                            </div>
+                            <div style={{ marginTop: "var(--space-4)" }}>
+                                <Button size="lg" fullWidth onClick={() => setSpot(null)} iconRight={<i className="ph ph-binoculars" />}>
+                                    Into the collection
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 </div>

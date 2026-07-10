@@ -83,6 +83,8 @@ interface GameState {
     zoneMarks: Partial<Record<ZoneId, "suspect" | "ruled-out">>;
     /** Every position the ranger has held, for the breadcrumb trail. */
     trail: { x: number; y: number; day: number; via: "walk" | "truck" }[];
+    /** The spotting log: one species sighted on every ranger move. */
+    sightings: { speciesId: string; day: number }[];
 
     setHasHydrated: (v: boolean) => void;
     setPlayer: (player: Player) => void;
@@ -118,6 +120,8 @@ interface GameState {
     cycleZoneMark: (zoneId: ZoneId) => void;
     /** Case board: rule a zone straight out (elimination clue button). */
     ruleOutZone: (zoneId: ZoneId) => void;
+    /** Log the species spotted on this move. */
+    recordSighting: (speciesId: string, day: number) => void;
     reset: () => void;
 }
 
@@ -147,6 +151,7 @@ const initial = {
     hotStreak: 0,
     zoneMarks: {} as Partial<Record<ZoneId, "suspect" | "ruled-out">>,
     trail: [] as { x: number; y: number; day: number; via: "walk" | "truck" }[],
+    sightings: [] as { speciesId: string; day: number }[],
 };
 
 export const useGameStore = create<GameState>()(
@@ -315,6 +320,8 @@ export const useGameStore = create<GameState>()(
                 }),
 
             ruleOutZone: (zoneId) => set((s) => ({ zoneMarks: { ...s.zoneMarks, [zoneId]: "ruled-out" as const } })),
+
+            recordSighting: (speciesId, day) => set((s) => ({ sightings: [...s.sightings, { speciesId, day }] })),
 
             reset: () => set({ ...initial }),
         }),
