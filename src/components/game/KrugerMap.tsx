@@ -57,9 +57,11 @@ interface KrugerMapProps {
     legendTop?: number;
     /** Today's walking range in km: draws a dashed ring around the pin. */
     walkRangeKm?: number | null;
+    /** Bakkie mode: the drag preview goes anywhere, no walking clamp or ring. */
+    freeDrag?: boolean;
 }
 
-export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, target = null, maxScale = 4, showThirds = false, legendTop = 12, walkRangeKm = null }: KrugerMapProps) {
+export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, target = null, maxScale = 4, showThirds = false, legendTop = 12, walkRangeKm = null, freeDrag = false }: KrugerMapProps) {
     const down = useRef<{ x: number; y: number } | null>(null);
     const svgRef = useRef<SVGSVGElement>(null);
     const barRef = useRef<HTMLSpanElement>(null);
@@ -124,7 +126,7 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
     // Drag-to-move: pick the pin up and walk it. The drag is clamped to the
     // day's range along the same bearing, a tether line runs back to the start
     // and a chip reads out the distance being walked.
-    const draggable = Boolean(onPlace && pin && !pin.locked && walkRangeKm != null);
+    const draggable = Boolean(onPlace && pin && !pin.locked && (walkRangeKm != null || freeDrag));
     const [drag, setDrag] = useState<{ x: number; y: number; km: number } | null>(null);
 
     // react-zoom-pan-pinch listens to NATIVE touch events on its wrapper, which
@@ -157,10 +159,11 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
     };
 
     const onPinPointerMove = (e: React.PointerEvent<HTMLSpanElement>) => {
-        if (!drag || !pin || walkRangeKm == null) return;
+        if (!drag || !pin) return;
         const f = clientToFraction(e.clientX, e.clientY);
         if (!f) return;
-        const t = clampWalk(pin, f, walkRangeKm);
+        // On a bakkie ride the drag goes anywhere; on foot it clamps to range.
+        const t = freeDrag || walkRangeKm == null ? f : clampWalk(pin, f, walkRangeKm);
         setDrag({ x: t.x, y: t.y, km: distanceKm(pin, t) });
     };
 

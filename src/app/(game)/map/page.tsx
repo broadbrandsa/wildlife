@@ -36,7 +36,7 @@ const TIER_META: Record<ScentTier, { label: string; tone: "neutral" | "teal" | "
     hot: { label: "Fresh sign", tone: "clay", icon: "paw-print" },
 };
 
-type SheetId = "status" | "ranger" | "dog" | "clue" | "guides";
+type SheetId = "status" | "ranger" | "dog" | "clue" | "guides" | "bakkie";
 
 /** Small clay notification dot pinned to a corner of its parent. */
 function NDot() {
@@ -170,6 +170,8 @@ function MapInner() {
     const cluesSeenDay = useGameStore((s) => s.cluesSeenDay);
     const markScentSeen = useGameStore((s) => s.markScentSeen);
     const markCluesSeen = useGameStore((s) => s.markCluesSeen);
+    const truckRidesLeft = useGameStore((s) => s.truckRidesLeft);
+    const rideTruck = useGameStore((s) => s.rideTruck);
     const campaignTotal = useCampaignTotal();
 
     const [dismissed, setDismissed] = useState(false);
@@ -177,6 +179,9 @@ function MapInner() {
     const [guideJustUnlocked, setGuideJustUnlocked] = useState(false);
     const [lockModal, setLockModal] = useState(false);
     const [sheet, setSheet] = useState<SheetId | null>(null);
+    // Bakkie mode: pick anywhere on the map, then confirm the ride.
+    const [truckMode, setTruckMode] = useState(false);
+    const [truckDest, setTruckDest] = useState<{ x: number; y: number } | null>(null);
     const day = useCurrentDay();
     const roundOver = isRoundOver(day);
 
@@ -266,6 +271,27 @@ function MapInner() {
         setSheet("dog");
     };
 
+    // The bakkie: only once a pin exists, never on a locked pin or a closed round.
+    const canCallBakkie = Boolean(pin && !pin.locked && !roundOver);
+
+    const callBakkie = () => {
+        setSheet(null);
+        setTruckMode(true);
+    };
+
+    const onPickDestination = (x: number, y: number) => setTruckDest({ x, y });
+
+    const confirmRide = () => {
+        if (truckDest) rideTruck(truckDest.x, truckDest.y, day);
+        setTruckDest(null);
+        setTruckMode(false);
+    };
+
+    const cancelRide = () => {
+        setTruckDest(null);
+        setTruckMode(false);
+    };
+
     const openClueSheet = () => {
         markCluesSeen(day);
         setSheet("clue");
@@ -275,10 +301,11 @@ function MapInner() {
         <div style={{ position: "relative", height: "calc(100% + 5.5rem)", marginBottom: "-5.5rem", background: "radial-gradient(120% 110% at 50% 0%, #2C4A39 0%, #16110A 92%)" }}>
             <KrugerMap
                 pin={pin}
-                onPlace={onPlace}
+                onPlace={truckMode ? onPickDestination : onPlace}
                 maxScale={inventory.includes("pro-binoculars") ? 8 : 4}
                 legendTop={140}
-                walkRangeKm={pin && !pin.locked && canMove ? walkKm : null}
+                walkRangeKm={!truckMode && pin && !pin.locked && canMove ? walkKm : null}
+                freeDrag={truckMode}
             />
 
             {/* the team, split: you and your dog, each with their own signal */}
@@ -311,6 +338,7 @@ function MapInner() {
             <div style={{ position: "absolute", right: 0, top: "46%", transform: "translateY(-50%)", display: "flex", flexDirection: "column", gap: 10 }}>
                 <DockTab icon="notebook" label="Clue" dot={newClueToday} onClick={openClueSheet} />
                 <DockTab icon="book-open-text" label="Guides" onClick={() => setSheet("guides")} />
+                <DockTab icon="truck" label="Bakkie" onClick={() => setSheet("bakkie")} />
                 <DockTab icon="radio" label="Radio" onClick={() => router.push("/codes")} />
             </div>
 
@@ -341,6 +369,41 @@ function MapInner() {
                 >
                     <i className="ph-fill ph-hand-tap" style={{ fontSize: 16 }} />
                     Tap the map to drop your pin and start the hunt
+                </div>
+            )}
+
+            {/* bakkie mode: pick a destination anywhere on the map */}
+            {truckMode && !truckDest && (
+                <div
+                    className="kw-rise"
+                    style={{
+                        position: "absolute",
+                        left: "50%",
+                        bottom: 110,
+                        transform: "translateX(-50%)",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 10,
+                        maxWidth: "88%",
+                        padding: "0.5rem 0.6rem 0.5rem 0.9rem",
+                        background: "var(--ochre-500)",
+                        color: "var(--sand-900)",
+                        borderRadius: "var(--radius-pill)",
+                        boxShadow: "var(--shadow-lg)",
+                        fontSize: "0.82rem",
+                        fontWeight: 700,
+                        lineHeight: 1.3,
+                    }}
+                >
+                    <i className="ph-fill ph-truck" style={{ fontSize: 16, flex: "none" }} />
+                    Tap or drag your pin to where the bakkie should drive
+                    <button
+                        onClick={cancelRide}
+                        aria-label="Cancel the bakkie"
+                        style={{ flex: "none", width: 28, height: 28, borderRadius: "50%", border: "none", background: "rgba(38,29,16,0.16)", color: "var(--sand-900)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                    >
+                        <i className="ph-bold ph-x" style={{ fontSize: 13 }} />
+                    </button>
                 </div>
             )}
 
@@ -432,7 +495,20 @@ function MapInner() {
                             <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", margin: "var(--space-2) 0 0" }}>
                                 One lock-in for the whole game. Lock in only when you are sure.
                             </p>
-                            <div style={{ marginTop: "var(--space-5)" }}>
+                            <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.64rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-muted)", marginTop: "var(--space-3)" }}>
+                                <i className="ph ph-truck" /> Bakkie rides left: {truckRidesLeft}
+                            </div>
+                            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)", marginTop: "var(--space-5)" }}>
+                                {!roundOver &&
+                                    (truckRidesLeft > 0 ? (
+                                        <Button size="lg" fullWidth variant="secondary" onClick={callBakkie} iconRight={<i className="ph ph-truck" />}>
+                                            Call the patrol bakkie
+                                        </Button>
+                                    ) : (
+                                        <Button size="lg" fullWidth variant="secondary" onClick={() => router.push("/shop")} iconRight={<i className="ph ph-truck" />}>
+                                            Fuel the patrol bakkie
+                                        </Button>
+                                    ))}
                                 <Button
                                     size="lg"
                                     fullWidth
@@ -488,6 +564,13 @@ function MapInner() {
                             <p style={{ margin: "var(--space-4) 0 0", fontFamily: "var(--font-serif)", fontSize: "1.05rem", lineHeight: 1.55, color: "var(--sand-900)" }}>
                                 {SCENT_TEXT[read.tier].replace("{dog}", dogName) + " " + scentDirectionText(read, dogName)}
                             </p>
+                            {read.tier === "cold" && !roundOver && (
+                                <p style={{ margin: "var(--space-3) 0 0", fontSize: "0.82rem", color: "var(--text-secondary)", lineHeight: 1.5 }}>
+                                    {truckRidesLeft > 0
+                                        ? `Fresh ground is a drive away. The bakkie has ${truckRidesLeft} ride${truckRidesLeft === 1 ? "" : "s"} left.`
+                                        : "The bakkie is out of fuel. The kit room can fill the tank."}
+                                </p>
+                            )}
                             {hasRadio && (
                                 <div
                                     style={{ marginTop: "var(--space-4)", display: "flex", gap: 8, alignItems: "flex-start", background: "var(--ochre-100)", border: "1px solid var(--ochre-200)", borderRadius: "var(--radius-sm)", padding: "0.55rem 0.7rem" }}
@@ -551,6 +634,42 @@ function MapInner() {
                 </Sheet>
             )}
 
+            {sheet === "bakkie" && (
+                <Sheet onClose={() => setSheet(null)}>
+                    <Eyebrow rule>The patrol bakkie</Eyebrow>
+                    <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", margin: "var(--space-4) 0" }}>
+                        <span style={{ flex: "none", width: 44, height: 44, borderRadius: "var(--radius-md)", background: "var(--accent-soft)", color: "var(--ochre-700)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>
+                            <i className="ph-fill ph-truck" />
+                        </span>
+                        <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.7rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-primary)", fontWeight: 700 }}>
+                            Bakkie rides left: {truckRidesLeft}
+                        </div>
+                    </div>
+                    <p style={{ fontSize: "0.86rem", color: "var(--text-secondary)", lineHeight: 1.55, margin: 0 }}>
+                        The real K9 teams deploy by vehicle: handlers and dogs ride to where the trail starts, and the tracking begins where the wheels stop. A ride takes your ranger and {dogName} to any point on the map, far beyond the day&apos;s walking limit, but the drive takes the rest of the day.
+                    </p>
+                    <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", lineHeight: 1.5, margin: "var(--space-3) 0 0" }}>
+                        You start the round with two free rides, and they stay free. More fuel can be donated in the kit room for R150 a tank.
+                    </p>
+                    {!pin && (
+                        <p style={{ fontSize: "0.82rem", color: "var(--text-secondary)", lineHeight: 1.5, margin: "var(--space-3) 0 0" }}>
+                            Drop your first pin, then the bakkie can pick your team up in the field.
+                        </p>
+                    )}
+                    <div style={{ marginTop: "var(--space-5)" }}>
+                        {canCallBakkie && truckRidesLeft > 0 ? (
+                            <Button size="lg" fullWidth onClick={callBakkie} iconRight={<i className="ph ph-truck" />}>
+                                Call the patrol bakkie
+                            </Button>
+                        ) : truckRidesLeft <= 0 ? (
+                            <Button size="lg" fullWidth variant="secondary" onClick={() => router.push("/shop")} iconRight={<i className="ph ph-truck" />}>
+                                Fuel the bakkie in the kit room
+                            </Button>
+                        ) : null}
+                    </div>
+                </Sheet>
+            )}
+
             <ZoneSheet
                 zone={guideZone}
                 onClose={closeGuide}
@@ -601,6 +720,44 @@ function MapInner() {
                         <div style={{ marginTop: "var(--space-5)" }}>
                             <Button size="lg" fullWidth onClick={closeWelcome} iconRight={<i className="ph ph-map-pin" />}>
                                 Drop my first pin
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Bakkie ride confirmation: the drive spends the day and a ride */}
+            {truckDest && (
+                <div
+                    style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: "var(--gutter)", background: "var(--bg-overlay, rgba(17,32,26,0.55))" }}
+                    onClick={() => setTruckDest(null)}
+                >
+                    <div
+                        className="kw-rise"
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ width: "100%", maxWidth: 420, background: "var(--surface-page)", borderRadius: "var(--radius-2xl)", padding: "var(--space-6) var(--gutter) var(--space-6)", boxShadow: "var(--shadow-xl)" }}
+                    >
+                        <div style={{ display: "flex", justifyContent: "center", marginBottom: "var(--space-4)" }}>
+                            <span style={{ width: 52, height: 52, borderRadius: "50%", background: "var(--accent-soft)", color: "var(--ochre-700)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26 }}>
+                                <i className="ph-fill ph-truck" />
+                            </span>
+                        </div>
+                        <h2 style={{ fontSize: "var(--text-h4)", textAlign: "center", margin: 0 }}>Ride the bakkie here?</h2>
+                        <div style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: "0.66rem", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-accent)", marginTop: "var(--space-2)" }}>
+                            Zone {ZONE_BY_ID[zoneAtPoint(truckDest)].number}, {ZONE_BY_ID[zoneAtPoint(truckDest)].name}
+                        </div>
+                        <p style={{ fontSize: "0.86rem", color: "var(--text-secondary)", lineHeight: 1.55, margin: "var(--space-4) 0 0", textAlign: "center" }}>
+                            The drive takes the rest of the day. {dogName} reads the ground where the wheels stop.
+                        </p>
+                        <div style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: "0.64rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-muted)", marginTop: "var(--space-3)" }}>
+                            Rides left after this: {Math.max(0, truckRidesLeft - 1)}
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)", marginTop: "var(--space-5)" }}>
+                            <Button size="lg" fullWidth onClick={confirmRide} iconRight={<i className="ph ph-truck" />}>
+                                Ride the bakkie
+                            </Button>
+                            <Button size="lg" fullWidth variant="ghost" onClick={cancelRide}>
+                                Stay on foot
                             </Button>
                         </div>
                     </div>

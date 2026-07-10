@@ -212,6 +212,25 @@ export default function CheckoutPage() {
                             </div>
                         )}
 
+                        {item.id === "truck-fuel" && (
+                            <div
+                                style={{
+                                    display: "flex",
+                                    gap: "var(--space-3)",
+                                    alignItems: "flex-start",
+                                    background: "var(--ochre-100)",
+                                    border: "1px solid var(--ochre-200)",
+                                    borderRadius: "var(--radius-lg)",
+                                    padding: "var(--space-4)",
+                                }}
+                            >
+                                <i className="ph-fill ph-truck" style={{ fontSize: 20, color: "var(--ochre-700)", marginTop: 2 }} />
+                                <span style={{ fontSize: "0.86rem", color: "var(--text-secondary)", lineHeight: 1.55 }}>
+                                    The tank is full: one more bakkie ride is ready. Call the bakkie from the map when you need fresh ground.
+                                </span>
+                            </div>
+                        )}
+
                         {item.id === "extra-lockin" && (
                             <div
                                 style={{

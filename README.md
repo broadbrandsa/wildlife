@@ -60,12 +60,14 @@ Demo coupon codes (Intel Intercept): `5FM-RHINO-06`, `BIRD-MARULA-07`, `SCHOOL-W
 
 ## The hunt loop: ranger, thirds and scent
 
-The park is split into three latitude thirds (north, central, south; the poacher is in the south). Your pin is your ranger: where you stand is also your guess. You may move the ranger once a day (twice with `ranger-boots`); a fresh move opens each round day. The dog reads the ground wherever the ranger stands:
+The park is split into three latitude thirds (north, central, south; the poacher is in the south). Your pin is your ranger: where you stand is also your guess. You may move the ranger once a day (an extra move with `ranger-boots` or a Storm dog), and each move is clamped to a daily walking range (`BASE_DAILY_KM` in `src/lib/game.ts`, ~8 km; 12 km with Banjo); a fresh move opens each round day. The dog reads the ground wherever the ranger stands:
 
 - Outside the poacher's third, the dog finds nothing (a cold read with a nudge to move on).
 - Inside it, the read is faint, warm or fresh by distance, plus a rough four-point bearing toward the suspect. `ranger-compass` (or a Scout / Dotty dog) sharpens that to an eight-point bearing; `monthly-healthcare` (or a Banjo / Storm / Pepper dog) widens the scent radius.
 
-Logic lives in `src/lib/game.ts`: `thirdOf`, `poacherThird`, and a third-aware `scentRead`. The store gates movement via `pinMovesToday` and `moveRanger`. The map draws faint third dividers (`showThirds` on `KrugerMap`).
+**The patrol bakkie:** every player gets 2 free bakkie rides per round (`truckRidesLeft` in the store, never paywalled so the free path stays fair). A ride (`rideTruck`) moves the ranger to ANY point on the map, ignoring the walking clamp, but the drive takes the rest of the day (no further moves until the next round day). The dog reads the ground where the wheels stop. Extra rides come from the consumable `truck-fuel` kit item (Patrol bakkie fuel, R150, one ride per purchase, repeatable). A locked pin cannot ride.
+
+Logic lives in `src/lib/game.ts`: `thirdOf`, `poacherThird`, a third-aware `scentRead`, plus `dailyWalkKm` / `clampWalk` for movement. The store gates movement via `pinMovesToday`, `moveRanger` and `rideTruck`. The thirds are a hidden background mechanic; the map does not draw them.
 
 ## Kit room
 

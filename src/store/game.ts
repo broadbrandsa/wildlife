@@ -62,12 +62,23 @@ interface GameState {
     scentSeenAt: string | null;
     /** The round day on which the player last opened the clue panel (clue badge). */
     cluesSeenDay: number | null;
+    /**
+     * Patrol bakkie rides left. Every player starts the round with two free
+     * rides; they are never paywalled, so the free path stays fair. More rides
+     * come from the consumable truck-fuel kit item.
+     */
+    truckRidesLeft: number;
 
     setHasHydrated: (v: boolean) => void;
     setPlayer: (player: Player) => void;
     updatePlayer: (patch: Partial<Player>) => void;
     /** Move the ranger (which is also your guess). Counts against the day's moves. */
     moveRanger: (x: number, y: number, day: number) => void;
+    /**
+     * Ride the patrol bakkie to any point on the map, ignoring the walking
+     * clamp. The drive takes the rest of the day and spends one ride.
+     */
+    rideTruck: (x: number, y: number, day: number) => void;
     lockPin: () => void;
     purchase: (equipmentId: string) => Donation;
     grantEquipment: (equipmentId: string) => void;
@@ -103,6 +114,7 @@ const initial = {
     demoDay: null as number | null,
     scentSeenAt: null as string | null,
     cluesSeenDay: null as number | null,
+    truckRidesLeft: 2,
 };
 
 export const useGameStore = create<GameState>()(
@@ -127,6 +139,19 @@ export const useGameStore = create<GameState>()(
                     return {
                         pin: { x: target.x, y: target.y, updatedAt: new Date().toISOString(), locked: false },
                         pinMovesToday: { day, count },
+                    };
+                }),
+
+            rideTruck: (x, y, day) =>
+                set((s) => {
+                    if (!s.pin || s.pin.locked || s.truckRidesLeft <= 0) return {};
+                    return {
+                        // The bakkie goes anywhere: no clampWalk on a ride.
+                        pin: { x, y, updatedAt: new Date().toISOString(), locked: false },
+                        truckRidesLeft: s.truckRidesLeft - 1,
+                        // The drive takes the rest of the day: the daily move
+                        // gate reads pinMovesToday, so mark the day used up.
+                        pinMovesToday: { day, count: 99 },
                     };
                 }),
 
@@ -166,6 +191,8 @@ export const useGameStore = create<GameState>()(
                         : s.fieldGuides;
                     // A second lock-in reopens the pin and hands back a move; it is not kept in inventory.
                     const reopen = equipmentId === "extra-lockin";
+                    // Bakkie fuel is consumable too: each purchase adds one ride.
+                    const fuel = equipmentId === "truck-fuel";
                     return {
                         inventory: item?.consumable ? s.inventory : [...new Set([...s.inventory, equipmentId])],
                         cluesUnlocked: clues,
@@ -174,6 +201,7 @@ export const useGameStore = create<GameState>()(
                         donationsTotal: s.donationsTotal + donation.amountZar,
                         pin: reopen && s.pin ? { ...s.pin, locked: false } : s.pin,
                         pinMovesToday: reopen ? null : s.pinMovesToday,
+                        truckRidesLeft: fuel ? s.truckRidesLeft + 1 : s.truckRidesLeft,
                     };
                 });
                 return donation;
