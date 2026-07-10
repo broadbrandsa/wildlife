@@ -144,10 +144,13 @@ export default function CodesPage() {
                         {view.clue ? (
                             <ClueCard clue={view.clue} />
                         ) : (
-                            <p style={{ color: "var(--sand-50)", textAlign: "center" }}>Reward unlocked.</p>
+                            <p style={{ color: "var(--sand-50)", textAlign: "center" }}>Intel received.</p>
                         )}
                         <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.7rem", color: "rgba(245,239,226,0.7)", textAlign: "center", margin: 0 }}>
                             {view.credit}
+                        </p>
+                        <p style={{ fontSize: "0.8rem", color: "rgba(245,239,226,0.6)", textAlign: "center", margin: 0 }}>
+                            Heard it somewhere? Pass it on. Codes are for everyone.
                         </p>
                         <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)", marginTop: "var(--space-3)" }}>
                             <Button variant="accent" size="lg" fullWidth onClick={() => router.push("/journal")}>

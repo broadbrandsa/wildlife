@@ -59,13 +59,17 @@ interface KrugerMapProps {
     walkRangeKm?: number | null;
     /** Bakkie mode: the drag preview goes anywhere, no walking clamp or ring. */
     freeDrag?: boolean;
+    /** Breadcrumb trail of every position held, oldest first, ending at the pin. */
+    trail?: { x: number; y: number; day: number; via: "walk" | "truck" }[];
 }
 
-export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, target = null, maxScale = 4, showThirds = false, legendTop = 12, walkRangeKm = null, freeDrag = false }: KrugerMapProps) {
+export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, target = null, maxScale = 4, showThirds = false, legendTop = 12, walkRangeKm = null, freeDrag = false, trail = [] }: KrugerMapProps) {
     const down = useRef<{ x: number; y: number } | null>(null);
     const svgRef = useRef<SVGSVGElement>(null);
     const barRef = useRef<HTMLSpanElement>(null);
     const barLabelRef = useRef<HTMLSpanElement>(null);
+    const rootRef = useRef<HTMLDivElement>(null);
+    const zoomRef = useRef(1);
 
     // Recompute the scale bar against the SVG's on-screen width, which already
     // folds in the current pan/zoom. Written imperatively (refs, not state) so
@@ -86,6 +90,9 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
         for (const step of SCALE_STEPS) if (step <= raw) km = step;
         bar.style.width = `${Math.round(km / kmPerPx)}px`;
         label.textContent = `${km} KM`;
+        // Counter-scale the pin markers so they keep a steady on-screen size:
+        // the deeper the zoom, the smaller the pin sits on the ground.
+        rootRef.current?.style.setProperty("--kw-pin-scale", String(1 / zoomRef.current));
     };
 
     useEffect(() => {
@@ -181,8 +188,17 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
     const coordLabel = pin ? "YOUR PIN" : target ? "SUSPECT" : "";
 
     return (
-        <div style={{ position: "relative", width: "100%", height: "100%" }}>
-        <TransformWrapper minScale={1} maxScale={maxScale} doubleClick={{ mode: "zoomIn" }} centerOnInit onTransformed={() => updateScale()}>
+        <div ref={rootRef} style={{ position: "relative", width: "100%", height: "100%" }}>
+        <TransformWrapper
+            minScale={1}
+            maxScale={maxScale}
+            doubleClick={{ mode: "zoomIn" }}
+            centerOnInit
+            onTransformed={(ref) => {
+                zoomRef.current = ref.state.scale || 1;
+                updateScale();
+            }}
+        >
             <TransformComponent
                 wrapperStyle={{ width: "100%", height: "100%" }}
                 contentStyle={{ width: "100%", height: "100%", display: "flex", justifyContent: "center" }}
@@ -347,6 +363,30 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                             </text>
                         </g>
 
+                        {/* breadcrumb trail: every position held, ending at the pin.
+                            Walk legs read tight and dashed; truck legs long and sparse. */}
+                        {trail.length >= 2 && (
+                            <g pointerEvents="none">
+                                {trail.slice(1).map((p, i) => {
+                                    const a = trail[i];
+                                    const truck = p.via === "truck";
+                                    return (
+                                        <line
+                                            key={i}
+                                            x1={a.x * VW}
+                                            y1={a.y * VH}
+                                            x2={p.x * VW}
+                                            y2={p.y * VH}
+                                            stroke="var(--clay-500)"
+                                            strokeWidth={1.5}
+                                            strokeDasharray={truck ? "9 8" : "3 3"}
+                                            opacity={truck ? 0.35 : 0.55}
+                                        />
+                                    );
+                                })}
+                            </g>
+                        )}
+
                         {/* today's walking range: how far the ranger can move from here.
                             Radii use the same km scales as distanceKm (130 E-W, 366 N-S). */}
                         {walkRangeKm != null && pin && (
@@ -397,7 +437,7 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                                 position: "absolute",
                                 left: `${target.x * 100}%`,
                                 top: `${target.y * 100}%`,
-                                transform: "translate(-50%, -50%)",
+                                transform: "translate(-50%, -50%) scale(var(--kw-pin-scale, 1))",
                                 pointerEvents: "none",
                             }}
                         >
@@ -437,8 +477,11 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                                 left: `${(drag ?? pin).x * 100}%`,
                                 top: `${(drag ?? pin).y * 100}%`,
                                 // the tip of the rotated square pokes 2px shy of the
-                                // padded box bottom, so nudge down to keep it exact
-                                transform: "translate(-50%, calc(-100% + 2px))",
+                                // padded box bottom, so nudge down to keep it exact.
+                                // The counter-scale keeps the pin a steady screen
+                                // size, so it sits smaller on the ground when zoomed.
+                                transform: "translate(-50%, calc(-100% + 2px)) scale(var(--kw-pin-scale, 1))",
+                                transformOrigin: "50% 100%",
                                 pointerEvents: draggable ? "auto" : "none",
                                 touchAction: "none",
                                 cursor: draggable ? (drag ? "grabbing" : "grab") : undefined,

@@ -6,6 +6,7 @@ import { persist } from "zustand/middleware";
 import { CODE_BY_VALUE, EQUIPMENT_BY_ID } from "@/data";
 import type { ZoneId } from "@/data";
 import { BUSH_WISE_DOGS, clampWalk, currentDay, dailyWalkKm } from "@/lib/game";
+import type { ScentTier } from "@/lib/game";
 import { receiptNumber } from "@/lib/format";
 
 export interface Player {
@@ -68,6 +69,18 @@ interface GameState {
      * come from the consumable truck-fuel kit item.
      */
     truckRidesLeft: number;
+    /** `${day}:${pin.updatedAt}` of the last scent reveal that played. */
+    lastRevealKey: string | null;
+    /** The read before the current one, for the warmer / colder delta line. */
+    prevRead: { day: number; tier: ScentTier } | null;
+    /** The currently revealed read; shifts into prevRead on the next reveal. */
+    lastRead: { day: number; tier: ScentTier } | null;
+    /** Consecutive days the revealed read has been hot. */
+    hotStreak: number;
+    /** Case board verdicts per zone. Open zones are simply absent. */
+    zoneMarks: Partial<Record<ZoneId, "suspect" | "ruled-out">>;
+    /** Every position the ranger has held, for the breadcrumb trail. */
+    trail: { x: number; y: number; day: number; via: "walk" | "truck" }[];
 
     setHasHydrated: (v: boolean) => void;
     setPlayer: (player: Player) => void;
@@ -93,6 +106,15 @@ interface GameState {
     markScentSeen: () => void;
     /** Clear the clue badge for this round day. */
     markCluesSeen: (day: number) => void;
+    /**
+     * A scent reveal finished playing: remember its key, shift the current
+     * read into prevRead and keep the hot streak. One update, replay-safe.
+     */
+    recordReveal: (key: string, tier: ScentTier, day: number) => void;
+    /** Case board: cycle a zone open, suspect, ruled-out, open. */
+    cycleZoneMark: (zoneId: ZoneId) => void;
+    /** Case board: rule a zone straight out (elimination clue button). */
+    ruleOutZone: (zoneId: ZoneId) => void;
     reset: () => void;
 }
 
@@ -115,6 +137,12 @@ const initial = {
     scentSeenAt: null as string | null,
     cluesSeenDay: null as number | null,
     truckRidesLeft: 2,
+    lastRevealKey: null as string | null,
+    prevRead: null as { day: number; tier: ScentTier } | null,
+    lastRead: null as { day: number; tier: ScentTier } | null,
+    hotStreak: 0,
+    zoneMarks: {} as Partial<Record<ZoneId, "suspect" | "ruled-out">>,
+    trail: [] as { x: number; y: number; day: number; via: "walk" | "truck" }[],
 };
 
 export const useGameStore = create<GameState>()(
@@ -139,6 +167,7 @@ export const useGameStore = create<GameState>()(
                     return {
                         pin: { x: target.x, y: target.y, updatedAt: new Date().toISOString(), locked: false },
                         pinMovesToday: { day, count },
+                        trail: [...s.trail, { x: target.x, y: target.y, day, via: "walk" as const }],
                     };
                 }),
 
@@ -152,6 +181,7 @@ export const useGameStore = create<GameState>()(
                         // The drive takes the rest of the day: the daily move
                         // gate reads pinMovesToday, so mark the day used up.
                         pinMovesToday: { day, count: 99 },
+                        trail: [...s.trail, { x, y, day, via: "truck" as const }],
                     };
                 }),
 
@@ -249,6 +279,36 @@ export const useGameStore = create<GameState>()(
             markScentSeen: () => set((s) => ({ scentSeenAt: s.pin?.updatedAt ?? null })),
 
             markCluesSeen: (day) => set({ cluesSeenDay: day }),
+
+            recordReveal: (key, tier, day) =>
+                set((s) => {
+                    if (s.lastRevealKey === key) return {};
+                    // The streak counts consecutive days hot; a same-day move
+                    // that stays hot does not double-count the day.
+                    const hotStreak =
+                        tier !== "hot"
+                            ? 0
+                            : s.lastRead?.day === day && s.hotStreak > 0
+                              ? s.hotStreak
+                              : s.hotStreak + 1;
+                    return { lastRevealKey: key, prevRead: s.lastRead, lastRead: { day, tier }, hotStreak };
+                }),
+
+            cycleZoneMark: (zoneId) =>
+                set((s) => {
+                    const next =
+                        s.zoneMarks[zoneId] === "suspect"
+                            ? ("ruled-out" as const)
+                            : s.zoneMarks[zoneId] === "ruled-out"
+                              ? undefined
+                              : ("suspect" as const);
+                    const marks = { ...s.zoneMarks };
+                    if (next) marks[zoneId] = next;
+                    else delete marks[zoneId];
+                    return { zoneMarks: marks };
+                }),
+
+            ruleOutZone: (zoneId) => set((s) => ({ zoneMarks: { ...s.zoneMarks, [zoneId]: "ruled-out" as const } })),
 
             reset: () => set({ ...initial }),
         }),

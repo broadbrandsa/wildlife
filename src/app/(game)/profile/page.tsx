@@ -121,7 +121,7 @@ export default function ProfilePage() {
                     <Eyebrow>Donation history</Eyebrow>
                     <div style={{ marginTop: "var(--space-3)", display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
                         {donations.length === 0 ? (
-                            <p style={{ color: "var(--text-muted)", fontSize: "0.88rem" }}>No donations yet. Visit the kit room to support the unit.</p>
+                            <p style={{ color: "var(--text-muted)", fontSize: "0.88rem" }}>No donations yet. The kit room funds the dogs.</p>
                         ) : (
                             donations.map((d) => {
                                 const item = EQUIPMENT_BY_ID[d.equipmentId];
@@ -145,7 +145,7 @@ export default function ProfilePage() {
                     <Row icon="users-three" label="Meet the real K9 Unit" onClick={() => router.push("/team")} />
                     <Row icon="hand-heart" label="Your impact" onClick={() => router.push("/impact")} />
                     <Row icon="heart" label="Our allies" onClick={() => router.push("/allies")} />
-                    <Row icon="radio" label="Intel Intercept (enter a code)" onClick={() => router.push("/codes")} />
+                    <Row icon="radio" label="Enter a sponsor code" onClick={() => router.push("/codes")} />
                     <Row icon="scroll" label="Rules & privacy" onClick={() => router.push("/legal")} />
                 </div>
 

@@ -24,7 +24,7 @@ const CATEGORY_ICON: Record<string, string> = {
     synthesis: "puzzle-piece",
 };
 
-export function ClueCard({ clue, compact = false }: { clue: Clue; compact?: boolean }) {
+export function ClueCard({ clue, compact = false, action }: { clue: Clue; compact?: boolean; action?: React.ReactNode }) {
     const meta = SOURCE_META[clue.source];
     const isElimination = clue.kind === "elimination";
 
@@ -102,6 +102,10 @@ export function ClueCard({ clue, compact = false }: { clue: Clue; compact?: bool
                 <div style={{ padding: "0.6rem var(--space-4)", borderTop: "1px solid var(--border-subtle)", fontFamily: "var(--font-mono)", fontSize: "0.64rem", letterSpacing: "0.08em", color: "var(--text-muted)" }}>
                     DAY {clue.releaseDay} · READ IT AGAINST YOUR FIELD GUIDES
                 </div>
+            )}
+
+            {action && (
+                <div style={{ padding: "0.6rem var(--space-4)", borderTop: "1px solid var(--border-subtle)" }}>{action}</div>
             )}
         </div>
     );

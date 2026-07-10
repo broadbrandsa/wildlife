@@ -155,7 +155,7 @@ export default function ShopPage() {
             <Eyebrow>The kit room</Eyebrow>
             <h1 style={{ fontSize: "var(--text-h2)", margin: "var(--space-3) 0 var(--space-2)" }}>Equip your hunt</h1>
             <p style={{ color: "var(--text-secondary)", margin: 0 }}>
-                Every donation buys real kit for the K9 Unit and gives you a real edge on the hunt.
+                Every rand buys real kit for the dogs and a real edge for you.
             </p>
             <p style={{ display: "flex", gap: 6, alignItems: "flex-start", color: "var(--text-muted)", fontSize: "0.78rem", lineHeight: 1.5, margin: "var(--space-3) 0 0" }}>
                 <i className="ph ph-scales" style={{ marginTop: 2, color: "var(--green-600)" }} /> {FAIR_PLAY_LINE}
@@ -229,7 +229,7 @@ export default function ShopPage() {
             <div style={{ margin: "var(--space-8) 0 var(--space-4)" }}>
                 <Eyebrow rule>Field guides</Eyebrow>
                 <p style={{ fontSize: "0.82rem", color: "var(--text-muted)", margin: "var(--space-2) 0 0", lineHeight: 1.5 }}>
-                    You start with one area's field guide, unlocked where you dropped your first pin. Unlock more to read the terrain, plants and animals of other zones and rule them in or out as the clues land.
+                    Your first guide unlocked where you first pinned. The rest open other zones' ground so you can rule them in or out as the clues land.
                 </p>
             </div>
             {guidesToBuy.length === 0 ? (

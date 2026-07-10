@@ -1,4 +1,4 @@
-import { CLUES, DEMO_DAY_OVERRIDE, ROUND } from "@/data";
+import { CLUES, DEMO_DAY_OVERRIDE, ROUND, ZONES } from "@/data";
 import type { Clue, MapPoint, ZoneId } from "@/data";
 
 /**
@@ -256,6 +256,19 @@ export function scentRead(pin: MapPoint, opts: ScentReadOptions = {}): ScentRead
     else if (dist <= TIER_KM.warm * bonus) tier = "warm";
 
     return { inThird: true, tier, direction, rough, fine };
+}
+
+/** Orders tiers for warmer / colder comparisons across days. */
+export function tierRank(tier: ScentTier): number {
+    return { cold: 0, faint: 1, warm: 2, hot: 3 }[tier];
+}
+
+/** The whole park, in km², for the case board headline. */
+export const PARK_AREA_KM2 = ZONES.reduce((sum, z) => sum + z.areaKm2, 0);
+
+/** Ground still in play: the park minus every ruled-out zone. */
+export function searchAreaKm2(marks: Partial<Record<ZoneId, "suspect" | "ruled-out">>): number {
+    return ZONES.reduce((sum, z) => (marks[z.id] === "ruled-out" ? sum : sum + z.areaKm2), 0);
 }
 
 /** Field-ranger voice for each tier. `{dog}` is replaced with the dog's name. */

@@ -17,12 +17,14 @@ import {
     THIRD_LABEL,
     availableClueIds,
     dailyWalkKm,
+    distanceKm,
     scentDirectionText,
     daysRemaining,
     isRoundOver,
     nextClueLabel,
     poacherThird,
     scentRead,
+    tierRank,
     zoneAtPoint,
 } from "@/lib/game";
 import type { ScentTier } from "@/lib/game";
@@ -172,6 +174,13 @@ function MapInner() {
     const markCluesSeen = useGameStore((s) => s.markCluesSeen);
     const truckRidesLeft = useGameStore((s) => s.truckRidesLeft);
     const rideTruck = useGameStore((s) => s.rideTruck);
+    const lastRevealKey = useGameStore((s) => s.lastRevealKey);
+    const prevRead = useGameStore((s) => s.prevRead);
+    const hotStreak = useGameStore((s) => s.hotStreak);
+    const recordReveal = useGameStore((s) => s.recordReveal);
+    const zoneMarks = useGameStore((s) => s.zoneMarks);
+    const ruleOutZone = useGameStore((s) => s.ruleOutZone);
+    const trail = useGameStore((s) => s.trail);
     const campaignTotal = useCampaignTotal();
 
     const [dismissed, setDismissed] = useState(false);
@@ -182,6 +191,8 @@ function MapInner() {
     // Bakkie mode: pick anywhere on the map, then confirm the ride.
     const [truckMode, setTruckMode] = useState(false);
     const [truckDest, setTruckDest] = useState<{ x: number; y: number } | null>(null);
+    // Which elimination clue was just marked on the case board (confirmation line).
+    const [markedClueId, setMarkedClueId] = useState<string | null>(null);
     const day = useCurrentDay();
     const roundOver = isRoundOver(day);
 
@@ -232,6 +243,54 @@ function MapInner() {
     const hasRadio = inventory.includes("field-radio");
     const targetThird = poacherThird();
 
+    // The scent read plays as a short reveal exactly once per new position or
+    // new day. Once the key is recorded, reopening renders instantly.
+    const revealKey = pin ? `${day}:${pin.updatedAt}` : null;
+    const [revealing, setRevealing] = useState(false);
+
+    const startReveal = () => {
+        if (!revealKey || !read) return;
+        if (revealKey === lastRevealKey) return; // already played
+        const reduced =
+            typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const land = () => {
+            setRevealing(false);
+            if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+                if (read.tier === "warm") navigator.vibrate(30);
+                if (read.tier === "hot") navigator.vibrate([40, 60, 40]);
+            }
+            recordReveal(revealKey, read.tier, day);
+        };
+        if (reduced) {
+            land();
+            return;
+        }
+        setRevealing(true);
+        setTimeout(land, 2200);
+    };
+
+    // Warmer / colder, day over day: only ever compares the player's own tiers.
+    const delta = read && prevRead ? tierRank(read.tier) - tierRank(prevRead.tier) : null;
+    const deltaLine =
+        delta == null
+            ? null
+            : delta > 0
+              ? "WARMER THAN YOUR LAST READ"
+              : delta < 0
+                ? "COLDER THAN YOUR LAST READ"
+                : read && read.tier === "cold"
+                  ? truckRidesLeft > 0
+                      ? "STILL COLD. FRESH GROUND IS A DRIVE AWAY."
+                      : "STILL COLD."
+                  : "NO CHANGE. THE TRAIL IS PATIENT.";
+
+    // Camp summary: what today added up to, from real state.
+    const todayLegs = trail.filter((p) => p.day === day);
+    const truckedToday = todayLegs.some((p) => p.via === "truck");
+    const kmToday = Math.round(
+        trail.reduce((sum, p, i) => (i > 0 && p.day === day && p.via === "walk" ? sum + distanceKm(trail[i - 1], p) : sum), 0),
+    );
+
     // Notification badges.
     const rangerDot = Boolean(pin && canMove);
     const dogDot = Boolean(pin && pin.updatedAt !== scentSeenAt);
@@ -268,6 +327,7 @@ function MapInner() {
 
     const openDogSheet = () => {
         markScentSeen();
+        startReveal();
         setSheet("dog");
     };
 
@@ -306,6 +366,7 @@ function MapInner() {
                 legendTop={140}
                 walkRangeKm={!truckMode && pin && !pin.locked && canMove ? walkKm : null}
                 freeDrag={truckMode}
+                trail={trail}
             />
 
             {/* the team, split: you and your dog, each with their own signal */}
@@ -480,18 +541,31 @@ function MapInner() {
                     </h2>
                     <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", margin: "var(--space-2) 0 0" }}>
                         {!pin
-                            ? "Tap the map to send your ranger to a spot. That spot is also your guess."
+                            ? "Tap the map. Where your ranger stands is your guess."
                             : pinZone
                               ? `Zone ${pinZone.number}, ${pinZone.name}${pin.locked ? " · locked for the round" : ""}`
                               : "Locked for the round."}
                     </p>
                     {pin && !pin.locked && (
                         <>
-                            <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", margin: "var(--space-3) 0 0" }}>
-                                {canMove
-                                    ? `You have ${maxMoves - movesToday === 1 ? "one ranger move" : `${maxMoves - movesToday} ranger moves`} left today, each up to ${walkKm} km on foot. Drag your pin to walk it; the ring shows your reach.`
-                                    : "You have walked as far as you can today. Fresh legs tomorrow."}
-                            </p>
+                            {canMove ? (
+                                <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", margin: "var(--space-3) 0 0" }}>
+                                    {`${maxMoves - movesToday === 1 ? "One move" : `${maxMoves - movesToday} moves`} left today, up to ${walkKm} km each. Drag your pin to walk. The ring is your reach.`}
+                                </p>
+                            ) : (
+                                <div style={{ margin: "var(--space-3) 0 0" }}>
+                                    <div style={{ fontWeight: 700, fontSize: "0.92rem", display: "flex", alignItems: "center", gap: 8 }}>
+                                        <i className="ph-fill ph-campfire" style={{ color: "var(--ochre-600)", fontSize: 17 }} /> Camped for the night.
+                                    </div>
+                                    <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", margin: "var(--space-1, 0.25rem) 0 0" }}>
+                                        {dogName} settles by the fire. Fresh legs at dawn.
+                                    </p>
+                                    <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-muted)", marginTop: "var(--space-2)" }}>
+                                        TODAY: {truckedToday ? "BY BAKKIE" : `${kmToday} KM`}
+                                        {read ? ` · ${TIER_META[read.tier].label.toUpperCase()}` : ""} · {clueCountdown}
+                                    </div>
+                                </div>
+                            )}
                             <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", margin: "var(--space-2) 0 0" }}>
                                 One lock-in for the whole game. Lock in only when you are sure.
                             </p>
@@ -527,7 +601,7 @@ function MapInner() {
                     {pin?.locked && (
                         <>
                             <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", margin: "var(--space-3) 0 0" }}>
-                                Locked in for the round. Changed your mind? A second lock-in from the kit reopens your pin to move once more.
+                                Locked for the round. A second lock-in from the kit reopens it if you must move.
                             </p>
                             <div style={{ marginTop: "var(--space-5)" }}>
                                 <Button size="lg" fullWidth variant="secondary" onClick={() => router.push("/checkout/extra-lockin")}>
@@ -541,48 +615,83 @@ function MapInner() {
 
             {sheet === "dog" && (
                 <Sheet onClose={() => setSheet(null)}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-3)" }}>
-                        <span style={{ display: "inline-flex", alignItems: "center", gap: 8, fontFamily: "var(--font-mono)", fontSize: "0.64rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-accent)" }}>
-                            <i className="ph ph-paw-print" /> Scent read
-                        </span>
-                        {pin && read && (
-                            <Tag tone={TIER_META[read.tier].tone} size="sm">
-                                <i className={`ph ph-${TIER_META[read.tier].icon}`} style={{ marginRight: 4 }} />
-                                {read.inThird ? TIER_META[read.tier].label : "Nothing here"}
-                            </Tag>
-                        )}
-                    </div>
-                    {!pin || !read ? (
-                        <p style={{ margin: "var(--space-4) 0 0", fontSize: "0.88rem", color: "var(--text-secondary)", lineHeight: 1.55 }}>
-                            {dogName} is waiting for you to place your ranger. Tap the map and the dog reads the ground there.
-                        </p>
-                    ) : (
-                        <>
-                            <p style={{ margin: "var(--space-3) 0 0", fontSize: "0.78rem", lineHeight: 1.5, color: "var(--text-muted)" }}>
-                                {dogName} reads the ground wherever your ranger stands. On some ground the dog catches the scent, on some there is nothing. Move your ranger to hunt for it, then close in.
-                            </p>
-                            <p style={{ margin: "var(--space-4) 0 0", fontFamily: "var(--font-serif)", fontSize: "1.05rem", lineHeight: 1.55, color: "var(--sand-900)" }}>
-                                {SCENT_TEXT[read.tier].replace("{dog}", dogName) + " " + scentDirectionText(read, dogName)}
-                            </p>
-                            {read.tier === "cold" && !roundOver && (
-                                <p style={{ margin: "var(--space-3) 0 0", fontSize: "0.82rem", color: "var(--text-secondary)", lineHeight: 1.5 }}>
-                                    {truckRidesLeft > 0
-                                        ? `Fresh ground is a drive away. The bakkie has ${truckRidesLeft} ride${truckRidesLeft === 1 ? "" : "s"} left.`
-                                        : "The bakkie is out of fuel. The kit room can fill the tank."}
-                                </p>
-                            )}
-                            {hasRadio && (
-                                <div
-                                    style={{ marginTop: "var(--space-4)", display: "flex", gap: 8, alignItems: "flex-start", background: "var(--ochre-100)", border: "1px solid var(--ochre-200)", borderRadius: "var(--radius-sm)", padding: "0.55rem 0.7rem" }}
-                                >
-                                    <i className="ph ph-broadcast" style={{ color: "var(--ochre-700)", marginTop: 2 }} />
-                                    <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)", lineHeight: 1.5 }}>
-                                        HQ radios in: other teams place the freshest scent in {THIRD_LABEL[targetThird]} of the park.
+                    {(() => {
+                        const hot = Boolean(read && !revealing && read.tier === "hot");
+                        return (
+                            <div
+                                style={{
+                                    background: hot ? "var(--clay-100)" : "var(--surface-card)",
+                                    border: `1px solid ${hot ? "var(--clay-500)" : "var(--border-subtle)"}`,
+                                    borderRadius: "var(--radius-lg)",
+                                    padding: "var(--space-4)",
+                                    transition: "background var(--dur-base) var(--ease-out)",
+                                }}
+                            >
+                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-3)" }}>
+                                    <span style={{ display: "inline-flex", alignItems: "center", gap: 8, fontFamily: "var(--font-mono)", fontSize: "0.64rem", letterSpacing: "0.12em", textTransform: "uppercase", color: hot ? "var(--clay-600)" : "var(--text-accent)" }}>
+                                        <i className="ph ph-paw-print" /> Scent read
                                     </span>
+                                    {pin && read && !revealing && (
+                                        <Tag tone={TIER_META[read.tier].tone} size="sm">
+                                            <i className={`ph ph-${TIER_META[read.tier].icon}`} style={{ marginRight: 4 }} />
+                                            {TIER_META[read.tier].label}
+                                        </Tag>
+                                    )}
                                 </div>
-                            )}
-                        </>
-                    )}
+
+                                {!pin || !read ? (
+                                    <p style={{ margin: "var(--space-4) 0 0", fontSize: "0.88rem", color: "var(--text-secondary)", lineHeight: 1.55 }}>
+                                        {dogName} is waiting for you to place your ranger. Tap the map and the dog reads the ground there.
+                                    </p>
+                                ) : revealing ? (
+                                    <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "var(--space-5) 0 var(--space-3)", fontFamily: "var(--font-mono)", fontSize: "0.7rem", letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--text-muted)" }}>
+                                        <i className="ph ph-paw-print kw-spin" style={{ fontSize: 16, color: "var(--ochre-600)" }} />
+                                        {dogName} is casting...
+                                    </div>
+                                ) : (
+                                    <div className="kw-rise">
+                                        {prevRead == null && (
+                                            <p style={{ margin: "var(--space-3) 0 0", fontSize: "0.78rem", lineHeight: 1.5, color: "var(--text-muted)" }}>
+                                                {dogName} reads the ground where you stand. Hunt for the scent, then close in.
+                                            </p>
+                                        )}
+                                        <p style={{ margin: "var(--space-4) 0 0", fontFamily: "var(--font-serif)", fontSize: "1.05rem", lineHeight: 1.55, color: "var(--sand-900)" }}>
+                                            {SCENT_TEXT[read.tier].replace("{dog}", dogName) + " " + scentDirectionText(read, dogName)}
+                                            {read.tier === "hot" && hotStreak === 2 && ` ${dogName} has held this line for two days. The camp is near.`}
+                                            {read.tier === "hot" && hotStreak >= 3 && ` ${dogName} will not leave this ground. Trust the dog.`}
+                                        </p>
+                                        {read.tier === "hot" && inventory.includes("gps-collar") && pin && (
+                                            <div style={{ margin: "var(--space-3) 0 0", fontFamily: "var(--font-mono)", fontSize: "0.66rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--clay-600)", fontWeight: 700 }}>
+                                                Collar fix: {Math.round(distanceKm(pin, ROUND.poacher))} km to the suspect
+                                            </div>
+                                        )}
+                                        {read.tier === "cold" && prevRead == null && !roundOver && (
+                                            <p style={{ margin: "var(--space-3) 0 0", fontSize: "0.82rem", color: "var(--text-secondary)", lineHeight: 1.5 }}>
+                                                {truckRidesLeft > 0
+                                                    ? `Fresh ground is a drive away. The bakkie has ${truckRidesLeft} ride${truckRidesLeft === 1 ? "" : "s"} left.`
+                                                    : "The bakkie is out of fuel. The kit room can fill the tank."}
+                                            </p>
+                                        )}
+                                        {deltaLine && (
+                                            <div style={{ margin: "var(--space-4) 0 0", paddingTop: "var(--space-3)", borderTop: "1px dashed var(--border-default)", fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--text-muted)" }}>
+                                                {deltaLine}
+                                            </div>
+                                        )}
+                                        {hasRadio && (
+                                            <div
+                                                style={{ marginTop: "var(--space-4)", display: "flex", gap: 8, alignItems: "flex-start", background: "var(--ochre-100)", border: "1px solid var(--ochre-200)", borderRadius: "var(--radius-sm)", padding: "0.55rem 0.7rem" }}
+                                            >
+                                                <i className="ph ph-broadcast" style={{ color: "var(--ochre-700)", marginTop: 2 }} />
+                                                <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)", lineHeight: 1.5 }}>
+                                                    HQ radios in: the freshest scent is in {THIRD_LABEL[targetThird]} of the park.
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })()}
                 </Sheet>
             )}
 
@@ -597,7 +706,30 @@ function MapInner() {
                     <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: "var(--space-3)", fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.12em", color: "var(--text-muted)" }}>
                         <i className="ph ph-timer" /> {clueCountdown}
                     </div>
-                    {latest && <ClueCard clue={latest} />}
+                    {latest && (
+                        <ClueCard
+                            clue={latest}
+                            action={
+                                latest.kind === "elimination" ? (
+                                    markedClueId === latest.id || zoneMarks[latest.zoneId] === "ruled-out" ? (
+                                        <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+                                            <i className="ph ph-check" style={{ marginRight: 5 }} /> Marked on your case board.
+                                        </span>
+                                    ) : (
+                                        <button
+                                            onClick={() => {
+                                                ruleOutZone(latest.zoneId);
+                                                setMarkedClueId(latest.id);
+                                            }}
+                                            style={{ background: "none", border: "none", cursor: "pointer", padding: "0.2rem 0", fontSize: "0.8rem", fontWeight: 600, color: "var(--text-link)", display: "inline-flex", alignItems: "center", gap: 6 }}
+                                        >
+                                            <i className="ph ph-prohibit" /> Rule it out on your case board
+                                        </button>
+                                    )
+                                ) : undefined
+                            }
+                        />
+                    )}
                 </Sheet>
             )}
 
@@ -713,7 +845,7 @@ function MapInner() {
                             </Tag>
                             <h2 style={{ fontSize: "var(--text-h3)", margin: "var(--space-3) 0 0" }}>Drop your first pin</h2>
                             <p style={{ fontSize: "0.86rem", color: "var(--text-secondary)", lineHeight: 1.55, margin: "var(--space-2) 0 0" }}>
-                                Tap the map where you think the suspect is hiding. That spot is where your ranger stands and your guess for the round, and it unlocks a free field guide for that ground. Choose with care: once on the ground, your ranger can only walk about {walkKm} km of bush a day. Here is your first clue to work from.
+                                Tap the map where you think the suspect is hiding. Your ranger deploys there, and that ground&apos;s field guide unlocks free. From then on you move on foot, about {walkKm} km a day, so read your first clue before you choose.
                             </p>
                         </div>
                         <ClueCard clue={CLUE_BY_ID["f01"]} />
@@ -787,10 +919,10 @@ function MapInner() {
                             </div>
                         )}
                         <p style={{ fontSize: "0.86rem", color: "var(--text-secondary)", lineHeight: 1.55, margin: "var(--space-4) 0 0", textAlign: "center" }}>
-                            You get one lock-in for the whole game. This is your final decision, and this pin is the one used to rank you when the round ends.
+                            One lock-in for the whole game. This pin is the one that counts when the round closes. Ties go to the earliest locked pin.
                         </p>
                         <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", lineHeight: 1.5, margin: "var(--space-3) 0 0", textAlign: "center" }}>
-                            Changed your mind later? Only a second lock-in from the kit can reopen your pin.
+                            Only a second lock-in from the kit can reopen it.
                         </p>
                         <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)", marginTop: "var(--space-5)" }}>
                             <Button size="lg" fullWidth onClick={confirmLockIn} iconRight={<i className="ph ph-lock-simple" />}>

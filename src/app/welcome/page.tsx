@@ -90,22 +90,22 @@ function KitPreview() {
 const CARDS = [
     {
         title: "Read the clues",
-        body: "Clues drip out across the round, each one a real fact about Kruger's rivers, rock, plants and animals. Here is your first, exactly as it lands in your journal on day 1.",
+        body: "Every clue is a real fact about Kruger's rock, rivers, plants and animals. Solve them and the map gets smaller. Here is your first.",
         visual: <ClueCard clue={CLUE_BY_ID["f01"]} />,
     },
     {
         title: "Track the scent",
-        body: "Send your ranger to a spot on the map and your dog reads the ground there. Move each day, follow the pull, close in, then lock in your answer.",
+        body: "Stand somewhere and your dog reads the ground. Cold, faint, warm, fresh. Move each day and walk the trail warmer.",
         visual: <ScentPreview />,
     },
     {
         title: "Win real prizes",
-        body: "The closest locked pins take the prizes: a Kruger safari with a visit to the K9 pack, getaways and gear for 26 winners in all.",
+        body: "The closest locked pins win. A Kruger safari with the K9 pack, getaways and gear, 26 winners in all.",
         visual: <PrizePreview />,
     },
     {
         title: "Fund the dogs",
-        body: "Donate to kit out your hunt. Every rand goes to the SAWC K9 Anti-Poaching Unit, and winning never requires spending a cent.",
+        body: "Kit out your hunt if you choose. Every rand goes to the real SAWC K9 unit, and winning never costs a cent.",
         visual: <KitPreview />,
     },
 ];
@@ -129,7 +129,7 @@ export default function WelcomePage() {
                     Welcome to the K9 Unit.
                 </h1>
                 <p style={{ color: "rgba(245,239,226,0.82)", fontSize: "var(--text-lead)", margin: 0 }}>
-                    You and your dog are the team's best chance of finding the suspect. Here is how the hunt works.
+                    A poacher is hiding somewhere in Kruger. You and your dog are going to find him.
                 </p>
             </div>
 

@@ -59,8 +59,8 @@ export default function OnboardingPage() {
         `Welcome to the SAWC K9 Unit, ${rangerName || "ranger"}. You and ${chosenDogName || "your dog"} join the roster this morning.`,
         "And not a moment too soon. Poachers crossed the western boundary in the dark. One of them is still inside the park, lying up somewhere in the bush.",
         `The ranger teams are grounded in fog and the aircraft cannot fly. Until it lifts, you and ${chosenDogName || "your dog"} are the only ones who can work this scent.`,
-        `The trail shows itself slowly. Across the round, clues come in from the field: the rock underfoot, the rivers, the plants, radio traffic from other teams. Read them, and ${chosenDogName || "your dog"} tells you how close the scent runs.`,
-        "Drop your pin where you think the suspect is hiding, then move in as the trail sharpens. Lock in when you are sure. The closest pin when the round closes puts the real team on the ground, and every move funds the dogs who do this for real.",
+        `Clues will come in from the field: the rock underfoot, the rivers, radio traffic from other teams. Read them, and ${chosenDogName || "your dog"} will tell you how warm the trail runs.`,
+        "Drop your pin where you think he is hiding, move in as the trail sharpens, and lock in when you are sure. Closest pin at the close wins, and every donation feeds the dogs who do this for real.",
     ];
 
     const finish = () => {
@@ -94,7 +94,7 @@ export default function OnboardingPage() {
                             <Eyebrow>Your ranger</Eyebrow>
                             <h1 style={{ fontSize: "var(--text-h2)", margin: "var(--space-3) 0 0" }}>This is you</h1>
                             <p style={{ color: "var(--text-secondary)", marginTop: "var(--space-2)" }}>
-                                Step through and pick the ranger that feels like you. The lineup reflects the real rangers of the Greater Kruger. Then sign on with your name below.
+                                Pick the ranger that feels like you. The lineup mirrors the real rangers of the Greater Kruger.
                             </p>
                         </div>
 
@@ -132,7 +132,7 @@ export default function OnboardingPage() {
                             <Eyebrow>Your partner</Eyebrow>
                             <h1 style={{ fontSize: "var(--text-h2)", margin: "var(--space-3) 0 0" }}>Pick your dog</h1>
                             <p style={{ color: "var(--text-secondary)", marginTop: "var(--space-2)" }}>
-                                Step through the dogs. Each is based on a real SAWC K9 role and brings its own superpower to the tracking. Name your dog below.
+                                Every dog here does this job for real at SAWC. Each brings its own superpower to your hunt.
                             </p>
                         </div>
 
@@ -159,7 +159,7 @@ export default function OnboardingPage() {
                             placeholder="e.g. Bandit"
                             value={dogName}
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDogName(e.target.value)}
-                            hint="This is what we'll call your dog in the game."
+                            hint="What your dog answers to in the field."
                         />
                         <Button size="lg" fullWidth disabled={!chosenDogName} onClick={() => setStep("origin")} iconRight={<i className="ph ph-arrow-right" />}>
                             Report for duty

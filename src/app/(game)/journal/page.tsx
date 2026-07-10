@@ -8,34 +8,43 @@ import { ClueCard } from "@/components/game/ClueCard";
 import { ZoneSheet } from "@/components/game/ZoneSheet";
 import { CLUES, ZONES } from "@/data";
 import type { Zone } from "@/data";
-import { BUSH_WISE_DOGS, availableClueIds, freeCluesToCome, hoursUntilNextClue } from "@/lib/game";
+import { BUSH_WISE_DOGS, PARK_AREA_KM2, availableClueIds, freeCluesToCome, hoursUntilNextClue, searchAreaKm2 } from "@/lib/game";
 import { useCurrentDay, useGameStore } from "@/store/game";
 
-/** Field guide card: tap to read it if owned, otherwise unlock it in the kit room. */
-function GuideCard({
+type ZoneMark = "suspect" | "ruled-out" | undefined;
+
+/**
+ * Case board card: the card body cycles the zone's verdict (open, suspect,
+ * ruled out); the affordance in the corner opens or unlocks its field guide.
+ */
+function CaseCard({
     zone,
+    mark,
     owned,
     freePick,
+    onCycle,
     onRead,
     onUnlock,
 }: {
     zone: Zone;
+    mark: ZoneMark;
     owned: boolean;
     /** Dotty's superpower: this card can be claimed free. */
     freePick?: boolean;
+    onCycle: () => void;
     onRead: () => void;
     onUnlock: () => void;
 }) {
+    const ruledOut = mark === "ruled-out";
     return (
-        <button
-            onClick={owned ? onRead : onUnlock}
-            aria-label={
-                owned
-                    ? `Read the ${zone.name} field guide`
-                    : freePick
-                      ? `Claim the ${zone.name} field guide free`
-                      : `Unlock the ${zone.name} field guide for R25`
-            }
+        <div
+            role="button"
+            tabIndex={0}
+            onClick={onCycle}
+            onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") onCycle();
+            }}
+            aria-label={`Mark ${zone.name}: currently ${mark ?? "open"}`}
             style={{
                 textAlign: "left",
                 cursor: "pointer",
@@ -43,33 +52,83 @@ function GuideCard({
                 flexDirection: "column",
                 gap: 6,
                 background: owned ? "var(--surface-card)" : "var(--surface-sunken)",
-                border: `1px solid ${owned ? "var(--border-subtle)" : "var(--border-default)"}`,
+                border: `1px solid ${mark === "suspect" ? "var(--ochre-500)" : owned ? "var(--border-subtle)" : "var(--border-default)"}`,
                 borderRadius: "var(--radius-md)",
                 padding: "var(--space-3) var(--space-4)",
-                minHeight: 96,
+                minHeight: 108,
+                opacity: ruledOut ? 0.55 : 1,
+                transition: "all var(--dur-fast) var(--ease-out)",
             }}
         >
             <span style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.7rem", color: "var(--text-accent)" }}>{zone.number}</span>
-                {owned ? (
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: "0.74rem", fontWeight: 600, color: "var(--text-link)", whiteSpace: "nowrap" }}>
-                        <i className="ph ph-book-open" /> Read
+                <span
+                    role="button"
+                    tabIndex={0}
+                    aria-label={
+                        owned
+                            ? `Read the ${zone.name} field guide`
+                            : freePick
+                              ? `Claim the ${zone.name} field guide free`
+                              : `Unlock the ${zone.name} field guide for R25`
+                    }
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        (owned ? onRead : onUnlock)();
+                    }}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                            e.stopPropagation();
+                            (owned ? onRead : onUnlock)();
+                        }
+                    }}
+                    style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 4,
+                        fontSize: "0.74rem",
+                        fontWeight: 600,
+                        whiteSpace: "nowrap",
+                        padding: "0.35rem 0.5rem",
+                        margin: "-0.35rem -0.5rem",
+                        borderRadius: "var(--radius-sm)",
+                        color: owned ? "var(--text-link)" : freePick ? "var(--ochre-700)" : "var(--text-muted)",
+                    }}
+                >
+                    {owned ? (
+                        <>
+                            <i className="ph ph-book-open" /> Read
+                        </>
+                    ) : freePick ? (
+                        <>
+                            <i className="ph-fill ph-paw-print" /> Free pick
+                        </>
+                    ) : (
+                        <>
+                            <i className="ph ph-lock-simple" /> R25
+                        </>
+                    )}
+                </span>
+            </span>
+            <span style={{ flex: 1 }}>
+                <span style={{ display: "block", fontSize: "0.9rem", fontWeight: 600, color: owned ? "var(--text-primary)" : "var(--text-secondary)", lineHeight: 1.25, textDecoration: ruledOut ? "line-through" : "none" }}>
+                    {zone.name}
+                </span>
+                <span style={{ display: "block", fontSize: "0.72rem", color: "var(--text-muted)", marginTop: 2, lineHeight: 1.35 }}>{zone.subtitle}</span>
+            </span>
+            <span style={{ minHeight: 18 }}>
+                {mark === "suspect" && (
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: "0.7rem", fontWeight: 700, color: "var(--ochre-700)" }}>
+                        <i className="ph-fill ph-detective" /> Suspect
                     </span>
-                ) : freePick ? (
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: "0.74rem", fontWeight: 600, color: "var(--ochre-700)", whiteSpace: "nowrap" }}>
-                        <i className="ph-fill ph-paw-print" /> Free pick
-                    </span>
-                ) : (
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: "0.74rem", fontWeight: 600, color: "var(--text-muted)", whiteSpace: "nowrap" }}>
-                        <i className="ph ph-lock-simple" /> R25
+                )}
+                {ruledOut && (
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: "0.7rem", fontWeight: 700, color: "var(--text-muted)" }}>
+                        <i className="ph ph-prohibit" /> Ruled out
                     </span>
                 )}
             </span>
-            <span style={{ flex: 1 }}>
-                <span style={{ display: "block", fontSize: "0.9rem", fontWeight: 600, color: owned ? "var(--text-primary)" : "var(--text-secondary)", lineHeight: 1.25 }}>{zone.name}</span>
-                <span style={{ display: "block", fontSize: "0.72rem", color: "var(--text-muted)", marginTop: 2, lineHeight: 1.35 }}>{zone.subtitle}</span>
-            </span>
-        </button>
+        </div>
     );
 }
 
@@ -92,6 +151,11 @@ export default function JournalPage() {
     const player = useGameStore((s) => s.player);
     const freeGuideUsed = useGameStore((s) => s.freeGuideUsed);
     const claimFreeGuide = useGameStore((s) => s.claimFreeGuide);
+    const zoneMarks = useGameStore((s) => s.zoneMarks);
+    const cycleZoneMark = useGameStore((s) => s.cycleZoneMark);
+    const ruleOutZone = useGameStore((s) => s.ruleOutZone);
+    const [markedClueId, setMarkedClueId] = useState<string | null>(null);
+    const areaLeft = searchAreaKm2(zoneMarks);
     // Dotty's superpower: the matriarch knows the bush, so one guide pick is free.
     const freePickAvailable = Boolean(player && BUSH_WISE_DOGS.has(player.dogId) && !freeGuideUsed);
     const dogName = player?.dogName ?? "Your dog";
@@ -104,20 +168,26 @@ export default function JournalPage() {
                 {available.length} clue{available.length === 1 ? "" : "s"} in hand · {toCome} field clue{toCome === 1 ? "" : "s"} still to come.
             </p>
 
-            {/* Field guides */}
+            {/* Case board: mark zones and open their field guides */}
             <div style={{ margin: "var(--space-6) 0 0" }}>
-                <Eyebrow rule>Field guides</Eyebrow>
-                <p style={{ fontSize: "0.82rem", color: "var(--text-muted)", margin: "var(--space-2) 0 var(--space-3)" }}>
-                    Your first field guide is free: it unlocks for the ground where you drop your first pin. Tap a guide you own to read it. Unlock any other zone for R25.
-                    {freePickAvailable && ` ${dogName} knows this bush: the matriarch grants you one more guide free. Tap any zone to claim it.`}
+                <Eyebrow rule>Case board</Eyebrow>
+                <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.72rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-primary)", fontWeight: 700, margin: "var(--space-3) 0 0" }}>
+                    Search area: {areaLeft.toLocaleString("en-ZA")} km² of {PARK_AREA_KM2.toLocaleString("en-ZA")}
+                </div>
+                <p style={{ fontSize: "0.76rem", color: "var(--text-muted)", margin: "0.2rem 0 0" }}>Rule ground out to shrink the search.</p>
+                <p style={{ fontSize: "0.82rem", color: "var(--text-muted)", margin: "var(--space-3) 0 var(--space-3)" }}>
+                    Tap a zone to mark it suspect or rule it out. The book opens its field guide. Your first guide unlocked with your first pin; any other zone opens for R25.
+                    {freePickAvailable && ` ${dogName} knows this bush: the matriarch grants you one more guide free.`}
                 </p>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-2)" }}>
                     {ZONES.map((z) => (
-                        <GuideCard
+                        <CaseCard
                             key={z.id}
                             zone={z}
+                            mark={zoneMarks[z.id]}
                             owned={fieldGuides.includes(z.id)}
                             freePick={freePickAvailable}
+                            onCycle={() => cycleZoneMark(z.id)}
                             onRead={() => setGuideZone(z)}
                             onUnlock={() => {
                                 if (freePickAvailable) {
@@ -137,7 +207,29 @@ export default function JournalPage() {
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
                 {available.map((c) => (
-                    <ClueCard key={c.id} clue={c} />
+                    <ClueCard
+                        key={c.id}
+                        clue={c}
+                        action={
+                            c.kind === "elimination" ? (
+                                markedClueId === c.id || zoneMarks[c.zoneId] === "ruled-out" ? (
+                                    <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+                                        <i className="ph ph-check" style={{ marginRight: 5 }} /> Marked on your case board.
+                                    </span>
+                                ) : (
+                                    <button
+                                        onClick={() => {
+                                            ruleOutZone(c.zoneId);
+                                            setMarkedClueId(c.id);
+                                        }}
+                                        style={{ background: "none", border: "none", cursor: "pointer", padding: "0.2rem 0", fontSize: "0.8rem", fontWeight: 600, color: "var(--text-link)", display: "inline-flex", alignItems: "center", gap: 6 }}
+                                    >
+                                        <i className="ph ph-prohibit" /> Rule it out on your case board
+                                    </button>
+                                )
+                            ) : undefined
+                        }
+                    />
                 ))}
             </div>
 
@@ -170,7 +262,7 @@ export default function JournalPage() {
                     <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: 2, lineHeight: 1.45 }}>
                         {toCome === 0
                             ? "You have the full field-clue timeline. Work the kit for extra intel."
-                            : `${toCome} field clue${toCome === 1 ? "" : "s"} still to come. Each lands on its own, so keep tracking.`}
+                            : `${toCome} field clue${toCome === 1 ? "" : "s"} still to come. Each lands on its own day, so keep tracking.`}
                     </div>
                 </div>
             </div>

@@ -206,7 +206,7 @@ export default function CheckoutPage() {
                                 >
                                     <i className="ph-fill ph-book-open" style={{ fontSize: 20, color: "var(--teal-700)", marginTop: 2 }} />
                                     <span style={{ fontSize: "0.86rem", color: "var(--text-secondary)", lineHeight: 1.55 }}>
-                                        {item.name} is now open. Read it from the field guide chips on the map, or from the field guides in your journal.
+                                        {item.name} is open. Read it from the chips on the map or from your journal.
                                     </span>
                                 </div>
                             </div>
@@ -245,7 +245,7 @@ export default function CheckoutPage() {
                             >
                                 <i className="ph-fill ph-lock-key-open" style={{ fontSize: 20, color: "var(--ochre-700)", marginTop: 2 }} />
                                 <span style={{ fontSize: "0.86rem", color: "var(--text-secondary)", lineHeight: 1.55 }}>
-                                    Your pin is reopened. Head back to the hunt, move your ranger, and lock in once more.
+                                    Your pin is open again. Move your ranger, then lock in once more.
                                 </span>
                             </div>
                         )}

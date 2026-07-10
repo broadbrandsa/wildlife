@@ -4,6 +4,7 @@ import type { Zone, ZoneId } from "./types";
 export const ZONES: Zone[] = [
     {
         id: "far-north",
+        areaKm2: 975,
         number: 1,
         name: "Far North",
         subtitle: "Pafuri · Makuleke · Luvuvhu",
@@ -17,6 +18,7 @@ export const ZONES: Zone[] = [
     },
     {
         id: "punda-sandveld",
+        areaKm2: 1950,
         number: 2,
         name: "Northern Sandveld",
         subtitle: "Punda Maria · Mahonie Loop",
@@ -30,6 +32,7 @@ export const ZONES: Zone[] = [
     },
     {
         id: "mopane-shingwedzi",
+        areaKm2: 4870,
         number: 3,
         name: "Mopane Plains",
         subtitle: "Shingwedzi · Red Rocks",
@@ -43,6 +46,7 @@ export const ZONES: Zone[] = [
     },
     {
         id: "letaba-olifants",
+        areaKm2: 1365,
         number: 4,
         name: "Letaba & Olifants",
         subtitle: "The great gorge",
@@ -56,6 +60,7 @@ export const ZONES: Zone[] = [
     },
     {
         id: "central-basalt",
+        areaKm2: 3900,
         number: 5,
         name: "Central Plains",
         subtitle: "Satara · Orpen · S100",
@@ -69,6 +74,7 @@ export const ZONES: Zone[] = [
     },
     {
         id: "lebombo",
+        areaKm2: 1560,
         number: 6,
         name: "Lebombo Ridge",
         subtitle: "Nwanetsi · eastern border",
@@ -82,6 +88,7 @@ export const ZONES: Zone[] = [
     },
     {
         id: "southern-sabie",
+        areaKm2: 2925,
         number: 7,
         name: "Southern Sabie",
         subtitle: "Skukuza · Lower Sabie · leopard corridor",
@@ -95,6 +102,7 @@ export const ZONES: Zone[] = [
     },
     {
         id: "sw-granite",
+        areaKm2: 1940,
         number: 8,
         name: "South-West Granite",
         subtitle: "Pretoriuskop · Berg-en-Dal · Malelane",

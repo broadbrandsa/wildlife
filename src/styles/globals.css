@@ -66,7 +66,9 @@ ol {
     }
 }
 .kw-pin-drop {
-    animation: kw-pin-drop 520ms var(--ease-out) both;
+    /* backwards, not both: once the drop lands, the element's own transform
+       (which carries the zoom counter-scale) must take over */
+    animation: kw-pin-drop 520ms var(--ease-out) backwards;
 }
 
 @keyframes kw-spin {

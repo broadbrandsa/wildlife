@@ -30,6 +30,8 @@ export interface Zone {
     centroid: MapPoint;
     /** Wash colour key for the PhotoPlate / map fill. */
     wash: "bushveld" | "savanna" | "clay" | "dawn" | "sand";
+    /** Ground the zone covers, in km², for the case board's search area. */
+    areaKm2: number;
 }
 
 export type DogId = "storm" | "scout" | "banjo" | "dotty" | "pepper";
