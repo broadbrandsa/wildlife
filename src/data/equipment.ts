@@ -154,19 +154,32 @@ export const EQUIPMENT: Equipment[] = [
         unlocksClueId: "s03",
         realWorldNote: "Helicopter time supports live operations and rhino work. It is expensive, so aerial hours are reserved for when they count most.",
     },
+    {
+        id: "extra-lockin",
+        name: "Second lock-in",
+        tier: "hunt",
+        priceZar: 30,
+        description: "A fresh lock-in for a ranger who has changed their mind.",
+        effect: "Reopens your locked pin so you can move it and lock in once more. Your first lock-in is always free.",
+        fundedEquivalent: "About two days of food for one working dog",
+        icon: "lock-key-open",
+        realWorldNote: "In the field, a fresh radio call can move a whole team. Your donation feeds a dog while you get one more read on the ground.",
+        consumable: true,
+    },
 ];
 
 /**
- * Field guides. Players pick ONE free at sign-on (their starting area) and can
- * unlock the others here. Each guide opens a zone's full field guide (rock,
- * plants, animals, named places), the deduction toolkit that turns clues into a
- * place you can point to. Marking a zone on the case board stays free for all.
+ * Field guides. The FIRST guide is free: it unlocks automatically for the zone
+ * where the player drops their first pin (see the map page). Every other zone's
+ * guide can be unlocked here for R25. Each guide opens a zone's full field guide
+ * (rock, plants, animals, named places), the deduction toolkit that turns clues
+ * into a place you can point to.
  */
 export const GUIDES: Equipment[] = ZONES.map((z) => ({
     id: `guide-${z.id}`,
     name: `Field guide: ${z.name}`,
     tier: "care" as const,
-    priceZar: 60,
+    priceZar: 25,
     description: `${z.subtitle}. Its rock, plants, animals and named places.`,
     effect: `Opens the full field guide for ${z.name}, so you can read its terrain and rule it in or out with confidence.`,
     fundedEquivalent: "Field-ranger training materials",

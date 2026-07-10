@@ -43,6 +43,7 @@ function MapInner() {
     const pin = useGameStore((s) => s.pin);
     const moveRanger = useGameStore((s) => s.moveRanger);
     const lockPin = useGameStore((s) => s.lockPin);
+    const grantFieldGuide = useGameStore((s) => s.grantFieldGuide);
     const cluesUnlocked = useGameStore((s) => s.cluesUnlocked);
     const inventory = useGameStore((s) => s.inventory);
     const fieldGuides = useGameStore((s) => s.fieldGuides);
@@ -103,6 +104,8 @@ function MapInner() {
     const onPlace = (x: number, y: number) => {
         if (!canMove && pin) return; // out of moves today; existing pin stays put
         moveRanger(x, y, day);
+        // Your first field guide is free: unlock it for the ground you first pin.
+        if (fieldGuides.length === 0) grantFieldGuide(zoneAtPoint({ x, y }));
     };
 
     const onLockTap = () => {
@@ -296,14 +299,24 @@ function MapInner() {
                         {pin && !pin.locked && (
                             <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)", marginTop: 4 }}>
                                 {canMove
-                                    ? `You can move ${maxMoves - movesToday} more time${maxMoves - movesToday === 1 ? "" : "s"} today. Ties go to the earliest lock, so lock in when sure.`
+                                    ? `You can move ${maxMoves - movesToday} more time${maxMoves - movesToday === 1 ? "" : "s"} today. You lock in once, so lock in when you are sure. Ties go to the earliest lock.`
                                     : "You have moved as far as you can today. Lock in, or move again tomorrow."}
+                            </div>
+                        )}
+                        {pin?.locked && (
+                            <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)", marginTop: 4 }}>
+                                You get one lock-in. Changed your mind? A second lock-in from the kit reopens your pin to move once more.
                             </div>
                         )}
                     </div>
                     {pin && !pin.locked && (
                         <Button size="sm" variant={confirmLock ? "primary" : "secondary"} onClick={onLockTap}>
                             {confirmLock ? "Tap to confirm" : "Lock in"}
+                        </Button>
+                    )}
+                    {pin?.locked && (
+                        <Button size="sm" variant="secondary" onClick={() => router.push("/checkout/extra-lockin")}>
+                            Move again
                         </Button>
                     )}
                 </div>

@@ -61,60 +61,40 @@ function LockedRow({ clue, onAction }: { clue: Clue; onAction: () => void }) {
     );
 }
 
-/** Case board row: tap to cycle open → suspect → ruled out. */
-function CaseRow({ zone, owned, onOpenGuide, onLockedGuide }: { zone: Zone; owned: boolean; onOpenGuide: () => void; onLockedGuide: () => void }) {
-    const mark = useGameStore((s) => s.zoneMarks[zone.id]);
-    const cycleZoneMark = useGameStore((s) => s.cycleZoneMark);
-
-    const meta =
-        mark === "suspect"
-            ? { icon: "crosshair", color: "var(--ochre-700)", bg: "var(--ochre-100)", bd: "var(--ochre-200)", label: "Suspect" }
-            : mark === "eliminated"
-              ? { icon: "prohibit", color: "var(--text-muted)", bg: "var(--surface-sunken)", bd: "var(--border-subtle)", label: "Ruled out" }
-              : { icon: "circle", color: "var(--text-muted)", bg: "var(--surface-card)", bd: "var(--border-subtle)", label: "Open" };
-
+/** Field guide row: tap to read it if owned, otherwise unlock it in the kit room. */
+function GuideRow({ zone, owned, onRead, onUnlock }: { zone: Zone; owned: boolean; onRead: () => void; onUnlock: () => void }) {
     return (
-        <div
+        <button
+            onClick={owned ? onRead : onUnlock}
+            aria-label={owned ? `Read the ${zone.name} field guide` : `Unlock the ${zone.name} field guide for R25`}
             style={{
+                width: "100%",
+                textAlign: "left",
+                cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
                 gap: "var(--space-3)",
-                background: meta.bg,
-                border: `1px solid ${meta.bd}`,
+                background: owned ? "var(--surface-card)" : "var(--surface-sunken)",
+                border: `1px solid ${owned ? "var(--border-subtle)" : "var(--border-default)"}`,
                 borderRadius: "var(--radius-md)",
-                padding: "0.55rem var(--space-3) 0.55rem var(--space-4)",
+                padding: "0.6rem var(--space-4)",
             }}
         >
-            <button
-                onClick={() => cycleZoneMark(zone.id)}
-                aria-label={`Mark ${zone.name}`}
-                style={{ flex: 1, display: "flex", alignItems: "center", gap: "var(--space-3)", background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0 }}
-            >
-                <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.7rem", color: "var(--text-accent)", width: 14 }}>{zone.number}</span>
-                <span
-                    style={{
-                        flex: 1,
-                        fontSize: "0.88rem",
-                        fontWeight: 600,
-                        color: mark === "eliminated" ? "var(--text-muted)" : "var(--text-primary)",
-                        textDecoration: mark === "eliminated" ? "line-through" : "none",
-                    }}
-                >
-                    {zone.name}
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.7rem", color: "var(--text-accent)", width: 14 }}>{zone.number}</span>
+            <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ display: "block", fontSize: "0.88rem", fontWeight: 600, color: owned ? "var(--text-primary)" : "var(--text-secondary)" }}>{zone.name}</span>
+                <span style={{ display: "block", fontSize: "0.72rem", color: "var(--text-muted)" }}>{zone.subtitle}</span>
+            </span>
+            {owned ? (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: "0.76rem", fontWeight: 600, color: "var(--text-link)", whiteSpace: "nowrap" }}>
+                    <i className="ph ph-book-open" /> Read
                 </span>
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontFamily: "var(--font-mono)", fontSize: "0.6rem", letterSpacing: "0.1em", textTransform: "uppercase", color: meta.color }}>
-                    <i className={`ph${mark === "suspect" ? "-fill" : ""} ph-${meta.icon}`} style={{ fontSize: 14 }} />
-                    {meta.label}
+            ) : (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: "0.76rem", fontWeight: 600, color: "var(--text-muted)", whiteSpace: "nowrap" }}>
+                    <i className="ph ph-lock-simple" /> R25
                 </span>
-            </button>
-            <button
-                onClick={owned ? onOpenGuide : onLockedGuide}
-                aria-label={owned ? `Field guide for ${zone.name}` : `Unlock the field guide for ${zone.name}`}
-                style={{ background: "none", border: "none", cursor: "pointer", color: owned ? "var(--text-link)" : "var(--text-muted)", fontSize: 17, padding: "0.2rem" }}
-            >
-                <i className={`ph ph-${owned ? "book-open" : "lock-simple"}`} />
-            </button>
-        </div>
+            )}
+        </button>
     );
 }
 
@@ -138,9 +118,7 @@ export default function JournalPage() {
         return { available, locked };
     }, [cluesUnlocked, day]);
 
-    const marks = useGameStore((s) => s.zoneMarks);
     const fieldGuides = useGameStore((s) => s.fieldGuides);
-    const openCount = ZONES.length - Object.values(marks).filter((m) => m === "eliminated").length;
 
     return (
         <div style={{ padding: "var(--space-6) var(--gutter) var(--space-7)" }}>
@@ -153,22 +131,20 @@ export default function JournalPage() {
                 <i className="ph ph-timer" /> {nextClueLabel(day)}
             </div>
 
-            {/* Case board */}
+            {/* Field guides */}
             <div style={{ margin: "var(--space-6) 0 0" }}>
-                <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
-                    <Eyebrow rule>Case board</Eyebrow>
-                </div>
+                <Eyebrow rule>Field guides</Eyebrow>
                 <p style={{ fontSize: "0.82rem", color: "var(--text-muted)", margin: "var(--space-2) 0 var(--space-3)" }}>
-                    Tap a zone to mark your verdict. {openCount} of {ZONES.length} still open. The book opens its field guide; a lock means you can unlock that guide in the kit room.
+                    Your first field guide is free: it unlocks for the ground where you drop your first pin. Tap a guide you own to read it. Unlock any other zone for R25.
                 </p>
                 <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
                     {ZONES.map((z) => (
-                        <CaseRow
+                        <GuideRow
                             key={z.id}
                             zone={z}
                             owned={fieldGuides.includes(z.id)}
-                            onOpenGuide={() => setGuideZone(z)}
-                            onLockedGuide={() => router.push("/shop")}
+                            onRead={() => setGuideZone(z)}
+                            onUnlock={() => router.push(`/checkout/guide-${z.id}`)}
                         />
                     ))}
                 </div>

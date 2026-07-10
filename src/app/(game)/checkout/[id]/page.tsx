@@ -206,9 +206,28 @@ export default function CheckoutPage() {
                                 >
                                     <i className="ph-fill ph-book-open" style={{ fontSize: 20, color: "var(--teal-700)", marginTop: 2 }} />
                                     <span style={{ fontSize: "0.86rem", color: "var(--text-secondary)", lineHeight: 1.55 }}>
-                                        {item.name} is now open. Read it from the field guide chips on the map, or from the case board in your journal.
+                                        {item.name} is now open. Read it from the field guide chips on the map, or from the field guides in your journal.
                                     </span>
                                 </div>
+                            </div>
+                        )}
+
+                        {item.id === "extra-lockin" && (
+                            <div
+                                style={{
+                                    display: "flex",
+                                    gap: "var(--space-3)",
+                                    alignItems: "flex-start",
+                                    background: "var(--ochre-100)",
+                                    border: "1px solid var(--ochre-200)",
+                                    borderRadius: "var(--radius-lg)",
+                                    padding: "var(--space-4)",
+                                }}
+                            >
+                                <i className="ph-fill ph-lock-key-open" style={{ fontSize: 20, color: "var(--ochre-700)", marginTop: 2 }} />
+                                <span style={{ fontSize: "0.86rem", color: "var(--text-secondary)", lineHeight: 1.55 }}>
+                                    Your pin is reopened. Head back to the hunt, move your ranger, and lock in once more.
+                                </span>
                             </div>
                         )}
 

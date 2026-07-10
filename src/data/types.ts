@@ -77,6 +77,8 @@ export interface Equipment {
     unlocksFieldGuideZoneId?: ZoneId;
     /** Short factual note on how the real SAWC K9 unit uses this item. */
     realWorldNote?: string;
+    /** Consumable: not kept in inventory, can be bought repeatedly (e.g. a second lock-in). */
+    consumable?: boolean;
 }
 
 export type ClueCategory =

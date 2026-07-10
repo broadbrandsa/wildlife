@@ -4,8 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { DOGS, RANGERS, ZONES } from "@/data";
-import type { ZoneId } from "@/data";
+import { DOGS, RANGERS } from "@/data";
 import { Button, Eyebrow, Field } from "@/components/ds";
 import { PhoneStage } from "@/components/game/PhoneStage";
 import { useGameStore } from "@/store/game";
@@ -21,7 +20,7 @@ const ORIGIN = [
 ];
 const HERO_CARD = "Welcome to the K9 Unit.";
 
-type Step = "age" | "parent" | "name" | "origin" | "ranger" | "dog" | "guide";
+type Step = "age" | "parent" | "name" | "origin" | "ranger" | "dog";
 
 function ProgressDots({ index, total }: { index: number; total: number }) {
     return (
@@ -45,7 +44,6 @@ function ProgressDots({ index, total }: { index: number; total: number }) {
 export default function OnboardingPage() {
     const router = useRouter();
     const setPlayer = useGameStore((s) => s.setPlayer);
-    const grantFieldGuide = useGameStore((s) => s.grantFieldGuide);
 
     const [step, setStep] = useState<Step>("age");
     const [birthYear, setBirthYear] = useState("");
@@ -55,7 +53,6 @@ export default function OnboardingPage() {
     const [rangerId, setRangerId] = useState<string | null>(null);
     const [dogId, setDogId] = useState<string | null>(null);
     const [dogName, setDogName] = useState("");
-    const [startZone, setStartZone] = useState<ZoneId | null>(null);
     const [error, setError] = useState("");
 
     // Selecting a dog suggests its reference name, but keeps a custom one if typed.
@@ -68,8 +65,8 @@ export default function OnboardingPage() {
     const age = birthYear ? THIS_YEAR - Number(birthYear) : null;
     const isMinor = age != null && age < 18;
     const steps: Step[] = isMinor
-        ? ["age", "parent", "name", "origin", "ranger", "dog", "guide"]
-        : ["age", "name", "origin", "ranger", "dog", "guide"];
+        ? ["age", "parent", "name", "origin", "ranger", "dog"]
+        : ["age", "name", "origin", "ranger", "dog"];
     const stepIndex = steps.indexOf(step);
 
     const submitAge = () => {
@@ -101,7 +98,7 @@ export default function OnboardingPage() {
     };
 
     const finish = () => {
-        if (!rangerId || !dogId || !startZone) return;
+        if (!rangerId || !dogId) return;
         const dogFallback = DOGS.find((d) => d.id === dogId)?.name ?? "Your dog";
         setPlayer({
             id: crypto.randomUUID(),
@@ -112,7 +109,7 @@ export default function OnboardingPage() {
             dogName: dogName.trim() || dogFallback,
             parentEmail: isMinor ? parentEmail : undefined,
         });
-        grantFieldGuide(startZone);
+        // The first field guide is unlocked free when the player drops their first pin.
         router.replace("/map?welcome=1");
     };
 
@@ -361,55 +358,7 @@ export default function OnboardingPage() {
                                 hint="This is what we'll call your dog in the game. Keep the suggestion or make it your own."
                             />
                         )}
-                        <Button size="lg" fullWidth disabled={!dogId || !dogName.trim()} onClick={() => setStep("guide")} iconRight={<i className="ph ph-arrow-right" />}>
-                            Choose where to start
-                        </Button>
-                    </div>
-                )}
-
-                {step === "guide" && (
-                    <div className="kw-rise" style={{ display: "flex", flexDirection: "column", gap: "var(--space-5)" }}>
-                        <div>
-                            <Eyebrow>Your starting ground</Eyebrow>
-                            <h1 style={{ fontSize: "var(--text-h2)", margin: "var(--space-3) 0 0" }}>Where do you know best?</h1>
-                            <p style={{ color: "var(--text-secondary)", marginTop: "var(--space-2)" }}>
-                                Pick one area to start. You get its field guide free: the rock, plants, animals and named places that let you read the clues for that ground. You can unlock the other guides later in the kit room.
-                            </p>
-                        </div>
-
-                        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
-                            {ZONES.map((z) => {
-                                const on = startZone === z.id;
-                                return (
-                                    <button
-                                        key={z.id}
-                                        onClick={() => setStartZone(z.id)}
-                                        style={{
-                                            textAlign: "left",
-                                            cursor: "pointer",
-                                            display: "flex",
-                                            alignItems: "center",
-                                            gap: "var(--space-3)",
-                                            background: on ? "var(--accent-soft)" : "var(--surface-card)",
-                                            border: `1.5px solid ${on ? "var(--ochre-500)" : "var(--border-subtle)"}`,
-                                            borderRadius: "var(--radius-lg)",
-                                            padding: "var(--space-3) var(--space-4)",
-                                            boxShadow: on ? "0 0 0 3px var(--ochre-100)" : "var(--shadow-xs)",
-                                            transition: "all var(--dur-fast) var(--ease-out)",
-                                        }}
-                                    >
-                                        <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.72rem", color: "var(--text-accent)", width: 16 }}>{z.number}</span>
-                                        <span style={{ flex: 1, minWidth: 0 }}>
-                                            <strong style={{ fontFamily: "var(--font-serif)", fontSize: "1.05rem", display: "block" }}>{z.name}</strong>
-                                            <span style={{ fontSize: "0.74rem", color: "var(--text-muted)" }}>{z.subtitle}</span>
-                                        </span>
-                                        {on && <i className="ph-fill ph-check-circle" style={{ color: "var(--ochre-600)", fontSize: 20 }} />}
-                                    </button>
-                                );
-                            })}
-                        </div>
-
-                        <Button size="lg" fullWidth disabled={!startZone} onClick={finish} iconRight={<i className="ph ph-paw-print" />}>
+                        <Button size="lg" fullWidth disabled={!dogId || !dogName.trim()} onClick={finish} iconRight={<i className="ph ph-paw-print" />}>
                             Begin the hunt
                         </Button>
                     </div>

@@ -39,9 +39,6 @@ export type RedeemResult =
     | { ok: true; unlockType: string; payloadId: string; creditLine: string }
     | { ok: false; reason: "unknown" | "used" | "expired" };
 
-/** Case-board verdict a player has recorded against a zone. */
-export type ZoneMark = "suspect" | "eliminated";
-
 interface GameState {
     hasHydrated: boolean;
     player: Player | null;
@@ -54,7 +51,6 @@ interface GameState {
     donations: Donation[];
     donationsTotal: number;
     notifyAsked: boolean;
-    zoneMarks: Partial<Record<ZoneId, ZoneMark>>;
     /** How many times the ranger has been moved on a given round day. */
     pinMovesToday: { day: number; count: number } | null;
     /** Demo-only day override, driven by the profile page scrubber. */
@@ -72,7 +68,6 @@ interface GameState {
     grantFieldGuide: (zoneId: ZoneId) => void;
     redeemCode: (raw: string) => RedeemResult;
     setNotifyAsked: () => void;
-    cycleZoneMark: (zoneId: ZoneId) => void;
     setDemoDay: (day: number | null) => void;
     reset: () => void;
 }
@@ -90,7 +85,6 @@ const initial = {
     donations: [] as Donation[],
     donationsTotal: 0,
     notifyAsked: false,
-    zoneMarks: {} as Partial<Record<ZoneId, ZoneMark>>,
     pinMovesToday: null as { day: number; count: number } | null,
     demoDay: null as number | null,
 };
@@ -151,12 +145,16 @@ export const useGameStore = create<GameState>()(
                     const guides = item?.unlocksFieldGuideZoneId
                         ? [...new Set([...s.fieldGuides, item.unlocksFieldGuideZoneId])]
                         : s.fieldGuides;
+                    // A second lock-in reopens the pin and hands back a move; it is not kept in inventory.
+                    const reopen = equipmentId === "extra-lockin";
                     return {
-                        inventory: [...new Set([...s.inventory, equipmentId])],
+                        inventory: item?.consumable ? s.inventory : [...new Set([...s.inventory, equipmentId])],
                         cluesUnlocked: clues,
                         fieldGuides: guides,
                         donations: [donation, ...s.donations],
                         donationsTotal: s.donationsTotal + donation.amountZar,
+                        pin: reopen && s.pin ? { ...s.pin, locked: false } : s.pin,
+                        pinMovesToday: reopen ? null : s.pinMovesToday,
                     };
                 });
                 return donation;
@@ -190,18 +188,6 @@ export const useGameStore = create<GameState>()(
             },
 
             setNotifyAsked: () => set({ notifyAsked: true }),
-
-            // open → suspect → eliminated → open
-            cycleZoneMark: (zoneId) =>
-                set((s) => {
-                    const cur = s.zoneMarks[zoneId];
-                    const next: ZoneMark | undefined =
-                        cur === undefined ? "suspect" : cur === "suspect" ? "eliminated" : undefined;
-                    const zoneMarks = { ...s.zoneMarks };
-                    if (next) zoneMarks[zoneId] = next;
-                    else delete zoneMarks[zoneId];
-                    return { zoneMarks };
-                }),
 
             setDemoDay: (day) => set({ demoDay: day }),
 

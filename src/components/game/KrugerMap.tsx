@@ -55,6 +55,7 @@ interface KrugerMapProps {
 
 export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, target = null, maxScale = 4, showThirds = false }: KrugerMapProps) {
     const down = useRef<{ x: number; y: number } | null>(null);
+    const svgRef = useRef<SVGSVGElement>(null);
 
     const handlePointerDown = (e: React.PointerEvent) => {
         down.current = { x: e.clientX, y: e.clientY };
@@ -65,9 +66,16 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
         const moved = Math.hypot(e.clientX - down.current.x, e.clientY - down.current.y);
         down.current = null;
         if (moved > 6) return; // it was a pan, not a tap
-        const rect = e.currentTarget.getBoundingClientRect();
-        const x = Math.min(Math.max((e.clientX - rect.left) / rect.width, 0), 1);
-        const y = Math.min(Math.max((e.clientY - rect.top) / rect.height, 0), 1);
+        // Convert the tap through the SVG's own coordinate matrix so it stays
+        // accurate under any pan/zoom (getScreenCTM folds in the transform and
+        // the preserveAspectRatio letterboxing). Fractions are of the viewBox.
+        const svg = svgRef.current;
+        if (!svg) return;
+        const ctm = svg.getScreenCTM();
+        if (!ctm) return;
+        const local = new DOMPoint(e.clientX, e.clientY).matrixTransform(ctm.inverse());
+        const x = Math.min(Math.max(local.x / VW, 0), 1);
+        const y = Math.min(Math.max(local.y / VH, 0), 1);
         onPlace(x, y);
     };
 
@@ -92,7 +100,7 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                     onPointerUp={handlePointerUp}
                     style={{ position: "relative", height: "100%", aspectRatio: `${VW} / ${VH}`, touchAction: "none" }}
                 >
-                    <svg viewBox={`0 0 ${VW} ${VH}`} width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+                    <svg ref={svgRef} viewBox={`0 0 ${VW} ${VH}`} width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
                         <defs>
                             <clipPath id="park-clip">
                                 <path d={PARK_PATH} />
@@ -362,11 +370,6 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                     {showThirds && (
                         <LegendKey label="Thirds">
                             <span style={{ width: 12, height: 0, borderTop: "1.5px dashed var(--sand-600)", display: "inline-block" }} />
-                        </LegendKey>
-                    )}
-                    {target && (
-                        <LegendKey label="Suspect">
-                            <i className="ph-fill ph-campfire" style={{ color: "var(--ochre-600)", fontSize: 11 }} />
                         </LegendKey>
                     )}
                 </div>
