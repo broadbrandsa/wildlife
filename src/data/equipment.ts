@@ -29,17 +29,6 @@ export const EQUIPMENT: Equipment[] = [
         realWorldNote: "Every SAWC dog wears a plain collar around the kennels. The working collar, out on a deployment, is the GPS one.",
     },
     {
-        id: "field-map",
-        name: "Field map",
-        tier: "free",
-        priceZar: 0,
-        description: "The base map of the lowveld.",
-        effect: "Shows all eight zones. This is your starting view for placing a pin.",
-        fundedEquivalent: "Included",
-        icon: "map-trifold",
-        realWorldNote: "Handlers and rangers plan every deployment off detailed maps of their section of the park.",
-    },
-    {
         id: "pro-binoculars",
         name: "Field binoculars",
         tier: "hunt",

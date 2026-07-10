@@ -78,7 +78,7 @@ const uuid = () =>
 const initial = {
     player: null as Player | null,
     pin: null as Pin | null,
-    inventory: ["standard-collar", "field-map"],
+    inventory: ["standard-collar"],
     cluesUnlocked: [] as string[],
     redeemedCodes: [] as string[],
     fieldGuides: [] as ZoneId[],
