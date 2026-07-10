@@ -249,40 +249,56 @@ function MapInner() {
                 )}
             </div>
 
-            {/* Field guide chips: owned zones open the guide, others send you to the kit room */}
+            {/* Field guide chips: only the guides you hold, plus a link to unlock more */}
             <div style={{ padding: "var(--space-3) 0 0", background: "var(--surface-page)" }}>
-                <div style={{ display: "flex", gap: "var(--space-2)", overflowX: "auto", padding: "0 var(--gutter)", scrollbarWidth: "none" }}>
-                    <span style={{ flex: "none", alignSelf: "center", fontFamily: "var(--font-mono)", fontSize: "0.6rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--text-muted)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", overflowX: "auto", padding: "0 var(--gutter)", scrollbarWidth: "none" }}>
+                    <span style={{ flex: "none", fontFamily: "var(--font-mono)", fontSize: "0.6rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--text-muted)" }}>
                         Field guides
                     </span>
-                    {ZONES.map((z) => {
-                        const owned = fieldGuides.includes(z.id);
-                        return (
-                            <button
-                                key={z.id}
-                                onClick={() => (owned ? setGuideZone(z) : router.push("/shop"))}
-                                style={{
-                                    flex: "none",
-                                    border: "1px solid var(--border-default)",
-                                    background: owned ? "var(--surface-card)" : "var(--surface-sunken)",
-                                    borderRadius: "var(--radius-pill)",
-                                    padding: "0.3rem 0.75rem",
-                                    fontSize: "0.74rem",
-                                    fontWeight: 600,
-                                    color: owned ? "var(--text-secondary)" : "var(--text-muted)",
-                                    cursor: "pointer",
-                                    whiteSpace: "nowrap",
-                                }}
-                            >
-                                {owned ? (
-                                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.64rem", color: "var(--text-accent)", marginRight: 5 }}>{z.number}</span>
-                                ) : (
-                                    <i className="ph ph-lock-simple" style={{ marginRight: 5, fontSize: 12 }} />
-                                )}
-                                {z.name}
-                            </button>
-                        );
-                    })}
+                    {ZONES.filter((z) => fieldGuides.includes(z.id)).map((z) => (
+                        <button
+                            key={z.id}
+                            onClick={() => setGuideZone(z)}
+                            style={{
+                                flex: "none",
+                                border: "1px solid var(--border-default)",
+                                background: "var(--surface-card)",
+                                borderRadius: "var(--radius-pill)",
+                                padding: "0.3rem 0.75rem",
+                                fontSize: "0.74rem",
+                                fontWeight: 600,
+                                color: "var(--text-secondary)",
+                                cursor: "pointer",
+                                whiteSpace: "nowrap",
+                            }}
+                        >
+                            <i className="ph ph-book-open" style={{ marginRight: 5, fontSize: 12, color: "var(--text-accent)" }} />
+                            {z.name}
+                        </button>
+                    ))}
+                    {fieldGuides.length === 0 && (
+                        <span style={{ flex: "none", fontSize: "0.74rem", color: "var(--text-muted)" }}>
+                            Your first guide unlocks with your first pin.
+                        </span>
+                    )}
+                    {fieldGuides.length < ZONES.length && (
+                        <button
+                            onClick={() => router.push("/journal")}
+                            style={{
+                                flex: "none",
+                                border: "none",
+                                background: "none",
+                                padding: "0.3rem 0.2rem",
+                                fontSize: "0.74rem",
+                                fontWeight: 600,
+                                color: "var(--text-link)",
+                                cursor: "pointer",
+                                whiteSpace: "nowrap",
+                            }}
+                        >
+                            Unlock more <i className="ph ph-arrow-right" />
+                        </button>
+                    )}
                 </div>
             </div>
 

@@ -19,6 +19,7 @@ import { ZONES } from "./zones";
 export const EQUIPMENT: Equipment[] = [
     {
         id: "standard-collar",
+        kitCategory: "dog",
         name: "Standard collar",
         tier: "free",
         priceZar: 0,
@@ -30,6 +31,7 @@ export const EQUIPMENT: Equipment[] = [
     },
     {
         id: "pro-binoculars",
+        kitCategory: "ranger",
         name: "Field binoculars",
         tier: "hunt",
         priceZar: 100,
@@ -41,6 +43,7 @@ export const EQUIPMENT: Equipment[] = [
     },
     {
         id: "topo-map",
+        kitCategory: "ranger",
         name: "Topographic overlay",
         tier: "hunt",
         priceZar: 200,
@@ -53,6 +56,7 @@ export const EQUIPMENT: Equipment[] = [
     },
     {
         id: "gps-collar",
+        kitCategory: "dog",
         name: "GPS tracking collar",
         tier: "hunt",
         priceZar: 250,
@@ -65,6 +69,7 @@ export const EQUIPMENT: Equipment[] = [
     },
     {
         id: "field-radio",
+        kitCategory: "ranger",
         name: "Field radio",
         tier: "hunt",
         priceZar: 300,
@@ -76,6 +81,7 @@ export const EQUIPMENT: Equipment[] = [
     },
     {
         id: "ranger-boots",
+        kitCategory: "ranger",
         name: "Ranger patrol boots",
         tier: "hunt",
         priceZar: 350,
@@ -87,6 +93,7 @@ export const EQUIPMENT: Equipment[] = [
     },
     {
         id: "ranger-compass",
+        kitCategory: "ranger",
         name: "Ranger's compass",
         tier: "hunt",
         priceZar: 500,
@@ -98,6 +105,7 @@ export const EQUIPMENT: Equipment[] = [
     },
     {
         id: "monthly-healthcare",
+        kitCategory: "dog",
         name: "Monthly K9 healthcare",
         tier: "care",
         priceZar: 500,
@@ -109,6 +117,7 @@ export const EQUIPMENT: Equipment[] = [
     },
     {
         id: "plane-flyover",
+        kitCategory: "air",
         name: "Aerial patrol hour",
         tier: "big-ticket",
         priceZar: 1850,
@@ -121,6 +130,7 @@ export const EQUIPMENT: Equipment[] = [
     },
     {
         id: "ranger-gps",
+        kitCategory: "ranger",
         name: "Handheld GPS",
         tier: "big-ticket",
         priceZar: 2400,
@@ -133,6 +143,7 @@ export const EQUIPMENT: Equipment[] = [
     },
     {
         id: "helicopter-recon",
+        kitCategory: "air",
         name: "Helicopter recon",
         tier: "big-ticket",
         priceZar: 15000,
@@ -145,6 +156,7 @@ export const EQUIPMENT: Equipment[] = [
     },
     {
         id: "extra-lockin",
+        kitCategory: "ranger",
         name: "Second lock-in",
         tier: "hunt",
         priceZar: 30,

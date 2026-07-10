@@ -62,10 +62,15 @@ export interface Ranger {
 
 export type EquipmentTier = "free" | "care" | "hunt" | "big-ticket";
 
+/** Who or what a kit item equips, for the kit room's chooser. */
+export type KitCategory = "ranger" | "dog" | "air";
+
 export interface Equipment {
     id: string;
     name: string;
     tier: EquipmentTier;
+    /** Which side of the team this equips (kit room section). Field guides omit it. */
+    kitCategory?: KitCategory;
     priceZar: number;
     description: string;
     effect: string;
