@@ -58,6 +58,10 @@ interface GameState {
     pinMovesToday: { day: number; count: number } | null;
     /** Demo-only day override, driven by the profile page scrubber. */
     demoDay: number | null;
+    /** The pin.updatedAt whose scent read the player has opened (dog badge). */
+    scentSeenAt: string | null;
+    /** The round day on which the player last opened the clue panel (clue badge). */
+    cluesSeenDay: number | null;
 
     setHasHydrated: (v: boolean) => void;
     setPlayer: (player: Player) => void;
@@ -74,6 +78,10 @@ interface GameState {
     redeemCode: (raw: string) => RedeemResult;
     setNotifyAsked: () => void;
     setDemoDay: (day: number | null) => void;
+    /** Clear the dog badge: the current pin's scent read has been opened. */
+    markScentSeen: () => void;
+    /** Clear the clue badge for this round day. */
+    markCluesSeen: (day: number) => void;
     reset: () => void;
 }
 
@@ -93,6 +101,8 @@ const initial = {
     notifyAsked: false,
     pinMovesToday: null as { day: number; count: number } | null,
     demoDay: null as number | null,
+    scentSeenAt: null as string | null,
+    cluesSeenDay: null as number | null,
 };
 
 export const useGameStore = create<GameState>()(
@@ -207,6 +217,10 @@ export const useGameStore = create<GameState>()(
             setNotifyAsked: () => set({ notifyAsked: true }),
 
             setDemoDay: (day) => set({ demoDay: day }),
+
+            markScentSeen: () => set((s) => ({ scentSeenAt: s.pin?.updatedAt ?? null })),
+
+            markCluesSeen: (day) => set({ cluesSeenDay: day }),
 
             reset: () => set({ ...initial }),
         }),

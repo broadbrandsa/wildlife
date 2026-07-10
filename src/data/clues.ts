@@ -13,7 +13,7 @@ import type { Clue } from "./types";
  * IDs match the spreadsheet (f01-f20 free, s01-s10 paid).
  */
 export const CLUES: Clue[] = [
-    // ---------- TIER 1: entry, north vs south (days 1-14) ----------
+    // ---------- TIER 1: entry, north vs south (days 1-7) ----------
     {
         id: "f01",
         source: "free",
@@ -67,7 +67,7 @@ export const CLUES: Clue[] = [
             "The Sabie means fearful in Tsonga and supports 49 fish species, the most of any river in Kruger. The road along it is rated among the best game-viewing roads in Africa.",
     },
 
-    // ---------- TIER 2: narrow within the south (days 19-34) ----------
+    // ---------- TIER 2: narrow within the south (days 10-17) ----------
     {
         id: "f05",
         source: "free",
@@ -121,7 +121,7 @@ export const CLUES: Clue[] = [
             "The sourveld around Pretoriuskop, the oldest rest camp, carries Kruger's best population of sable antelope, whose horns can sweep back over a metre.",
     },
 
-    // ---------- TIER 3: the Skukuza and Sabie area (days 39-54) ----------
+    // ---------- TIER 3: the Skukuza and Sabie area (days 20-27) ----------
     {
         id: "f09",
         source: "free",
@@ -175,7 +175,7 @@ export const CLUES: Clue[] = [
             "The southern ground hornbill, near-threatened and turkey-sized, favours the open woodlands of central and southern Kruger around Satara, Tshokwane and Lower Sabie.",
     },
 
-    // ---------- TIER 4: features around the koppie (days 59-69) ----------
+    // ---------- TIER 4: features around the koppie (days 30-35) ----------
     {
         id: "f13",
         source: "free",
@@ -216,7 +216,7 @@ export const CLUES: Clue[] = [
             "The name means place of jigger fleas in Tsonga. The jigger, or sand flea, burrows into skin, a hazard the old travellers knew well.",
     },
 
-    // ---------- TIER 5: triangulate onto the dome (days 74-90) ----------
+    // ---------- TIER 5: triangulate onto the dome (days 37-43) ----------
     {
         id: "f16",
         source: "free",
@@ -237,7 +237,7 @@ export const CLUES: Clue[] = [
         difficulty: "pinpoint",
         kind: "trail",
         tier: 5,
-        releaseDay: 39,
+        releaseDay: 38,
         zoneId: "southern-sabie",
         body: "Put it together. A lone granite lookout dome. South of the sweeping-warden's camp. West of the fearful river. Within sight of the little-hills koppie where the warden's ashes lie.",
         didYouKnow:
@@ -250,7 +250,7 @@ export const CLUES: Clue[] = [
         difficulty: "pinpoint",
         kind: "trail",
         tier: 5,
-        releaseDay: 41,
+        releaseDay: 40,
         zoneId: "southern-sabie",
         body: "From the fire the suspect can see the Sabie's dark tree-line to the north, and low granite hills rolling away south toward the crocodile-river border.",
         didYouKnow:
@@ -263,7 +263,7 @@ export const CLUES: Clue[] = [
         difficulty: "pinpoint",
         kind: "trail",
         tier: 5,
-        releaseDay: 43,
+        releaseDay: 42,
         zoneId: "southern-sabie",
         body: "Field teams have ringed a single bald koppie between the two southern camps. The scent always returns to its rocky crown.",
         didYouKnow:
@@ -276,7 +276,7 @@ export const CLUES: Clue[] = [
         difficulty: "pinpoint",
         kind: "trail",
         tier: 5,
-        releaseDay: 45,
+        releaseDay: 43,
         zoneId: "southern-sabie",
         body: "The hunt ends where the oldest rock in Africa breaks the surface, at a flea-named lookout dome the tourists climb for the view, south of the great camp. Drop your pin on its crown.",
         didYouKnow:

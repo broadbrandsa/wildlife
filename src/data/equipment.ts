@@ -24,7 +24,7 @@ export const EQUIPMENT: Equipment[] = [
         tier: "free",
         priceZar: 0,
         description: "Your dog's everyday leather collar. Your team is on the board.",
-        effect: "Starter kit. Upgrade to the GPS collar to read your dog's track.",
+        effect: "Standard issue for every dog on the roster. It does not change the hunt on its own; the paid kit below does.",
         fundedEquivalent: "Included",
         icon: "circle",
         realWorldNote: "Every SAWC dog wears a plain collar around the kennels. The working collar, out on a deployment, is the GPS one.",
