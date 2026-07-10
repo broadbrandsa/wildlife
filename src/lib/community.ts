@@ -47,26 +47,27 @@ export function pinsLocked(day: number): number {
     return Math.round(rangersHunting(day) * frac);
 }
 
+/** The ops-room report counts rangers inside this ring around the suspect. */
+export const NEAR_TARGET_KM = 15;
+
 /**
- * Ops-room pressure line: how close the nearest ranger in the whole game is to
- * the suspect. Anonymous by design, and it never confirms a leader: when the
- * player's own pin is closer than the simulated field, the report shows a
- * phantom rival a stride ahead of them instead, so the closest player can
- * never tell from this line that they are the closest.
+ * Ops-room pressure line: how many rangers are within NEAR_TARGET_KM of the
+ * suspect, and how many of those have locked in. One shared, day-seeded number:
+ * every player sees exactly the same report on the same day, and the player's
+ * own pin never feeds into it, so nothing shown is ever tailored or misleading.
+ *
+ * Production: replace with a real server aggregate over live player pins
+ * (count pins within NEAR_TARGET_KM of the target, and their locked flags).
  */
-export function closestRival(day: number, playerKm: number | null): { km: number; locked: boolean } {
-    // The field tightens through the round: roughly 160 km out on day 1,
-    // closing toward 10 km in the final week, with a daily wobble so some days
-    // the gap holds and other days it jumps.
+export function rangersNearTarget(day: number): { count: number; locked: number } {
     const t = clamp01((day - 1) / (ROUND.durationDays - 1));
-    const base = 10 + 150 * Math.pow(1 - t, 1.8);
-    const wobble = 1 + (dayNoise(day * 7 + 1) - 0.5) * 0.24;
-    let km = base * wobble;
-    // Never confirm the leader: someone always breathes down the leader's neck.
-    if (playerKm != null && playerKm < km + 2) {
-        km = Math.max(2, playerKm - (1 + dayNoise(day * 3 + 5) * 2));
-    }
-    // In the final week the front-runner has locked, so the tiebreak clock is real.
-    const locked = day >= ROUND.durationDays - 7;
-    return { km: Math.max(2, Math.round(km)), locked };
+    // A thin sliver of the hunting field has worked its way inside the ring:
+    // about one ranger on day 1, a couple of dozen mid-round, a crowd late.
+    const frac = 0.0002 + (0.005 - 0.0002) * Math.pow(t, 1.5);
+    const wobble = 1 + (dayNoise(day * 7 + 1) - 0.5) * 0.2;
+    const count = Math.max(1, Math.round(rangersHunting(day) * frac * wobble));
+    // Of those, the locked share grows as the tiebreak clock starts to matter.
+    const lockedFrac = 0.25 + 0.6 * easeOut(t);
+    const locked = Math.min(count, Math.round(count * lockedFrac));
+    return { count, locked };
 }

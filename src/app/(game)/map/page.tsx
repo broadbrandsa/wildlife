@@ -17,7 +17,6 @@ import {
     THIRD_LABEL,
     availableClueIds,
     dailyWalkKm,
-    distanceKm,
     scentDirectionText,
     daysRemaining,
     isRoundOver,
@@ -27,7 +26,7 @@ import {
     zoneAtPoint,
 } from "@/lib/game";
 import type { ScentTier } from "@/lib/game";
-import { closestRival, rangersHunting } from "@/lib/community";
+import { NEAR_TARGET_KM, rangersHunting, rangersNearTarget } from "@/lib/community";
 import { useCurrentDay, useGameStore } from "@/store/game";
 
 const TIER_META: Record<ScentTier, { label: string; tone: "neutral" | "teal" | "ochre" | "clay"; icon: string }> = {
@@ -89,8 +88,8 @@ function MapInner() {
     const canMove = !pin?.locked && movesToday < maxMoves;
     const walkKm = dailyWalkKm(player?.dogId);
 
-    // Ops-room pressure line: the nearest ranger in the whole game, anonymous.
-    const rival = closestRival(day, pin ? distanceKm(pin, ROUND.poacher) : null);
+    // Ops-room pressure line: the same shared report for every player.
+    const near = rangersNearTarget(day);
 
     // The dog reads the ground wherever the ranger currently stands.
     const read = useMemo(
@@ -198,7 +197,8 @@ function MapInner() {
                     >
                         <i className="ph-fill ph-broadcast" style={{ fontSize: 13 }} />
                         <span>
-                            Ops room: nearest ranger is {rival.km} km from the suspect · {rival.locked ? "locked in" : "not locked in"}
+                            Ops room: {near.count} ranger{near.count === 1 ? "" : "s"} within {NEAR_TARGET_KM} km of the suspect ·{" "}
+                            {near.locked === 0 ? "none" : near.locked} locked in
                         </span>
                     </div>
                 )}
