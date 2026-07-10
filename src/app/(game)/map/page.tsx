@@ -359,7 +359,7 @@ function MapInner() {
                             <>
                                 <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)", marginTop: 4 }}>
                                     {canMove
-                                        ? `You have ${maxMoves - movesToday === 1 ? "one ranger move" : `${maxMoves - movesToday} ranger moves`} left today, each up to ${walkKm} km on foot. The ring on the map shows your reach.`
+                                        ? `You have ${maxMoves - movesToday === 1 ? "one ranger move" : `${maxMoves - movesToday} ranger moves`} left today, each up to ${walkKm} km on foot. Drag your pin to walk it; the ring shows your reach.`
                                         : "You have walked as far as you can today. Fresh legs tomorrow."}
                                 </div>
                                 <div style={{ fontSize: "0.74rem", color: "var(--text-muted)", marginTop: 3 }}>

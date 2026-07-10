@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
 
 import { ZONES } from "@/data";
 import type { ZoneId } from "@/data";
+import { clampWalk, distanceKm } from "@/lib/game";
 import { CAMPS, formatLatLng, K9_BASE, LANDMARKS, MAP_H, MAP_W, PARK_PATH, PROJ, RIVER_PATHS } from "./map-geometry";
 
 const VW = MAP_W;
@@ -95,6 +96,18 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    // Convert a client point through the SVG's own coordinate matrix so it stays
+    // accurate under any pan/zoom (getScreenCTM folds in the transform and the
+    // preserveAspectRatio letterboxing). Fractions are of the viewBox.
+    const clientToFraction = (clientX: number, clientY: number): { x: number; y: number } | null => {
+        const svg = svgRef.current;
+        if (!svg) return null;
+        const ctm = svg.getScreenCTM();
+        if (!ctm) return null;
+        const local = new DOMPoint(clientX, clientY).matrixTransform(ctm.inverse());
+        return { x: Math.min(Math.max(local.x / VW, 0), 1), y: Math.min(Math.max(local.y / VH, 0), 1) };
+    };
+
     const handlePointerDown = (e: React.PointerEvent) => {
         down.current = { x: e.clientX, y: e.clientY };
     };
@@ -104,17 +117,41 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
         const moved = Math.hypot(e.clientX - down.current.x, e.clientY - down.current.y);
         down.current = null;
         if (moved > 6) return; // it was a pan, not a tap
-        // Convert the tap through the SVG's own coordinate matrix so it stays
-        // accurate under any pan/zoom (getScreenCTM folds in the transform and
-        // the preserveAspectRatio letterboxing). Fractions are of the viewBox.
-        const svg = svgRef.current;
-        if (!svg) return;
-        const ctm = svg.getScreenCTM();
-        if (!ctm) return;
-        const local = new DOMPoint(e.clientX, e.clientY).matrixTransform(ctm.inverse());
-        const x = Math.min(Math.max(local.x / VW, 0), 1);
-        const y = Math.min(Math.max(local.y / VH, 0), 1);
-        onPlace(x, y);
+        const f = clientToFraction(e.clientX, e.clientY);
+        if (f) onPlace(f.x, f.y);
+    };
+
+    // Drag-to-move: pick the pin up and walk it. The drag is clamped to the
+    // day's range along the same bearing, a tether line runs back to the start
+    // and a chip reads out the distance being walked.
+    const draggable = Boolean(onPlace && pin && !pin.locked && walkRangeKm != null);
+    const [drag, setDrag] = useState<{ x: number; y: number; km: number } | null>(null);
+
+    const onPinPointerDown = (e: React.PointerEvent<HTMLSpanElement>) => {
+        if (!draggable || !pin) return;
+        e.stopPropagation(); // keep the map from panning under the drag
+        e.preventDefault();
+        try {
+            e.currentTarget.setPointerCapture(e.pointerId);
+        } catch {
+            // capture is best-effort; the move handler still tracks the pointer
+        }
+        setDrag({ x: pin.x, y: pin.y, km: 0 });
+    };
+
+    const onPinPointerMove = (e: React.PointerEvent<HTMLSpanElement>) => {
+        if (!drag || !pin || walkRangeKm == null) return;
+        const f = clientToFraction(e.clientX, e.clientY);
+        if (!f) return;
+        const t = clampWalk(pin, f, walkRangeKm);
+        setDrag({ x: t.x, y: t.y, km: distanceKm(pin, t) });
+    };
+
+    const onPinPointerUp = (e: React.PointerEvent<HTMLSpanElement>) => {
+        if (!drag) return;
+        e.stopPropagation();
+        if (onPlace && drag.km > 0.3) onPlace(drag.x, drag.y);
+        setDrag(null);
     };
 
     const dimmed = (id: ZoneId) => revealZones.length > 0 && !revealZones.includes(id);
@@ -307,6 +344,29 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                                 pointerEvents="none"
                             />
                         )}
+
+                        {/* drag tether: from where the ranger stands to where the pin is being walked */}
+                        {drag && pin && drag.km > 0.1 && (
+                            <g pointerEvents="none">
+                                <line
+                                    x1={pin.x * VW}
+                                    y1={pin.y * VH}
+                                    x2={drag.x * VW}
+                                    y2={drag.y * VH}
+                                    stroke="var(--clay-500)"
+                                    strokeWidth={1.6}
+                                    strokeDasharray="5 3"
+                                />
+                                <circle
+                                    cx={pin.x * VW}
+                                    cy={pin.y * VH}
+                                    r={4}
+                                    fill="var(--sand-50)"
+                                    stroke="var(--clay-500)"
+                                    strokeWidth={1.6}
+                                />
+                            </g>
+                        )}
                     </svg>
 
                     {/* the revealed poacher camp (debrief only) */}
@@ -339,16 +399,24 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                         </span>
                     )}
 
-                    {/* the player's pin (HTML overlay so it can animate crisply) */}
+                    {/* the player's pin (HTML overlay so it can animate crisply).
+                        When movable it is a drag handle: pick it up and walk it. */}
                     {pin && (
                         <span
-                            className="kw-pin-drop"
+                            className={drag ? undefined : "kw-pin-drop"}
+                            onPointerDown={onPinPointerDown}
+                            onPointerMove={onPinPointerMove}
+                            onPointerUp={onPinPointerUp}
+                            onPointerCancel={() => setDrag(null)}
                             style={{
                                 position: "absolute",
-                                left: `${pin.x * 100}%`,
-                                top: `${pin.y * 100}%`,
+                                left: `${(drag ?? pin).x * 100}%`,
+                                top: `${(drag ?? pin).y * 100}%`,
                                 transform: "translate(-50%, -100%)",
-                                pointerEvents: "none",
+                                pointerEvents: draggable ? "auto" : "none",
+                                touchAction: "none",
+                                cursor: draggable ? (drag ? "grabbing" : "grab") : undefined,
+                                padding: 6, // a slightly larger finger target
                             }}
                         >
                             <span
@@ -370,6 +438,32 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                                     style={{ transform: "rotate(-45deg)", color: "#fff", fontSize: 14 }}
                                 />
                             </span>
+                        </span>
+                    )}
+
+                    {/* distance chip: how far the pin is being walked */}
+                    {drag && drag.km > 0.1 && (
+                        <span
+                            style={{
+                                position: "absolute",
+                                left: `${drag.x * 100}%`,
+                                top: `${drag.y * 100}%`,
+                                transform: "translate(-50%, calc(-100% - 46px))",
+                                pointerEvents: "none",
+                                fontFamily: "var(--font-mono)",
+                                fontSize: "0.68rem",
+                                fontWeight: 700,
+                                letterSpacing: "0.06em",
+                                whiteSpace: "nowrap",
+                                padding: "0.2rem 0.5rem",
+                                borderRadius: "var(--radius-pill)",
+                                background: "var(--sand-50)",
+                                color: "var(--clay-600)",
+                                border: "1px solid var(--clay-500)",
+                                boxShadow: "var(--shadow-sm)",
+                            }}
+                        >
+                            {drag.km.toFixed(1)} KM
                         </span>
                     )}
                 </div>
