@@ -5,10 +5,22 @@ import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
 
 import { ZONES } from "@/data";
 import type { ZoneId } from "@/data";
-import { CAMPS, K9_BASE, LANDMARKS, MAP_H, MAP_W, PARK_PATH, RIVER_PATHS } from "./map-geometry";
+import { CAMPS, formatLatLng, K9_BASE, LANDMARKS, MAP_H, MAP_W, PARK_PATH, PROJ, RIVER_PATHS } from "./map-geometry";
 
 const VW = MAP_W;
 const VH = MAP_H;
+
+/**
+ * Scale bar. The frame is a real projection, so a horizontal viewBox length
+ * maps to a real ground distance. Derived from PROJ so it tracks the geometry.
+ */
+const KM_PER_DEG_LNG = 111.32 * Math.cos(((PROJ.lat0 - PROJ.latSpan / 2) * Math.PI) / 180);
+const MAP_WIDTH_KM = PROJ.lngSpan * KM_PER_DEG_LNG;
+const KM_PER_PX = MAP_WIDTH_KM / VW;
+const SCALE_KM = 25;
+const SCALE_PX = SCALE_KM / KM_PER_PX;
+const SCALE_X = 16;
+const SCALE_Y = 596;
 
 /**
  * Game zone fills, in viewBox px. Band edges follow the real rivers that
@@ -61,7 +73,12 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
 
     const dimmed = (id: ZoneId) => revealZones.length > 0 && !revealZones.includes(id);
 
+    // Live coordinates for the map key: the player's pin, or the revealed camp on debrief.
+    const coordText = pin ? formatLatLng(pin.x, pin.y) : target ? formatLatLng(target.x, target.y) : null;
+    const coordLabel = pin ? "YOUR PIN" : target ? "SUSPECT" : "";
+
     return (
+        <div style={{ position: "relative", width: "100%", height: "100%" }}>
         <TransformWrapper minScale={1} maxScale={maxScale} doubleClick={{ mode: "zoomIn" }} centerOnInit>
             <TransformComponent
                 wrapperStyle={{ width: "100%", height: "100%" }}
@@ -226,6 +243,20 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                                 K9 BASE
                             </text>
                         </g>
+
+                        {/* scale bar (sits in the western veld, reads real km) */}
+                        <g stroke="var(--sand-50)" strokeWidth="1.6" opacity={0.85}>
+                            <line x1={SCALE_X} y1={SCALE_Y} x2={SCALE_X + SCALE_PX} y2={SCALE_Y} />
+                            <line x1={SCALE_X} y1={SCALE_Y - 4} x2={SCALE_X} y2={SCALE_Y + 4} />
+                            <line x1={SCALE_X + SCALE_PX} y1={SCALE_Y - 4} x2={SCALE_X + SCALE_PX} y2={SCALE_Y + 4} />
+                        </g>
+                        <text
+                            x={SCALE_X}
+                            y={SCALE_Y - 8}
+                            style={{ fontFamily: "var(--font-mono)", fontSize: 8, letterSpacing: "0.14em", fill: "var(--sand-50)", opacity: 0.85 }}
+                        >
+                            {SCALE_KM} KM
+                        </text>
                     </svg>
 
                     {/* the revealed poacher camp (debrief only) */}
@@ -294,5 +325,67 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                 </div>
             </TransformComponent>
         </TransformWrapper>
+
+            {/* map key: legend + live coordinates, pinned to the base of the map (does not pan or zoom) */}
+            <div
+                style={{
+                    position: "absolute",
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 8,
+                    padding: "0.4rem var(--gutter)",
+                    background: "rgba(250,246,236,0.92)",
+                    backdropFilter: "blur(8px)",
+                    WebkitBackdropFilter: "blur(8px)",
+                    borderTop: "1px solid var(--border-subtle)",
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "0.58rem",
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                    color: "var(--text-muted)",
+                }}
+            >
+                <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                    <LegendKey label="You">
+                        <i className="ph-fill ph-paw-print" style={{ color: "var(--clay-500)", fontSize: 11 }} />
+                    </LegendKey>
+                    <LegendKey label="Camp">
+                        <i className="ph-fill ph-circle" style={{ color: "var(--sand-900)", fontSize: 7 }} />
+                    </LegendKey>
+                    <LegendKey label="River">
+                        <span style={{ width: 12, height: 0, borderTop: "2px solid var(--teal-500)", display: "inline-block" }} />
+                    </LegendKey>
+                    {showThirds && (
+                        <LegendKey label="Thirds">
+                            <span style={{ width: 12, height: 0, borderTop: "1.5px dashed var(--sand-600)", display: "inline-block" }} />
+                        </LegendKey>
+                    )}
+                    {target && (
+                        <LegendKey label="Suspect">
+                            <i className="ph-fill ph-campfire" style={{ color: "var(--ochre-600)", fontSize: 11 }} />
+                        </LegendKey>
+                    )}
+                </div>
+                {coordText && (
+                    <span style={{ whiteSpace: "nowrap", color: "var(--text-primary)", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 5 }}>
+                        <i className="ph ph-crosshair" style={{ color: "var(--text-accent)", fontSize: 11 }} />
+                        {coordLabel} {coordText}
+                    </span>
+                )}
+            </div>
+        </div>
+    );
+}
+
+function LegendKey({ label, children }: { label: string; children: React.ReactNode }) {
+    return (
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+            <span style={{ display: "inline-flex", width: 13, justifyContent: "center" }}>{children}</span>
+            {label}
+        </span>
     );
 }

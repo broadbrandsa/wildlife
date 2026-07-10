@@ -3,6 +3,27 @@
 // Projection: x = (lng - 30.8188) / 1.2837, y = (-22.2804 - lat) / 3.2976
 // Data (c) OpenStreetMap contributors, ODbL.
 
+// Inverse projection: normalised map point (x,y) back to real lng/lat.
+// x,y are 0..1 fractions of this viewBox; used for the on-map coordinate readout.
+export const PROJ = {
+    lng0: 30.818759,
+    lngSpan: 1.283728,
+    lat0: -22.280367,
+    latSpan: 3.297598,
+} as const;
+
+export function pointToLatLng(x: number, y: number): { lat: number; lng: number } {
+    return { lat: PROJ.lat0 - y * PROJ.latSpan, lng: PROJ.lng0 + x * PROJ.lngSpan };
+}
+
+/** Field-guide style coordinate string, e.g. "24.99° S · 31.55° E". */
+export function formatLatLng(x: number, y: number): string {
+    const { lat, lng } = pointToLatLng(x, y);
+    const ns = lat < 0 ? "S" : "N";
+    const ew = lng < 0 ? "W" : "E";
+    return `${Math.abs(lat).toFixed(2)}° ${ns} · ${Math.abs(lng).toFixed(2)}° ${ew}`;
+}
+
 export const MAP_W = 360;
 export const MAP_H = 760;
 
