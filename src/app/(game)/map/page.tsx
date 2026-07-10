@@ -20,7 +20,6 @@ import {
     nextClueLabel,
     poacherThird,
     scentRead,
-    thirdOf,
     zoneAtPoint,
 } from "@/lib/game";
 import type { ScentTier } from "@/lib/game";
@@ -99,7 +98,6 @@ function MapInner() {
     // Field radio: HQ tells you which third the scent is in.
     const hasRadio = inventory.includes("field-radio");
     const targetThird = poacherThird();
-    const rangerThird = pin ? thirdOf(pin) : null;
 
     const onPlace = (x: number, y: number) => {
         if (!canMove && pin) return; // out of moves today; existing pin stays put
@@ -172,7 +170,7 @@ function MapInner() {
 
             {/* Map */}
             <div style={{ position: "relative", height: "min(52dvh, 460px)", background: "radial-gradient(120% 110% at 50% 0%, #2C4A39 0%, #16110A 92%)" }}>
-                <KrugerMap pin={pin} onPlace={onPlace} maxScale={inventory.includes("pro-binoculars") ? 8 : 4} showThirds legendTop={64} />
+                <KrugerMap pin={pin} onPlace={onPlace} maxScale={inventory.includes("pro-binoculars") ? 8 : 4} legendTop={64} />
                 {!pin && !(showWelcome && !dismissed) && (
                     <div
                         className="kw-rise"
@@ -342,7 +340,7 @@ function MapInner() {
                             {!pin
                                 ? "Tap the map to send your ranger to a spot. That spot is also your guess."
                                 : pinZone
-                                  ? `${THIRD_LABEL[rangerThird ?? "south"].replace("the ", "")} · zone ${pinZone.number}, ${pinZone.name}${pin.locked ? " · locked for the round" : ""}`
+                                  ? `Zone ${pinZone.number}, ${pinZone.name}${pin.locked ? " · locked for the round" : ""}`
                                   : "Locked for the round."}
                         </div>
                         {pin && !pin.locked && (
@@ -396,7 +394,7 @@ function MapInner() {
                             </Tag>
                         </div>
                         <p style={{ margin: "0.4rem 0 0", fontSize: "0.78rem", lineHeight: 1.5, color: "var(--text-muted)" }}>
-                            {dogName} reads the ground wherever your ranger stands. The dog only picks up the trail in the third of the park where the suspect is hiding. Move your ranger to hunt for the scent, then close in.
+                            {dogName} reads the ground wherever your ranger stands. On some ground the dog catches the scent, on some there is nothing. Move your ranger to hunt for it, then close in.
                         </p>
                         <p style={{ margin: "var(--space-3) 0 0", fontFamily: "var(--font-serif)", fontSize: "0.98rem", lineHeight: 1.5, color: "var(--sand-900)" }}>
                             {SCENT_TEXT[read.tier].replace("{dog}", dogName) +
@@ -521,7 +519,7 @@ function MapInner() {
                         <h2 style={{ fontSize: "var(--text-h4)", textAlign: "center", margin: 0 }}>Lock in your final answer?</h2>
                         {pinZone && (
                             <div style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: "0.66rem", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-accent)", marginTop: "var(--space-2)" }}>
-                                {THIRD_LABEL[rangerThird ?? "south"].replace("the ", "")} · zone {pinZone.number}, {pinZone.name}
+                                Zone {pinZone.number}, {pinZone.name}
                             </div>
                         )}
                         <p style={{ fontSize: "0.86rem", color: "var(--text-secondary)", lineHeight: 1.55, margin: "var(--space-4) 0 0", textAlign: "center" }}>

@@ -135,10 +135,12 @@ export function poacherThird(): Third {
     return thirdOf(ROUND.poacher);
 }
 
+// Broad region wording for the field radio only. The "thirds" gating is a
+// hidden mechanic, so this never uses the word "third".
 export const THIRD_LABEL: Record<Third, string> = {
-    north: "the northern third",
-    central: "the central third",
-    south: "the southern third",
+    north: "the north",
+    central: "the centre",
+    south: "the south",
 };
 
 // ---------------------------------------------------------------------------
@@ -210,8 +212,8 @@ export function scentRead(pin: MapPoint, opts: ScentReadOptions = {}): ScentRead
 
 /** Field-ranger voice for each tier. `{dog}` is replaced with the dog's name. */
 export const SCENT_TEXT: Record<ScentTier, string> = {
-    cold: "{dog} casts wide, circles twice and lies down. Nothing here. The scent is not in this part of the park. Move your ranger to another third and try again.",
-    faint: "{dog} lifts a nose to the wind and holds it a moment. The trail is in this part of the park, but old and far off.",
+    cold: "{dog} casts wide, circles twice and lies down. Nothing here. Move your ranger and cast for the scent on new ground.",
+    faint: "{dog} lifts a nose to the wind and holds it a moment. There is a trail here, but old and far off.",
     warm: "{dog} works the ground in tightening loops, tail up. The trail has been through here.",
     hot: "{dog} freezes, then pulls hard against the lead. Fresh sign. You are close.",
 };

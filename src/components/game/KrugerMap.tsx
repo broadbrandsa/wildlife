@@ -356,6 +356,33 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
             </TransformComponent>
         </TransformWrapper>
 
+            {/* compass, top-right: the map is a north-up projection, so north is always up */}
+            <div
+                style={{
+                    position: "absolute",
+                    top: 12,
+                    right: "var(--gutter)",
+                    width: 40,
+                    height: 40,
+                    borderRadius: "50%",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 1,
+                    background: "rgba(250,246,236,0.9)",
+                    backdropFilter: "blur(8px)",
+                    WebkitBackdropFilter: "blur(8px)",
+                    border: "1px solid var(--border-subtle)",
+                    boxShadow: "var(--shadow-sm)",
+                    pointerEvents: "none",
+                }}
+                aria-label="Compass, north is up"
+            >
+                <i className="ph-fill ph-caret-up" style={{ fontSize: 12, color: "var(--clay-500)", lineHeight: 1 }} />
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.04em", color: "var(--text-primary)", lineHeight: 1 }}>N</span>
+            </div>
+
             {/* legend: vertical key, top-left, tucked under the ranger pill (does not pan or zoom) */}
             <div
                 style={{
