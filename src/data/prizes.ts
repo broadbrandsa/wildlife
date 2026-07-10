@@ -76,7 +76,7 @@ export const WIN_STEPS: { icon: string; title: string; body: string }[] = [
 export const FUNDRAISING_GOAL_ZAR = 500000;
 
 export const GOAL_LINE =
-    "Round 1 aims to raise R500,000 for the SAWC K9 Anti-Poaching Unit: a full year of food, veterinary care and field kit for the pack that does this work for real.";
+    "This hunt aims to raise R500,000 for the SAWC K9 Anti-Poaching Unit: a full year of food, veterinary care and field kit for the pack that does this work for real.";
 
 /** Entry is free and never tied to a donation (CPA section 36). */
 export const FAIR_PLAY_LINE =

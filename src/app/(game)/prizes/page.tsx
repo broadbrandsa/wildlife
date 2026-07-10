@@ -10,7 +10,6 @@ import {
     FUNDRAISING_GOAL_ZAR,
     GOAL_LINE,
     PRIZE_TIERS,
-    ROUND,
     WIN_STEPS,
 } from "@/data";
 import { zar } from "@/lib/format";
@@ -36,7 +35,7 @@ export default function PrizesPage() {
                 >
                     <i className="ph ph-arrow-left" /> Back
                 </button>
-                <Eyebrow color="var(--ochre-300)">Round {ROUND.number} · How to win</Eyebrow>
+                <Eyebrow color="var(--ochre-300)">How to win</Eyebrow>
                 <h1 style={{ color: "#fff", fontSize: "var(--text-h1)", margin: "var(--space-3) 0 0", lineHeight: 1.1 }}>
                     Catch the poacher, win the bush.
                 </h1>

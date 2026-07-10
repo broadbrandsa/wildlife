@@ -15,6 +15,7 @@ import {
     SCENT_TEXT,
     THIRD_LABEL,
     availableClueIds,
+    scentDirectionText,
     daysRemaining,
     isRoundOver,
     nextClueLabel,
@@ -141,7 +142,7 @@ function MapInner() {
                 <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
                     <div>
                         <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--ochre-300)" }}>
-                            Round {ROUND.number} · {ROUND.name}
+                            {ROUND.name}
                         </div>
                         <h1 style={{ color: "#fff", fontSize: "var(--text-h3)", margin: "0.3rem 0 0" }}>The hunt</h1>
                     </div>
@@ -397,10 +398,7 @@ function MapInner() {
                             {dogName} reads the ground wherever your ranger stands. On some ground the dog catches the scent, on some there is nothing. Move your ranger to hunt for it, then close in.
                         </p>
                         <p style={{ margin: "var(--space-3) 0 0", fontFamily: "var(--font-serif)", fontSize: "0.98rem", lineHeight: 1.5, color: "var(--sand-900)" }}>
-                            {SCENT_TEXT[read.tier].replace("{dog}", dogName) +
-                                (read.inThird && read.tier !== "hot"
-                                    ? ` The trail pulls ${read.fine ? read.direction : read.rough}.`
-                                    : "")}
+                            {SCENT_TEXT[read.tier].replace("{dog}", dogName) + " " + scentDirectionText(read, dogName)}
                         </p>
                         {hasRadio && (
                             <div

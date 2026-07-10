@@ -49,7 +49,7 @@ function DebriefInner() {
                 }}
             >
                 <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--ochre-300)" }}>
-                    Round {ROUND.number} debrief{preview && !roundOver ? " · preview" : ""}
+                    Debrief{preview && !roundOver ? " · preview" : ""}
                 </div>
                 <h1 style={{ color: "#fff", fontSize: "var(--text-h2)", margin: "var(--space-3) 0 var(--space-2)" }}>The camp is found</h1>
                 <p style={{ color: "rgba(245,239,226,0.85)", margin: "0 auto", maxWidth: 420, fontSize: "0.92rem", lineHeight: 1.55 }}>
@@ -103,7 +103,7 @@ function DebriefInner() {
                                     dogName,
                                     distanceKm: dist,
                                     ratingTitle: rating.title,
-                                    roundName: `Round ${ROUND.number} · ${ROUND.name}`,
+                                    roundName: ROUND.name,
                                 })
                             }
                             iconLeft={<i className="ph ph-share-network" />}

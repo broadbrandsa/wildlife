@@ -212,11 +212,30 @@ export function scentRead(pin: MapPoint, opts: ScentReadOptions = {}): ScentRead
 
 /** Field-ranger voice for each tier. `{dog}` is replaced with the dog's name. */
 export const SCENT_TEXT: Record<ScentTier, string> = {
-    cold: "{dog} casts wide, circles twice and lies down. Nothing here. Move your ranger and cast for the scent on new ground.",
+    cold: "{dog} casts wide, circles twice and lies down. Nothing here.",
     faint: "{dog} lifts a nose to the wind and holds it a moment. There is a trail here, but old and far off.",
     warm: "{dog} works the ground in tightening loops, tail up. The trail has been through here.",
     hot: "{dog} freezes, then pulls hard against the lead. Fresh sign. You are close.",
 };
+
+/**
+ * Sun-based direction cues (southern hemisphere: the midday sun sits to the
+ * north). The base read never names a compass point, so the player reads the
+ * sky and decides which way to go. A compass or a line-reading dog upgrades to
+ * the exact bearing.
+ */
+const SUN_CUE: Record<RoughDirection, string> = {
+    north: "toward the midday sun",
+    east: "toward the sunrise",
+    south: "away from the midday sun",
+    west: "toward the evening sunset",
+};
+
+/** A direction line for every scent read, so the player always has a way to go. */
+export function scentDirectionText(read: ScentReadResult, dogName: string): string {
+    if (read.fine) return `The pull runs ${read.direction}.`;
+    return `${dogName}'s nose swings ${SUN_CUE[read.rough]}.`;
+}
 
 // ---------------------------------------------------------------------------
 // Round-end reckoning
