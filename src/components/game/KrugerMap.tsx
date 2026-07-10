@@ -69,6 +69,43 @@ const LEBOMBO_HILLS = Array.from({ length: 8 }, (_, i) => ({
     y: LEBOMBO.y0 + 22 + i * 32,
 }));
 
+/**
+ * The main tourist roads, drawn camp to camp along the real routes: the H1
+ * tar spine from Pafuri down to Skukuza, the Sabie and Crocodile roads in the
+ * south, and the H7 to Orpen. Approximate but true to the network.
+ */
+const MAIN_ROADS = [
+    // Pafuri > Punda Maria > Shingwedzi > Mopani > Letaba > Olifants > Satara > Skukuza
+    "M 106.4 33.7 Q 68 58 55.6 95 Q 112 146 172.3 190.9 Q 176 240 161.1 286.1 Q 176 330 212.2 363 Q 240 379 258.1 397.9 Q 273 440 269.2 486.9 Q 262 562 218.2 625.6",
+    // Skukuza > Lower Sabie > Crocodile Bridge
+    "M 218.2 625.6 Q 264 638 307.5 654.3 Q 311 684 301.3 709.4",
+];
+const SIDE_ROADS = [
+    "M 218.2 625.6 Q 170 642 126.2 666.1", // Skukuza > Pretoriuskop
+    "M 126.2 666.1 Q 144 700 176.2 725.1", // Pretoriuskop > Berg-en-Dal
+    "M 176.2 725.1 Q 240 736 301.3 709.4", // Berg-en-Dal > Crocodile Bridge
+    "M 159.6 506.1 Q 215 496 269.2 486.9", // Orpen > Satara
+];
+
+/** Waterholes and dams, small and true to their rivers. */
+const WATERHOLES = [
+    { x: 182, y: 206 }, // Kanniedood, Shingwedzi
+    { x: 172, y: 296 }, // Pioneer, Mopani
+    { x: 243, y: 492 }, // Nsemani, west of Satara
+    { x: 292, y: 662 }, // Sunset Dam, Lower Sabie
+];
+
+/** Deterministic tree scatter: a breath of veld texture, never random at render. */
+const VEG = (() => {
+    let s = 7;
+    const rnd = () => ((s = (s * 16807) % 2147483647) / 2147483647);
+    const pts: { x: number; y: number; r: number }[] = [];
+    for (let i = 0; i < 64; i++) {
+        pts.push({ x: 12 + rnd() * (VW - 24), y: 12 + rnd() * (VH - 24), r: 1.1 + rnd() * 1.3 });
+    }
+    return pts;
+})();
+
 interface KrugerMapProps {
     pin: { x: number; y: number; locked?: boolean } | null;
     onPlace?: (x: number, y: number) => void;
@@ -249,6 +286,12 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                                 <circle cx="11" cy="12" r="0.7" fill="rgba(33,28,20,0.06)" />
                                 <circle cx="8" cy="7" r="0.5" fill="rgba(245,239,226,0.07)" />
                             </pattern>
+                            {/* relief: high western ground shading down toward the Lebombo */}
+                            <linearGradient id="kw-relief" x1="0" y1="0" x2="1" y2="0">
+                                <stop offset="0" stopColor="rgba(33,28,20,0.12)" />
+                                <stop offset="0.28" stopColor="rgba(33,28,20,0)" />
+                                <stop offset="1" stopColor="rgba(245,239,226,0.05)" />
+                            </linearGradient>
                         </defs>
 
                         {/* graticule: the survey grid behind the park, with degree labels */}
@@ -339,6 +382,19 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                             {/* paper grain across the whole park */}
                             <rect x="0" y="0" width={VW} height={VH} fill="url(#kw-grain)" />
 
+                            {/* relief: the ground rises gently toward the western edge */}
+                            <rect x="0" y="0" width={VW} height={VH} fill="url(#kw-relief)" />
+
+                            {/* veld texture: a scatter of trees across the park */}
+                            <g pointerEvents="none">
+                                {VEG.map((t, i) => (
+                                    <g key={i} opacity={0.3}>
+                                        <line x1={t.x} y1={t.y} x2={t.x} y2={t.y + 2.6} stroke="rgba(33,28,20,0.7)" strokeWidth="0.5" />
+                                        <circle cx={t.x} cy={t.y - 0.6} r={t.r} fill="#41522F" />
+                                    </g>
+                                ))}
+                            </g>
+
                             {/* hill glyphs along the Lebombo rhyolite ridge */}
                             {LEBOMBO_HILLS.map((h, i) => (
                                 <path key={i} d={`M ${h.x} ${h.y} l 5 8 l -10 0 Z`} fill="#8F3B22" opacity={0.4} />
@@ -378,6 +434,38 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                                     opacity={r.tier === 1 ? 0.95 : 0.6}
                                 />
                             ))}
+
+                            {/* the tourist roads: tar spine solid, side roads dashed */}
+                            <g fill="none" strokeLinecap="round" strokeLinejoin="round" pointerEvents="none">
+                                {MAIN_ROADS.map((d, i) => (
+                                    <g key={`m${i}`}>
+                                        <path d={d} stroke="rgba(245,239,226,0.5)" strokeWidth="1.8" />
+                                        <path d={d} stroke="#A3672F" strokeWidth="0.9" opacity={0.75} />
+                                    </g>
+                                ))}
+                                {SIDE_ROADS.map((d, i) => (
+                                    <path key={`s${i}`} d={d} stroke="#8A6B3F" strokeWidth="0.8" strokeDasharray="3 2.4" opacity={0.6} />
+                                ))}
+                            </g>
+
+                            {/* waterholes and dams */}
+                            {WATERHOLES.map((w, i) => (
+                                <g key={i} pointerEvents="none">
+                                    <circle cx={w.x} cy={w.y} r="2.2" fill="#4C7572" opacity={0.85} />
+                                    <circle cx={w.x} cy={w.y} r="3.4" fill="none" stroke="#4C7572" strokeWidth="0.5" opacity={0.4} />
+                                </g>
+                            ))}
+
+                            {/* the park's name, set into the ground like a plate mark */}
+                            <text
+                                x={92}
+                                y={452}
+                                transform="rotate(-90 92 452)"
+                                textAnchor="middle"
+                                style={{ fontFamily: "var(--font-serif)", fontSize: 11, letterSpacing: "0.5em", fill: "rgba(33,28,20,0.16)", fontWeight: 600 }}
+                            >
+                                KRUGER NATIONAL PARK
+                            </text>
 
                             {/* the great rivers, named in the water's voice */}
                             {showLabels &&

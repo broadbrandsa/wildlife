@@ -65,7 +65,7 @@ export const PHASE_SKY: Record<DayPhase, { gradient: string; scrim: string | nul
         scrim: "rgba(240, 138, 78, 0.16)",
     },
     night: {
-        gradient: "radial-gradient(120% 110% at 50% 0%, #0C0F16 0%, #000000 88%)",
-        scrim: "rgba(3, 5, 10, 0.5)",
+        gradient: "radial-gradient(120% 110% at 50% 0%, #060708 0%, #000000 60%)",
+        scrim: "rgba(0, 0, 0, 0.55)",
     },
 };
