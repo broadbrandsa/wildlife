@@ -8,15 +8,34 @@ import { ClueCard } from "@/components/game/ClueCard";
 import { ZoneSheet } from "@/components/game/ZoneSheet";
 import { CLUES, ZONES } from "@/data";
 import type { Zone } from "@/data";
-import { availableClueIds, freeCluesToCome, hoursUntilNextClue } from "@/lib/game";
+import { BUSH_WISE_DOGS, availableClueIds, freeCluesToCome, hoursUntilNextClue } from "@/lib/game";
 import { useCurrentDay, useGameStore } from "@/store/game";
 
 /** Field guide card: tap to read it if owned, otherwise unlock it in the kit room. */
-function GuideCard({ zone, owned, onRead, onUnlock }: { zone: Zone; owned: boolean; onRead: () => void; onUnlock: () => void }) {
+function GuideCard({
+    zone,
+    owned,
+    freePick,
+    onRead,
+    onUnlock,
+}: {
+    zone: Zone;
+    owned: boolean;
+    /** Dotty's superpower: this card can be claimed free. */
+    freePick?: boolean;
+    onRead: () => void;
+    onUnlock: () => void;
+}) {
     return (
         <button
             onClick={owned ? onRead : onUnlock}
-            aria-label={owned ? `Read the ${zone.name} field guide` : `Unlock the ${zone.name} field guide for R25`}
+            aria-label={
+                owned
+                    ? `Read the ${zone.name} field guide`
+                    : freePick
+                      ? `Claim the ${zone.name} field guide free`
+                      : `Unlock the ${zone.name} field guide for R25`
+            }
             style={{
                 textAlign: "left",
                 cursor: "pointer",
@@ -35,6 +54,10 @@ function GuideCard({ zone, owned, onRead, onUnlock }: { zone: Zone; owned: boole
                 {owned ? (
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: "0.74rem", fontWeight: 600, color: "var(--text-link)", whiteSpace: "nowrap" }}>
                         <i className="ph ph-book-open" /> Read
+                    </span>
+                ) : freePick ? (
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: "0.74rem", fontWeight: 600, color: "var(--ochre-700)", whiteSpace: "nowrap" }}>
+                        <i className="ph-fill ph-paw-print" /> Free pick
                     </span>
                 ) : (
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: "0.74rem", fontWeight: 600, color: "var(--text-muted)", whiteSpace: "nowrap" }}>
@@ -66,6 +89,12 @@ export default function JournalPage() {
     const nextHours = hoursUntilNextClue(day);
 
     const fieldGuides = useGameStore((s) => s.fieldGuides);
+    const player = useGameStore((s) => s.player);
+    const freeGuideUsed = useGameStore((s) => s.freeGuideUsed);
+    const claimFreeGuide = useGameStore((s) => s.claimFreeGuide);
+    // Dotty's superpower: the matriarch knows the bush, so one guide pick is free.
+    const freePickAvailable = Boolean(player && BUSH_WISE_DOGS.has(player.dogId) && !freeGuideUsed);
+    const dogName = player?.dogName ?? "Your dog";
 
     return (
         <div style={{ padding: "var(--space-6) var(--gutter) var(--space-7)" }}>
@@ -80,6 +109,7 @@ export default function JournalPage() {
                 <Eyebrow rule>Field guides</Eyebrow>
                 <p style={{ fontSize: "0.82rem", color: "var(--text-muted)", margin: "var(--space-2) 0 var(--space-3)" }}>
                     Your first field guide is free: it unlocks for the ground where you drop your first pin. Tap a guide you own to read it. Unlock any other zone for R25.
+                    {freePickAvailable && ` ${dogName} knows this bush: the matriarch grants you one more guide free. Tap any zone to claim it.`}
                 </p>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-2)" }}>
                     {ZONES.map((z) => (
@@ -87,8 +117,16 @@ export default function JournalPage() {
                             key={z.id}
                             zone={z}
                             owned={fieldGuides.includes(z.id)}
+                            freePick={freePickAvailable}
                             onRead={() => setGuideZone(z)}
-                            onUnlock={() => router.push(`/checkout/guide-${z.id}`)}
+                            onUnlock={() => {
+                                if (freePickAvailable) {
+                                    claimFreeGuide(z.id);
+                                    setGuideZone(z);
+                                } else {
+                                    router.push(`/checkout/guide-${z.id}`);
+                                }
+                            }}
                         />
                     ))}
                 </div>

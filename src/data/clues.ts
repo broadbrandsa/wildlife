@@ -34,7 +34,7 @@ export const CLUES: Clue[] = [
         difficulty: "region",
         kind: "trail",
         tier: 1,
-        releaseDay: 6,
+        releaseDay: 3,
         zoneId: "southern-sabie",
         body: "The rain gauge by the nearest camp is one of the fuller ones in the park. This is the wetter, greener half, where the storms come first.",
         didYouKnow:
@@ -47,7 +47,7 @@ export const CLUES: Clue[] = [
         difficulty: "region",
         kind: "trail",
         tier: 1,
-        releaseDay: 10,
+        releaseDay: 5,
         zoneId: "southern-sabie",
         body: "This is the busiest country in Kruger, the roads most tourists drive, and the ground where the great grey rhino once grazed thickest. It is also where the dogs are needed most.",
         didYouKnow:
@@ -60,7 +60,7 @@ export const CLUES: Clue[] = [
         difficulty: "region",
         kind: "trail",
         tier: 1,
-        releaseDay: 14,
+        releaseDay: 7,
         zoneId: "southern-sabie",
         body: "The closest great river is the one whose Tsonga name means fearful, for the crocodiles in it, and which carries more kinds of fish than any other river in the park.",
         didYouKnow:
@@ -75,7 +75,7 @@ export const CLUES: Clue[] = [
         difficulty: "zone",
         kind: "elimination",
         tier: 2,
-        releaseDay: 19,
+        releaseDay: 10,
         zoneId: "far-north",
         body: "The pack cast for scent in the far north, among the butterfly-leaved trees and the fat grey baobabs, where samango monkeys bark in the fever-tree forest. Three days, nothing. Rule the north out.",
         didYouKnow:
@@ -88,7 +88,7 @@ export const CLUES: Clue[] = [
         difficulty: "zone",
         kind: "trail",
         tier: 2,
-        releaseDay: 24,
+        releaseDay: 12,
         zoneId: "southern-sabie",
         body: "Underfoot the rock is pale grey and pink, weathered into bald rounded domes and scattered koppies, not the dark cracked turf of the eastern plains.",
         didYouKnow:
@@ -101,7 +101,7 @@ export const CLUES: Clue[] = [
         difficulty: "zone",
         kind: "trail",
         tier: 2,
-        releaseDay: 29,
+        releaseDay: 15,
         zoneId: "southern-sabie",
         body: "Silver-leaved trees catch the afternoon light on the slopes, and red bushwillow crowds the rocky rises. This is mixed granite woodland, not open golden savanna.",
         didYouKnow:
@@ -114,7 +114,7 @@ export const CLUES: Clue[] = [
         difficulty: "zone",
         kind: "elimination",
         tier: 2,
-        releaseDay: 34,
+        releaseDay: 17,
         zoneId: "sw-granite",
         body: "The dogs worked the high sour grasslands to the west, where sable bulls graze near the park's oldest camp. No sign of the man. He is not in the far south-west corner.",
         didYouKnow:
@@ -129,7 +129,7 @@ export const CLUES: Clue[] = [
         difficulty: "feature",
         kind: "trail",
         tier: 3,
-        releaseDay: 39,
+        releaseDay: 20,
         zoneId: "southern-sabie",
         body: "The nearest large camp carries the name the Shangaan gave a warden they respected: he who sweeps clean.",
         didYouKnow:
@@ -142,7 +142,7 @@ export const CLUES: Clue[] = [
         difficulty: "feature",
         kind: "trail",
         tier: 3,
-        releaseDay: 44,
+        releaseDay: 22,
         zoneId: "southern-sabie",
         body: "Not far from that camp, a small rise of hills holds the scattered ashes of the same first warden and his wife. The suspect keeps within sight of those little hills.",
         didYouKnow:
@@ -155,7 +155,7 @@ export const CLUES: Clue[] = [
         difficulty: "feature",
         kind: "trail",
         tier: 3,
-        releaseDay: 49,
+        releaseDay: 25,
         zoneId: "southern-sabie",
         body: "Leopards are unusually common in this country, draping their kills in the riverine trees along the great fish-river road a little to the north of the camp.",
         didYouKnow:
@@ -168,7 +168,7 @@ export const CLUES: Clue[] = [
         difficulty: "feature",
         kind: "trail",
         tier: 3,
-        releaseDay: 54,
+        releaseDay: 27,
         zoneId: "southern-sabie",
         body: "Before dawn a southern ground hornbill boomed from the woodland near the camp, a turkey-sized black bird with a red throat, a bird of the southern and central park.",
         didYouKnow:
@@ -183,7 +183,7 @@ export const CLUES: Clue[] = [
         difficulty: "landmark",
         kind: "trail",
         tier: 4,
-        releaseDay: 59,
+        releaseDay: 30,
         zoneId: "southern-sabie",
         body: "The camp sits at the foot of a bald granite dome that rises alone above the woodland, a lookout hill with a view for many miles in every direction.",
         didYouKnow:
@@ -196,7 +196,7 @@ export const CLUES: Clue[] = [
         difficulty: "landmark",
         kind: "trail",
         tier: 4,
-        releaseDay: 64,
+        releaseDay: 32,
         zoneId: "southern-sabie",
         body: "It lies just off the tar road that runs south from the sweeping-warden's camp toward the crocodile-river gate, not along the famous leopard road that runs east.",
         didYouKnow:
@@ -209,7 +209,7 @@ export const CLUES: Clue[] = [
         difficulty: "landmark",
         kind: "trail",
         tier: 4,
-        releaseDay: 69,
+        releaseDay: 35,
         zoneId: "southern-sabie",
         body: "The hill's own name, in Tsonga, is a warning: it speaks of a tiny burrowing flea that lodges in the feet of the careless.",
         didYouKnow:
@@ -224,7 +224,7 @@ export const CLUES: Clue[] = [
         difficulty: "pinpoint",
         kind: "trail",
         tier: 5,
-        releaseDay: 74,
+        releaseDay: 37,
         zoneId: "southern-sabie",
         body: "The dome is bald because it sheds its skin in curved sheets, like an onion, under the heat. The suspect's fire sits on bare rock near the top, where the granite is smooth.",
         didYouKnow:
@@ -237,7 +237,7 @@ export const CLUES: Clue[] = [
         difficulty: "pinpoint",
         kind: "trail",
         tier: 5,
-        releaseDay: 78,
+        releaseDay: 39,
         zoneId: "southern-sabie",
         body: "Put it together. A lone granite lookout dome. South of the sweeping-warden's camp. West of the fearful river. Within sight of the little-hills koppie where the warden's ashes lie.",
         didYouKnow:
@@ -250,7 +250,7 @@ export const CLUES: Clue[] = [
         difficulty: "pinpoint",
         kind: "trail",
         tier: 5,
-        releaseDay: 82,
+        releaseDay: 41,
         zoneId: "southern-sabie",
         body: "From the fire the suspect can see the Sabie's dark tree-line to the north, and low granite hills rolling away south toward the crocodile-river border.",
         didYouKnow:
@@ -263,7 +263,7 @@ export const CLUES: Clue[] = [
         difficulty: "pinpoint",
         kind: "trail",
         tier: 5,
-        releaseDay: 86,
+        releaseDay: 43,
         zoneId: "southern-sabie",
         body: "Field teams have ringed a single bald koppie between the two southern camps. The scent always returns to its rocky crown.",
         didYouKnow:
@@ -276,7 +276,7 @@ export const CLUES: Clue[] = [
         difficulty: "pinpoint",
         kind: "trail",
         tier: 5,
-        releaseDay: 90,
+        releaseDay: 45,
         zoneId: "southern-sabie",
         body: "The hunt ends where the oldest rock in Africa breaks the surface, at a flea-named lookout dome the tourists climb for the view, south of the great camp. Drop your pin on its crown.",
         didYouKnow:

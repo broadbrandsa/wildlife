@@ -96,6 +96,54 @@ export function distanceKm(a: MapPoint, b: MapPoint): number {
 }
 
 // ---------------------------------------------------------------------------
+// Ranger movement (a ranger can only walk so far in a day)
+
+/**
+ * Days of walking in the round: the pin drops on day 1, and a ranger starting
+ * at the very worst spot must still reach the suspect two days before the
+ * close (by day 43 of 45), walking flat out in the right direction.
+ */
+const WALKING_DAYS = ROUND.durationDays - 3;
+
+/** Worst-case start: the map corner furthest from the suspect. */
+const FURTHEST_KM = Math.max(
+    ...[
+        { x: 0, y: 0 },
+        { x: 1, y: 0 },
+        { x: 0, y: 1 },
+        { x: 1, y: 1 },
+    ].map((c) => distanceKm(c, ROUND.poacher)),
+);
+
+/** Base walking pace per day, tuned so the far corner arrives in time. */
+export const BASE_DAILY_KM = Math.ceil(FURTHEST_KM / WALKING_DAYS);
+
+/** Banjo is a free-running hound bred to run: his ranger covers more ground. */
+const LONG_WALK_DOGS = new Set(["banjo"]);
+
+/** How far this player's ranger can walk in one day, in km. */
+export function dailyWalkKm(dogId?: string | null): number {
+    return dogId && LONG_WALK_DOGS.has(dogId) ? Math.round(BASE_DAILY_KM * 1.5) : BASE_DAILY_KM;
+}
+
+/** Storm's Malinois drive earns the ranger a second move every day. */
+export const EXTRA_MOVE_DOGS = new Set(["storm"]);
+
+/** Dotty, the pack matriarch, knows the bush: one extra field guide, free. */
+export const BUSH_WISE_DOGS = new Set(["dotty"]);
+
+/**
+ * Clamp a tap to walking range: past the limit, the ranger walks as far as
+ * they can along the same bearing and stops there.
+ */
+export function clampWalk(from: MapPoint, to: MapPoint, maxKm: number): MapPoint {
+    const dist = distanceKm(from, to);
+    if (dist <= maxKm) return to;
+    const f = maxKm / dist;
+    return { x: from.x + (to.x - from.x) * f, y: from.y + (to.y - from.y) * f };
+}
+
+// ---------------------------------------------------------------------------
 // Zones on the map (real geography; edges follow the bounding rivers)
 
 /** Horizontal band each zone occupies in normalised map space (from KrugerMap). */
@@ -166,10 +214,10 @@ export interface ScentReadResult {
 /** Distance thresholds inside the poacher's third. Base tuning; kit/dog widen them. */
 const TIER_KM = { hot: 15, warm: 45 };
 
-/** Dogs whose nose widens the scent range (warm and fresh reach further). */
-const WIDE_RANGE_DOGS = new Set(["banjo", "storm", "pepper"]);
-/** Dogs that read the line, so the read shows a fine compass bearing. */
-const DIRECTION_DOGS = new Set(["scout", "dotty"]);
+/** Scout the bloodhound reads scent from much further out (wider tier radius). */
+const WIDE_RANGE_DOGS = new Set(["scout"]);
+/** Pepper the detection specialist finds what others miss: an exact bearing. */
+const DIRECTION_DOGS = new Set(["pepper"]);
 
 export interface ScentReadOptions {
     dogId?: string | null;

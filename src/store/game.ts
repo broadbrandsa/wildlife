@@ -5,7 +5,7 @@ import { persist } from "zustand/middleware";
 
 import { CODE_BY_VALUE, EQUIPMENT_BY_ID } from "@/data";
 import type { ZoneId } from "@/data";
-import { currentDay } from "@/lib/game";
+import { BUSH_WISE_DOGS, clampWalk, currentDay, dailyWalkKm } from "@/lib/game";
 import { receiptNumber } from "@/lib/format";
 
 export interface Player {
@@ -46,8 +46,10 @@ interface GameState {
     inventory: string[];
     cluesUnlocked: string[];
     redeemedCodes: string[];
-    /** Zones whose field guide the player owns (one chosen free at sign-on). */
+    /** Zones whose field guide the player owns (the first is free on first pin). */
     fieldGuides: ZoneId[];
+    /** Dotty's superpower: the matriarch grants one extra free guide pick. */
+    freeGuideUsed: boolean;
     donations: Donation[];
     donationsTotal: number;
     notifyAsked: boolean;
@@ -66,6 +68,8 @@ interface GameState {
     grantEquipment: (equipmentId: string) => void;
     unlockClue: (id: string) => void;
     grantFieldGuide: (zoneId: ZoneId) => void;
+    /** Spend Dotty's free pick on a zone guide. No-op for other dogs or if spent. */
+    claimFreeGuide: (zoneId: ZoneId) => void;
     redeemCode: (raw: string) => RedeemResult;
     setNotifyAsked: () => void;
     setDemoDay: (day: number | null) => void;
@@ -82,6 +86,7 @@ const initial = {
     cluesUnlocked: [] as string[],
     redeemedCodes: [] as string[],
     fieldGuides: [] as ZoneId[],
+    freeGuideUsed: false,
     donations: [] as Donation[],
     donationsTotal: 0,
     notifyAsked: false,
@@ -103,10 +108,13 @@ export const useGameStore = create<GameState>()(
             moveRanger: (x, y, day) =>
                 set((s) => {
                     if (s.pin?.locked) return {};
+                    // The first pin drops anywhere; after that the ranger is on
+                    // foot, so each move is clamped to the day's walking range.
+                    const target = s.pin ? clampWalk(s.pin, { x, y }, dailyWalkKm(s.player?.dogId)) : { x, y };
                     const prior = s.pinMovesToday;
                     const count = prior && prior.day === day ? prior.count + 1 : 1;
                     return {
-                        pin: { x, y, updatedAt: new Date().toISOString(), locked: false },
+                        pin: { x: target.x, y: target.y, updatedAt: new Date().toISOString(), locked: false },
                         pinMovesToday: { day, count },
                     };
                 }),
@@ -164,6 +172,14 @@ export const useGameStore = create<GameState>()(
 
             grantFieldGuide: (zoneId) =>
                 set((s) => ({ fieldGuides: [...new Set([...s.fieldGuides, zoneId])] })),
+
+            claimFreeGuide: (zoneId) =>
+                set((s) => {
+                    const dogId = s.player?.dogId;
+                    if (!dogId || !BUSH_WISE_DOGS.has(dogId) || s.freeGuideUsed) return {};
+                    if (s.fieldGuides.includes(zoneId)) return {};
+                    return { fieldGuides: [...s.fieldGuides, zoneId], freeGuideUsed: true };
+                }),
 
             redeemCode: (raw) => {
                 const value = raw.trim().toUpperCase();

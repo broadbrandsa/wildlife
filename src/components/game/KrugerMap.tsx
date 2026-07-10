@@ -54,9 +54,11 @@ interface KrugerMapProps {
     showThirds?: boolean;
     /** Distance from the top of the map to the legend card, clearing any overlay above it. */
     legendTop?: number;
+    /** Today's walking range in km: draws a dashed ring around the pin. */
+    walkRangeKm?: number | null;
 }
 
-export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, target = null, maxScale = 4, showThirds = false, legendTop = 12 }: KrugerMapProps) {
+export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, target = null, maxScale = 4, showThirds = false, legendTop = 12, walkRangeKm = null }: KrugerMapProps) {
     const down = useRef<{ x: number; y: number } | null>(null);
     const svgRef = useRef<SVGSVGElement>(null);
     const barRef = useRef<HTMLSpanElement>(null);
@@ -287,6 +289,24 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                                 K9 BASE
                             </text>
                         </g>
+
+                        {/* today's walking range: how far the ranger can move from here.
+                            Radii use the same km scales as distanceKm (130 E-W, 366 N-S). */}
+                        {walkRangeKm != null && pin && (
+                            <ellipse
+                                cx={pin.x * VW}
+                                cy={pin.y * VH}
+                                rx={(walkRangeKm / 130) * VW}
+                                ry={(walkRangeKm / 366) * VH}
+                                fill="var(--clay-500)"
+                                fillOpacity={0.08}
+                                stroke="var(--clay-500)"
+                                strokeWidth={1.2}
+                                strokeDasharray="4 3"
+                                opacity={0.9}
+                                pointerEvents="none"
+                            />
+                        )}
                     </svg>
 
                     {/* the revealed poacher camp (debrief only) */}
@@ -416,6 +436,11 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                 <LegendKey label="River">
                     <span style={{ width: 12, height: 0, borderTop: "2px solid var(--teal-500)", display: "inline-block" }} />
                 </LegendKey>
+                {walkRangeKm != null && (
+                    <LegendKey label="Day's walk">
+                        <span style={{ width: 10, height: 10, borderRadius: "50%", border: "1.5px dashed var(--clay-500)", display: "inline-block" }} />
+                    </LegendKey>
+                )}
                 {showThirds && (
                     <LegendKey label="Thirds">
                         <span style={{ width: 12, height: 0, borderTop: "1.5px dashed var(--sand-600)", display: "inline-block" }} />

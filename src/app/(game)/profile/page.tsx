@@ -171,7 +171,7 @@ export default function ProfilePage() {
                         />
                     </div>
                     <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", margin: "var(--space-3) 0 0", lineHeight: 1.5 }}>
-                        Scrub through the round to show how clues release over 90 days.
+                        Scrub through the round to show how clues release over the 45 days.
                     </p>
                     <div style={{ marginTop: "var(--space-4)" }}>
                         <Button size="sm" variant="secondary" fullWidth onClick={() => router.push("/debrief?preview=1")} iconRight={<i className="ph ph-flag-checkered" />}>

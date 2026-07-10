@@ -12,9 +12,11 @@ import { ZoneSheet } from "@/components/game/ZoneSheet";
 import { CLUE_BY_ID, CLUES, DOG_BY_ID, RANGER_BY_ID, ROUND, ZONES, ZONE_BY_ID } from "@/data";
 import type { Zone } from "@/data";
 import {
+    EXTRA_MOVE_DOGS,
     SCENT_TEXT,
     THIRD_LABEL,
     availableClueIds,
+    dailyWalkKm,
     scentDirectionText,
     daysRemaining,
     isRoundOver,
@@ -78,10 +80,13 @@ function MapInner() {
     const pinZone = pin ? ZONE_BY_ID[zoneAtPoint(pin)] : null;
     const clueCountdown = nextClueLabel(day);
 
-    // Movement: the ranger (your guess) may move once a day, twice with boots.
-    const maxMoves = inventory.includes("ranger-boots") ? 2 : 1;
+    // Movement: one move a day, plus one for boots, plus one for Storm's drive.
+    // Each move covers at most a day's walk in km (Banjo walks further).
+    const maxMoves =
+        1 + (inventory.includes("ranger-boots") ? 1 : 0) + (player && EXTRA_MOVE_DOGS.has(player.dogId) ? 1 : 0);
     const movesToday = pinMovesToday?.day === day ? pinMovesToday.count : 0;
     const canMove = !pin?.locked && movesToday < maxMoves;
+    const walkKm = dailyWalkKm(player?.dogId);
 
     // The dog reads the ground wherever the ranger currently stands.
     const read = useMemo(
@@ -171,7 +176,13 @@ function MapInner() {
 
             {/* Map */}
             <div style={{ position: "relative", height: "min(52dvh, 460px)", background: "radial-gradient(120% 110% at 50% 0%, #2C4A39 0%, #16110A 92%)" }}>
-                <KrugerMap pin={pin} onPlace={onPlace} maxScale={inventory.includes("pro-binoculars") ? 8 : 4} legendTop={64} />
+                <KrugerMap
+                    pin={pin}
+                    onPlace={onPlace}
+                    maxScale={inventory.includes("pro-binoculars") ? 8 : 4}
+                    legendTop={64}
+                    walkRangeKm={pin && !pin.locked && canMove ? walkKm : null}
+                />
                 {!pin && !(showWelcome && !dismissed) && (
                     <div
                         className="kw-rise"
@@ -348,8 +359,8 @@ function MapInner() {
                             <>
                                 <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)", marginTop: 4 }}>
                                     {canMove
-                                        ? `You have ${maxMoves - movesToday === 1 ? "one ranger move" : `${maxMoves - movesToday} ranger moves`} left today.`
-                                        : "You have moved as far as you can today."}
+                                        ? `You have ${maxMoves - movesToday === 1 ? "one ranger move" : `${maxMoves - movesToday} ranger moves`} left today, each up to ${walkKm} km on foot. The ring on the map shows your reach.`
+                                        : "You have walked as far as you can today. Fresh legs tomorrow."}
                                 </div>
                                 <div style={{ fontSize: "0.74rem", color: "var(--text-muted)", marginTop: 3 }}>
                                     One lock-in for the whole game. Lock in only when you are sure.
@@ -485,7 +496,7 @@ function MapInner() {
                             </Tag>
                             <h2 style={{ fontSize: "var(--text-h3)", margin: "var(--space-3) 0 0" }}>Drop your first pin</h2>
                             <p style={{ fontSize: "0.86rem", color: "var(--text-secondary)", lineHeight: 1.55, margin: "var(--space-2) 0 0" }}>
-                                Tap the map where you think the suspect is hiding. That spot is where your ranger stands and your guess for the round, and it unlocks a free field guide for that ground. Here is your first clue to work from.
+                                Tap the map where you think the suspect is hiding. That spot is where your ranger stands and your guess for the round, and it unlocks a free field guide for that ground. Choose with care: once on the ground, your ranger can only walk about {walkKm} km of bush a day. Here is your first clue to work from.
                             </p>
                         </div>
                         <ClueCard clue={CLUE_BY_ID["f01"]} />

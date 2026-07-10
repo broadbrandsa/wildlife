@@ -58,7 +58,7 @@ export const WIN_STEPS: { icon: string; title: string; body: string }[] = [
     {
         icon: "notebook",
         title: "Work the clues",
-        body: "Clues release across the 90 days. Read them against your field guides to narrow eight zones down to one river bend.",
+        body: "Clues release across the 45 days. Read them against your field guides to narrow eight zones down to one river bend.",
     },
     {
         icon: "map-pin",

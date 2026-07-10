@@ -15,8 +15,8 @@ export const ROUND: Round = {
     number: 1,
     name: "The Southern Koppie",
     startsAt: "2026-06-01T00:00:00+02:00",
-    endsAt: "2026-08-30T00:00:00+02:00",
-    durationDays: 90,
+    endsAt: "2026-07-16T00:00:00+02:00",
+    durationDays: 45,
     // Production note: poacher coords are server-only and never shipped to the
     // client. Held here for the offline v1 prototype only.
     // x: 0 (west) to 1 (east); y: 0 (north) to 1 (south). This is the real
