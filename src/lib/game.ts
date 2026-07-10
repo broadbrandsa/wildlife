@@ -267,15 +267,16 @@ export const SCENT_TEXT: Record<ScentTier, string> = {
 };
 
 /**
- * Sun-based direction cues (southern hemisphere: the midday sun sits to the
- * north). The base read never names a compass point, so the player reads the
- * sky and decides which way to go. A compass or a line-reading dog upgrades to
- * the exact bearing.
+ * Sky-based direction cues the player has to read for themselves. East and
+ * west come from the sun's day arc; north and south come from the Southern
+ * Cross, which hangs in the southern night sky over the lowveld (real ranger
+ * navigation). The base read never names a compass point; a compass or a
+ * line-reading dog upgrades to the exact bearing.
  */
 const SUN_CUE: Record<RoughDirection, string> = {
-    north: "toward the midday sun",
+    north: "away from the Southern Cross",
     east: "toward the sunrise",
-    south: "away from the midday sun",
+    south: "toward the Southern Cross",
     west: "toward the evening sunset",
 };
 

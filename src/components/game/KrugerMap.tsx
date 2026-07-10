@@ -419,6 +419,8 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                                 padding: 6, // a slightly larger finger target
                             }}
                         >
+                            {/* teardrop: the sharp corner (bottom-left) swings to the BOTTOM
+                                with rotate(-45deg), so the tip points at the ground it marks */}
                             <span
                                 style={{
                                     display: "flex",
@@ -428,14 +430,14 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                                     height: 30,
                                     borderRadius: "50% 50% 50% 2px",
                                     background: pin.locked ? "var(--green-700)" : "var(--clay-500)",
-                                    transform: "rotate(45deg)",
+                                    transform: "rotate(-45deg)",
                                     boxShadow: "var(--shadow-md)",
                                     border: "2px solid #fff",
                                 }}
                             >
                                 <i
                                     className={`ph-fill ph-${pin.locked ? "lock-simple" : "paw-print"}`}
-                                    style={{ transform: "rotate(-45deg)", color: "#fff", fontSize: 14 }}
+                                    style={{ transform: "rotate(45deg)", color: "#fff", fontSize: 14 }}
                                 />
                             </span>
                         </span>

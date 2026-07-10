@@ -60,13 +60,21 @@ export const NEAR_TARGET_KM = 15;
  * (count pins within NEAR_TARGET_KM of the target, and their locked flags).
  */
 export function rangersNearTarget(day: number): { count: number; locked: number } {
-    const t = clamp01((day - 1) / (ROUND.durationDays - 1));
-    // A thin sliver of the hunting field has worked its way inside the ring:
-    // about one ranger on day 1, a couple of dozen mid-round, a crowd late.
-    const frac = 0.0002 + (0.005 - 0.0002) * Math.pow(t, 1.5);
-    const wobble = 1 + (dayNoise(day * 7 + 1) - 0.5) * 0.2;
-    const count = Math.max(1, Math.round(rangersHunting(day) * frac * wobble));
+    // Raw day-seeded count: a thin sliver of the hunting field has worked its
+    // way inside the ring, about one ranger on day 1 growing to a crowd late.
+    const raw = (d: number) => {
+        const t = clamp01((d - 1) / (ROUND.durationDays - 1));
+        const frac = 0.0002 + (0.005 - 0.0002) * Math.pow(t, 1.5);
+        const wobble = 1 + (dayNoise(d * 7 + 1) - 0.5) * 0.2;
+        return Math.max(1, Math.round(rangersHunting(d) * frac * wobble));
+    };
+    // Rangers close in and stay close: the count only ever rises through the
+    // round, so take the running high-water mark and let the wobble decide
+    // which days it holds and which days it jumps.
+    let count = 1;
+    for (let d = 1; d <= day; d++) count = Math.max(count, raw(d));
     // Of those, the locked share grows as the tiebreak clock starts to matter.
+    const t = clamp01((day - 1) / (ROUND.durationDays - 1));
     const lockedFrac = 0.25 + 0.6 * easeOut(t);
     const locked = Math.min(count, Math.round(count * lockedFrac));
     return { count, locked };
