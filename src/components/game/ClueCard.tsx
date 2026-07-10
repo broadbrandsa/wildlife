@@ -100,7 +100,7 @@ export function ClueCard({ clue, compact = false }: { clue: Clue; compact?: bool
 
             {clue.releaseDay != null && (
                 <div style={{ padding: "0.6rem var(--space-4)", borderTop: "1px solid var(--border-subtle)", fontFamily: "var(--font-mono)", fontSize: "0.64rem", letterSpacing: "0.08em", color: "var(--text-muted)" }}>
-                    DAY {clue.releaseDay} · TAKE IT TO THE CASE BOARD
+                    DAY {clue.releaseDay} · READ IT AGAINST YOUR FIELD GUIDES
                 </div>
             )}
         </div>

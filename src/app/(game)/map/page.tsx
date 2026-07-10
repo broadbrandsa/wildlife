@@ -52,6 +52,7 @@ function MapInner() {
 
     const [dismissed, setDismissed] = useState(false);
     const [guideZone, setGuideZone] = useState<Zone | null>(null);
+    const [guideJustUnlocked, setGuideJustUnlocked] = useState(false);
     const [confirmLock, setConfirmLock] = useState(false);
     const confirmTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const day = useCurrentDay();
@@ -103,9 +104,21 @@ function MapInner() {
 
     const onPlace = (x: number, y: number) => {
         if (!canMove && pin) return; // out of moves today; existing pin stays put
+        const firstPin = fieldGuides.length === 0;
         moveRanger(x, y, day);
-        // Your first field guide is free: unlock it for the ground you first pin.
-        if (fieldGuides.length === 0) grantFieldGuide(zoneAtPoint({ x, y }));
+        // Your first field guide is free: unlock it for the ground you first pin,
+        // then bring it up so the player reads it and learns they can unlock more.
+        if (firstPin) {
+            const zoneId = zoneAtPoint({ x, y });
+            grantFieldGuide(zoneId);
+            setGuideZone(ZONE_BY_ID[zoneId]);
+            setGuideJustUnlocked(true);
+        }
+    };
+
+    const closeGuide = () => {
+        setGuideZone(null);
+        setGuideJustUnlocked(false);
     };
 
     const onLockTap = () => {
@@ -168,6 +181,34 @@ function MapInner() {
             {/* Map */}
             <div style={{ position: "relative", height: "min(52dvh, 460px)", background: "radial-gradient(120% 110% at 50% 0%, #2C4A39 0%, #16110A 92%)" }}>
                 <KrugerMap pin={pin} onPlace={onPlace} maxScale={inventory.includes("pro-binoculars") ? 8 : 4} showThirds legendTop={64} />
+                {!pin && !(showWelcome && !dismissed) && (
+                    <div
+                        className="kw-rise"
+                        style={{
+                            position: "absolute",
+                            left: "50%",
+                            bottom: 52,
+                            transform: "translateX(-50%)",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 8,
+                            maxWidth: "82%",
+                            padding: "0.5rem 0.9rem",
+                            background: "var(--ochre-500)",
+                            color: "var(--sand-900)",
+                            borderRadius: "var(--radius-pill)",
+                            boxShadow: "var(--shadow-lg)",
+                            fontSize: "0.82rem",
+                            fontWeight: 700,
+                            pointerEvents: "none",
+                            textAlign: "center",
+                            lineHeight: 1.3,
+                        }}
+                    >
+                        <i className="ph-fill ph-hand-tap" style={{ fontSize: 16 }} />
+                        Tap the map to drop your pin and start the hunt
+                    </div>
+                )}
                 {(ranger || dog) && (
                     <button
                         onClick={() => router.push("/profile")}
@@ -392,7 +433,15 @@ function MapInner() {
                 )}
             </div>
 
-            <ZoneSheet zone={guideZone} onClose={() => setGuideZone(null)} />
+            <ZoneSheet
+                zone={guideZone}
+                onClose={closeGuide}
+                justUnlocked={guideJustUnlocked}
+                onBuyMore={() => {
+                    closeGuide();
+                    router.push("/shop");
+                }}
+            />
 
             {/* First-launch welcome sheet */}
             {showWelcome && !dismissed && (
@@ -425,12 +474,15 @@ function MapInner() {
                                 <i className="ph-fill ph-paw-print" style={{ marginRight: 4 }} />
                                 {rangerName} and {dogName} are ready
                             </Tag>
-                            <h2 style={{ fontSize: "var(--text-h3)", margin: "var(--space-3) 0 0" }}>Your first clue</h2>
+                            <h2 style={{ fontSize: "var(--text-h3)", margin: "var(--space-3) 0 0" }}>Drop your first pin</h2>
+                            <p style={{ fontSize: "0.86rem", color: "var(--text-secondary)", lineHeight: 1.55, margin: "var(--space-2) 0 0" }}>
+                                Tap the map where you think the suspect is hiding. That spot is where your ranger stands and your guess for the round, and it unlocks a free field guide for that ground. Here is your first clue to work from.
+                            </p>
                         </div>
                         <ClueCard clue={CLUE_BY_ID["f01"]} />
                         <div style={{ marginTop: "var(--space-5)" }}>
                             <Button size="lg" fullWidth onClick={closeWelcome} iconRight={<i className="ph ph-map-pin" />}>
-                                Start tracking
+                                Drop my first pin
                             </Button>
                         </div>
                     </div>

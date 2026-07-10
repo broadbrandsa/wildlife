@@ -167,7 +167,7 @@ export default function ShopPage() {
             <div style={{ margin: "var(--space-8) 0 var(--space-4)" }}>
                 <Eyebrow rule>Field guides</Eyebrow>
                 <p style={{ fontSize: "0.82rem", color: "var(--text-muted)", margin: "var(--space-2) 0 0", lineHeight: 1.5 }}>
-                    You start with one area's field guide. Unlock more to read the terrain, plants and animals of other zones and rule them in or out on the case board.
+                    You start with one area's field guide, unlocked where you dropped your first pin. Unlock more to read the terrain, plants and animals of other zones and rule them in or out as the clues land.
                 </p>
             </div>
             {guidesToBuy.length === 0 ? (

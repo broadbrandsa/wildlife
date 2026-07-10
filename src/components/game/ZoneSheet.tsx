@@ -1,6 +1,6 @@
 "use client";
 
-import { Tag } from "@/components/ds";
+import { Button, Tag } from "@/components/ds";
 import type { Zone } from "@/data";
 
 function GuideRow({ label, icon, value }: { label: string; icon: string; value: string }) {
@@ -29,7 +29,19 @@ function GuideRow({ label, icon, value }: { label: string; icon: string; value: 
  * Field guide bottom sheet for a single zone. This is the deduction toolkit:
  * everything a clue can reference (rock, plants, animals, names) lives here.
  */
-export function ZoneSheet({ zone, onClose }: { zone: Zone | null; onClose: () => void }) {
+export function ZoneSheet({
+    zone,
+    onClose,
+    justUnlocked = false,
+    onBuyMore,
+}: {
+    zone: Zone | null;
+    onClose: () => void;
+    /** Show the "new field guide" banner (used when it opens on the first pin). */
+    justUnlocked?: boolean;
+    /** When set, shows a hint and button to unlock more field guides. */
+    onBuyMore?: () => void;
+}) {
     if (!zone) return null;
 
     return (
@@ -61,6 +73,26 @@ export function ZoneSheet({ zone, onClose }: { zone: Zone | null; onClose: () =>
                 }}
             >
                 <div style={{ width: 44, height: 5, borderRadius: 999, background: "var(--border-default)", margin: "0 auto var(--space-5)" }} />
+
+                {justUnlocked && (
+                    <div
+                        style={{
+                            display: "flex",
+                            gap: "0.7rem",
+                            alignItems: "flex-start",
+                            background: "var(--green-100)",
+                            border: "1px solid var(--green-200)",
+                            borderRadius: "var(--radius-lg)",
+                            padding: "0.7rem 0.85rem",
+                            marginBottom: "var(--space-5)",
+                        }}
+                    >
+                        <i className="ph-fill ph-book-open-text" style={{ fontSize: 20, color: "var(--green-700)", marginTop: 1 }} />
+                        <div style={{ fontSize: "0.84rem", color: "var(--text-secondary)", lineHeight: 1.5 }}>
+                            <strong style={{ color: "var(--text-primary)" }}>Field guide unlocked, free.</strong> You dropped your pin here, so this ground is yours to study. Read it to turn clues into a place you can point to.
+                        </div>
+                    </div>
+                )}
 
                 <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: "var(--space-3)" }}>
                     <div>
@@ -105,6 +137,28 @@ export function ZoneSheet({ zone, onClose }: { zone: Zone | null; onClose: () =>
                 >
                     {zone.signatureClue}
                 </div>
+
+                {onBuyMore && (
+                    <div
+                        style={{
+                            marginTop: "var(--space-5)",
+                            background: "var(--surface-sunken)",
+                            border: "1px solid var(--border-default)",
+                            borderRadius: "var(--radius-lg)",
+                            padding: "var(--space-4)",
+                        }}
+                    >
+                        <div style={{ fontWeight: 700, fontSize: "0.9rem" }}>Read more ground</div>
+                        <div style={{ fontSize: "0.82rem", color: "var(--text-muted)", lineHeight: 1.5, marginTop: 2 }}>
+                            The suspect could be in any zone. Unlock the field guide for another zone for R25, and every unlock funds the real K9 unit.
+                        </div>
+                        <div style={{ marginTop: "var(--space-3)" }}>
+                            <Button size="sm" variant="secondary" onClick={onBuyMore} iconLeft={<i className="ph ph-books" />}>
+                                Unlock more field guides
+                            </Button>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
