@@ -145,7 +145,7 @@ export default function PrizesPage() {
 
                 {/* the goal */}
                 <div>
-                    <Eyebrow rule>Why we are hunting</Eyebrow>
+                    <Eyebrow rule>Why we are tracking</Eyebrow>
                     <p style={{ margin: "var(--space-3) 0 0", fontSize: "0.9rem", color: "var(--text-secondary)", lineHeight: 1.6 }}>{GOAL_LINE}</p>
                     <div style={{ marginTop: "var(--space-4)" }}>
                         <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "var(--font-mono)", fontSize: "0.66rem", letterSpacing: "0.08em", color: "var(--text-muted)", marginBottom: 6 }}>

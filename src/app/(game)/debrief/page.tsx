@@ -112,7 +112,7 @@ function DebriefInner() {
                         </Button>
 
                         <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.66rem", letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text-muted)", textAlign: "center", margin: 0 }}>
-                            {rangersHunting(ROUND.durationDays).toLocaleString("en-ZA")} rangers hunted this round
+                            {rangersHunting(ROUND.durationDays).toLocaleString("en-ZA")} rangers tracked this round
                         </p>
                     </>
                 ) : (

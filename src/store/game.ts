@@ -12,7 +12,8 @@ export interface Player {
     id: string;
     /** The player's chosen name. They are the ranger, so this is the ranger's name. */
     displayName: string;
-    birthYear: number;
+    /** Optional: the age gate was dropped from sign-on. */
+    birthYear?: number;
     rangerId: string;
     dogId: string;
     /** Player-chosen name for their dog (defaults to the reference name). */

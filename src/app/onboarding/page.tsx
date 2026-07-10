@@ -6,22 +6,13 @@ import { useState } from "react";
 
 import { DOGS, RANGERS } from "@/data";
 import { Button, Eyebrow, Field } from "@/components/ds";
+import { CarouselArrow, CarouselDots } from "@/components/game/Carousel";
 import { PhoneStage } from "@/components/game/PhoneStage";
 import { useGameStore } from "@/store/game";
 
-const THIS_YEAR = 2026;
+type Step = "ranger" | "dog" | "origin";
 
-const ORIGIN = [
-    "Poachers crossed the western boundary in the dark. One of them is still inside the park, lying up somewhere in the bush.",
-    "The ranger teams are grounded in fog and the aircraft cannot fly. Until it lifts, you and your dog are the only ones who can work this scent.",
-    "The trail shows itself slowly. Across the round, clues come in from the field: the rock underfoot, the rivers, the plants, radio traffic from other teams. Read them, and your dog tells you how close the scent runs.",
-    "Drop your pin where you think the suspect is hiding, then move in as the trail sharpens. Lock in when you are sure. The closest pin when the round closes puts the real team on the ground, and every move funds the dogs who do this for real.",
-    "Welcome to the K9 Unit.",
-    "First, choose your ranger. Then, choose your dog.",
-];
-const HERO_CARD = "Welcome to the K9 Unit.";
-
-type Step = "age" | "parent" | "name" | "origin" | "ranger" | "dog";
+const STEPS: Step[] = ["ranger", "dog", "origin"];
 
 function ProgressDots({ index, total }: { index: number; total: number }) {
     return (
@@ -42,124 +33,43 @@ function ProgressDots({ index, total }: { index: number; total: number }) {
     );
 }
 
-function CarouselArrow({ dir, onClick }: { dir: "left" | "right"; onClick: () => void }) {
-    return (
-        <button
-            type="button"
-            onClick={onClick}
-            aria-label={dir === "left" ? "Previous" : "Next"}
-            style={{
-                position: "absolute",
-                top: "50%",
-                left: dir === "left" ? 10 : undefined,
-                right: dir === "right" ? 10 : undefined,
-                transform: "translateY(-50%)",
-                width: 44,
-                height: 44,
-                borderRadius: "50%",
-                border: "none",
-                cursor: "pointer",
-                background: "rgba(250,246,236,0.92)",
-                backdropFilter: "blur(6px)",
-                WebkitBackdropFilter: "blur(6px)",
-                boxShadow: "var(--shadow-md)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "var(--text-primary)",
-            }}
-        >
-            <i className={`ph-bold ph-caret-${dir}`} style={{ fontSize: 20 }} />
-        </button>
-    );
-}
-
-function CarouselDots({ index, total }: { index: number; total: number }) {
-    return (
-        <div style={{ display: "flex", gap: 7, justifyContent: "center" }}>
-            {Array.from({ length: total }).map((_, i) => (
-                <span
-                    key={i}
-                    style={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: 999,
-                        background: i === index ? "var(--accent)" : "var(--border-default)",
-                        transition: "all var(--dur-base) var(--ease-out)",
-                    }}
-                />
-            ))}
-        </div>
-    );
-}
-
 export default function OnboardingPage() {
     const router = useRouter();
     const setPlayer = useGameStore((s) => s.setPlayer);
 
-    const [step, setStep] = useState<Step>("age");
-    const [birthYear, setBirthYear] = useState("");
-    const [parentEmail, setParentEmail] = useState("");
+    const [step, setStep] = useState<Step>("ranger");
     const [name, setName] = useState("");
     const [originSeen, setOriginSeen] = useState(1);
     // Ranger and dog are chosen with a carousel: the one on screen is the pick.
     const [rangerIndex, setRangerIndex] = useState(0);
     const [dogIndex, setDogIndex] = useState(0);
     const [dogName, setDogName] = useState("");
-    const [error, setError] = useState("");
 
     const selectedRanger = RANGERS[rangerIndex];
     const selectedDog = DOGS[dogIndex];
-    const rangerId = selectedRanger.id;
-    const dogId = selectedDog.id;
     const stepThrough = (setIndex: (fn: (i: number) => number) => void, length: number, dir: 1 | -1) =>
         setIndex((i) => (i + dir + length) % length);
 
-    const age = birthYear ? THIS_YEAR - Number(birthYear) : null;
-    const isMinor = age != null && age < 18;
-    const steps: Step[] = isMinor
-        ? ["age", "parent", "name", "origin", "ranger", "dog"]
-        : ["age", "name", "origin", "ranger", "dog"];
-    const stepIndex = steps.indexOf(step);
+    const stepIndex = STEPS.indexOf(step);
+    const rangerName = name.trim();
+    const chosenDogName = dogName.trim();
 
-    const submitAge = () => {
-        const y = Number(birthYear);
-        if (!y || y < 1920 || y > THIS_YEAR) {
-            setError("Enter the year you were born.");
-            return;
-        }
-        setError("");
-        setStep(THIS_YEAR - y < 18 ? "parent" : "name");
-    };
-
-    const submitParent = () => {
-        if (!parentEmail.includes("@")) {
-            setError("We need a parent or guardian's email.");
-            return;
-        }
-        setError("");
-        setStep("name");
-    };
-
-    const submitName = () => {
-        if (name.trim().length < 2) {
-            setError("Pick a ranger name.");
-            return;
-        }
-        setError("");
-        setStep("origin");
-    };
+    // The team is chosen and named first, so dispatch can welcome them properly.
+    const ORIGIN = [
+        `Welcome to the SAWC K9 Unit, ${rangerName || "ranger"}. You and ${chosenDogName || "your dog"} join the roster this morning.`,
+        "And not a moment too soon. Poachers crossed the western boundary in the dark. One of them is still inside the park, lying up somewhere in the bush.",
+        `The ranger teams are grounded in fog and the aircraft cannot fly. Until it lifts, you and ${chosenDogName || "your dog"} are the only ones who can work this scent.`,
+        `The trail shows itself slowly. Across the round, clues come in from the field: the rock underfoot, the rivers, the plants, radio traffic from other teams. Read them, and ${chosenDogName || "your dog"} tells you how close the scent runs.`,
+        "Drop your pin where you think the suspect is hiding, then move in as the trail sharpens. Lock in when you are sure. The closest pin when the round closes puts the real team on the ground, and every move funds the dogs who do this for real.",
+    ];
 
     const finish = () => {
-        const dogFallback = selectedDog.breed;
         setPlayer({
             id: crypto.randomUUID(),
-            displayName: name.trim(),
-            birthYear: Number(birthYear),
-            rangerId,
-            dogId,
-            dogName: dogName.trim() || dogFallback,
-            parentEmail: isMinor ? parentEmail : undefined,
+            displayName: rangerName,
+            rangerId: selectedRanger.id,
+            dogId: selectedDog.id,
+            dogName: chosenDogName || selectedDog.breed,
         });
         // The first field guide is unlocked free when the player drops their first pin.
         router.replace("/map?welcome=1");
@@ -169,134 +79,22 @@ export default function OnboardingPage() {
         <PhoneStage columnStyle={{ flexDirection: "column" }}>
             <div style={{ padding: "var(--space-6) var(--gutter) 0" }}>
                 <button
-                    onClick={() => (stepIndex <= 0 ? router.back() : setStep(steps[stepIndex - 1]))}
-                    style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.85rem" }}
+                    onClick={() => (stepIndex <= 0 ? router.back() : setStep(STEPS[stepIndex - 1]))}
+                    style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.85rem", padding: "0.4rem 0" }}
                 >
                     <i className="ph ph-arrow-left" /> Back
                 </button>
-                <ProgressDots index={stepIndex} total={steps.length} />
+                <ProgressDots index={stepIndex} total={STEPS.length} />
             </div>
 
-            <div style={{ flex: 1, padding: "var(--space-7) var(--gutter)", display: "flex", flexDirection: "column" }}>
-                {step === "age" && (
-                    <div className="kw-rise" style={{ display: "flex", flexDirection: "column", gap: "var(--space-5)" }}>
-                        <div>
-                            <Eyebrow>Step 01 · Sign-on</Eyebrow>
-                            <h1 style={{ fontSize: "var(--text-h2)", margin: "var(--space-3) 0 0" }}>What year were you born?</h1>
-                            <p style={{ color: "var(--text-secondary)", marginTop: "var(--space-2)" }}>
-                                We ask so younger rangers get a parent's say-so. We never store your full birth date.
-                            </p>
-                        </div>
-                        <Field
-                            label="Birth year"
-                            type="number"
-                            inputMode="numeric"
-                            placeholder="e.g. 2014"
-                            value={birthYear}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBirthYear(e.target.value)}
-                            error={error || undefined}
-                        />
-                        <Button size="lg" fullWidth onClick={submitAge}>
-                            Continue
-                        </Button>
-                    </div>
-                )}
-
-                {step === "parent" && (
-                    <div className="kw-rise" style={{ display: "flex", flexDirection: "column", gap: "var(--space-5)" }}>
-                        <div>
-                            <Eyebrow>Step 02 · Parent's say-so</Eyebrow>
-                            <h1 style={{ fontSize: "var(--text-h2)", margin: "var(--space-3) 0 0" }}>A grown-up's email</h1>
-                            <p style={{ color: "var(--text-secondary)", marginTop: "var(--space-2)" }}>
-                                Because you are under 18, we send a quick note to a parent or guardian. This is a demo, so nothing is sent yet.
-                            </p>
-                        </div>
-                        <Field
-                            label="Parent or guardian email"
-                            type="email"
-                            icon={<i className="ph ph-envelope-simple" />}
-                            placeholder="parent@email.com"
-                            value={parentEmail}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setParentEmail(e.target.value)}
-                            error={error || undefined}
-                        />
-                        <Button size="lg" fullWidth onClick={submitParent}>
-                            Continue
-                        </Button>
-                    </div>
-                )}
-
-                {step === "name" && (
-                    <div className="kw-rise" style={{ display: "flex", flexDirection: "column", gap: "var(--space-5)" }}>
-                        <div>
-                            <Eyebrow>Sign-on</Eyebrow>
-                            <h1 style={{ fontSize: "var(--text-h2)", margin: "var(--space-3) 0 0" }}>Name your ranger</h1>
-                            <p style={{ color: "var(--text-secondary)", marginTop: "var(--space-2)" }}>You are the ranger. This is your name on the team and on the leaderboard.</p>
-                        </div>
-                        <Field
-                            label="Ranger name"
-                            icon={<i className="ph ph-identification-badge" />}
-                            placeholder="e.g. Ranger Kgosi"
-                            value={name}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
-                            error={error || undefined}
-                        />
-                        <Button size="lg" fullWidth onClick={submitName}>
-                            Continue
-                        </Button>
-                    </div>
-                )}
-
-                {step === "origin" && (
-                    <div className="kw-rise" style={{ display: "flex", flexDirection: "column", flex: 1 }}>
-                        <Eyebrow rule>Incoming · field radio</Eyebrow>
-                        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "var(--space-4)", marginTop: "var(--space-5)" }}>
-                            {ORIGIN.slice(0, originSeen).map((line, i) => {
-                                const hero = line === HERO_CARD;
-                                return (
-                                    <div
-                                        key={i}
-                                        className="kw-rise"
-                                        style={{
-                                            alignSelf: "flex-start",
-                                            maxWidth: "85%",
-                                            background: hero ? "var(--brand)" : "var(--surface-card)",
-                                            color: hero ? "var(--sand-50)" : "var(--text-primary)",
-                                            border: "1px solid var(--border-subtle)",
-                                            borderRadius: "var(--radius-lg)",
-                                            borderBottomLeftRadius: 4,
-                                            padding: "var(--space-4) var(--space-5)",
-                                            boxShadow: "var(--shadow-sm)",
-                                        }}
-                                    >
-                                        {i === 0 && (
-                                            <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--text-accent)", marginBottom: 4 }}>
-                                                Dispatch · Theresa
-                                            </div>
-                                        )}
-                                        {line}
-                                    </div>
-                                );
-                            })}
-                        </div>
-                        <Button
-                            size="lg"
-                            fullWidth
-                            onClick={() => (originSeen < ORIGIN.length ? setOriginSeen((n) => n + 1) : setStep("ranger"))}
-                            iconRight={<i className="ph ph-arrow-right" />}
-                        >
-                            {originSeen < ORIGIN.length ? "Next message" : "Choose your ranger"}
-                        </Button>
-                    </div>
-                )}
-
+            <div style={{ flex: 1, padding: "var(--space-6) var(--gutter) var(--space-7)", display: "flex", flexDirection: "column" }}>
                 {step === "ranger" && (
                     <div className="kw-rise" style={{ display: "flex", flexDirection: "column", gap: "var(--space-5)" }}>
                         <div>
                             <Eyebrow>Your ranger</Eyebrow>
-                            <h1 style={{ fontSize: "var(--text-h2)", margin: "var(--space-3) 0 0" }}>Pick your look, {name.trim() || "ranger"}</h1>
+                            <h1 style={{ fontSize: "var(--text-h2)", margin: "var(--space-3) 0 0" }}>This is you</h1>
                             <p style={{ color: "var(--text-secondary)", marginTop: "var(--space-2)" }}>
-                                This is you on the team. The lineup reflects the real rangers of the Greater Kruger. Step through and pick the one that feels like you; you play as {name.trim() || "yourself"}.
+                                Step through and pick the ranger that feels like you. The lineup reflects the real rangers of the Greater Kruger. Then sign on with your name below.
                             </p>
                         </div>
 
@@ -313,7 +111,16 @@ export default function OnboardingPage() {
                             &ldquo;{selectedRanger.personality}&rdquo;
                         </p>
 
-                        <Button size="lg" fullWidth onClick={() => setStep("dog")} iconRight={<i className="ph ph-arrow-right" />}>
+                        <Field
+                            label="Your ranger name"
+                            icon={<i className="ph ph-identification-badge" />}
+                            placeholder="e.g. Ranger Kgosi"
+                            value={name}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
+                            hint="Your name on the team and on the leaderboard."
+                        />
+
+                        <Button size="lg" fullWidth disabled={rangerName.length < 2} onClick={() => setStep("dog")} iconRight={<i className="ph ph-arrow-right" />}>
                             Now choose your dog
                         </Button>
                     </div>
@@ -325,7 +132,7 @@ export default function OnboardingPage() {
                             <Eyebrow>Your partner</Eyebrow>
                             <h1 style={{ fontSize: "var(--text-h2)", margin: "var(--space-3) 0 0" }}>Pick your dog</h1>
                             <p style={{ color: "var(--text-secondary)", marginTop: "var(--space-2)" }}>
-                                Step through the dogs. Each is based on a real SAWC K9 role and gives a small edge on the hunt. Name your dog below.
+                                Step through the dogs. Each is based on a real SAWC K9 role and brings its own superpower to the tracking. Name your dog below.
                             </p>
                         </div>
 
@@ -354,8 +161,51 @@ export default function OnboardingPage() {
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDogName(e.target.value)}
                             hint="This is what we'll call your dog in the game."
                         />
-                        <Button size="lg" fullWidth disabled={!dogName.trim()} onClick={finish} iconRight={<i className="ph ph-paw-print" />}>
-                            Begin the hunt
+                        <Button size="lg" fullWidth disabled={!chosenDogName} onClick={() => setStep("origin")} iconRight={<i className="ph ph-arrow-right" />}>
+                            Report for duty
+                        </Button>
+                    </div>
+                )}
+
+                {step === "origin" && (
+                    <div className="kw-rise" style={{ display: "flex", flexDirection: "column", flex: 1 }}>
+                        <Eyebrow rule>Incoming · field radio</Eyebrow>
+                        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "var(--space-4)", marginTop: "var(--space-5)" }}>
+                            {ORIGIN.slice(0, originSeen).map((line, i) => {
+                                const hero = i === 0; // the welcome card leads the thread
+                                return (
+                                    <div
+                                        key={i}
+                                        className="kw-rise"
+                                        style={{
+                                            alignSelf: "flex-start",
+                                            maxWidth: "85%",
+                                            background: hero ? "var(--brand)" : "var(--surface-card)",
+                                            color: hero ? "var(--sand-50)" : "var(--text-primary)",
+                                            border: "1px solid var(--border-subtle)",
+                                            borderRadius: "var(--radius-lg)",
+                                            borderBottomLeftRadius: 4,
+                                            padding: "var(--space-4) var(--space-5)",
+                                            boxShadow: "var(--shadow-sm)",
+                                        }}
+                                    >
+                                        {i === 0 && (
+                                            <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--ochre-300)", marginBottom: 4 }}>
+                                                Dispatch · Theresa
+                                            </div>
+                                        )}
+                                        {line}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        <Button
+                            size="lg"
+                            fullWidth
+                            onClick={() => (originSeen < ORIGIN.length ? setOriginSeen((n) => n + 1) : finish())}
+                            iconRight={<i className={`ph ph-${originSeen < ORIGIN.length ? "arrow-right" : "paw-print"}`} />}
+                        >
+                            {originSeen < ORIGIN.length ? "Next message" : "Begin the hunt"}
                         </Button>
                     </div>
                 )}

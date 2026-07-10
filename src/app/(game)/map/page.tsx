@@ -172,7 +172,7 @@ function MapInner() {
                         <i className="ph ph-hourglass-medium" /> {daysRemaining(day)} DAYS LEFT
                     </span>
                     <span>
-                        <i className="ph ph-users-three" /> {rangersHunting(day).toLocaleString("en-ZA")} RANGERS HUNTING
+                        <i className="ph ph-users-three" /> {rangersHunting(day).toLocaleString("en-ZA")} RANGERS TRACKING
                     </span>
                 </div>
 

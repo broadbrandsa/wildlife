@@ -23,7 +23,7 @@ export const CLUES: Clue[] = [
         tier: 1,
         releaseDay: 1,
         zoneId: "southern-sabie",
-        body: "Dispatch opens the file: the suspect camps where the hills are pale grey granite domes, not the flat black plains of the middle park nor the red mopane country of the north. Think of the older, southern ground.",
+        body: "The suspect camps where the hills are pale grey granite domes, not the flat black plains of the middle park nor the red mopane country of the north. Think of the older, southern ground.",
         didYouKnow:
             "Almost half of Kruger is granite up to 3.5 billion years old, among the oldest rock on Earth, and it dominates the south and west.",
     },
