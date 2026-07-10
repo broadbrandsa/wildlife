@@ -57,6 +57,32 @@ export function nextClueLabel(day: number): string {
     return `NEXT CLUE IN ${days} DAYS`;
 }
 
+/** The round day the next free clue releases, or null once all are out. */
+export function nextClueReleaseDay(day: number): number | null {
+    const days = nextClueDays(day);
+    return days == null ? null : day + days;
+}
+
+/** Whole hours until the next free clue releases, or null if all out. */
+export function hoursUntilNextClue(day: number): number | null {
+    const releaseDay = nextClueReleaseDay(day);
+    if (releaseDay == null) return null;
+    const start = new Date(ROUND.startsAt).getTime();
+    const realDay = Math.floor((Date.now() - start) / 86_400_000) + 1;
+    // Trust the wall clock only when the day we are showing is the real one.
+    // Under a demo/override day the clock is out of step, so estimate from days.
+    if (realDay === day) {
+        const releaseAt = start + (releaseDay - 1) * 86_400_000;
+        return Math.max(1, Math.ceil((releaseAt - Date.now()) / 3_600_000));
+    }
+    return (releaseDay - day) * 24;
+}
+
+/** How many timed free clues have not released yet. */
+export function freeCluesToCome(day: number): number {
+    return CLUES.filter((c) => c.source === "free" && c.releaseDay != null && (c.releaseDay as number) > day).length;
+}
+
 /**
  * Distance from a normalised map point to a normalised target. The map is a
  * real linear projection of Kruger (see map-geometry.ts): the frame spans
