@@ -40,7 +40,7 @@ const TIER_META: Record<ScentTier, { label: string; tone: "neutral" | "teal" | "
     hot: { label: "Fresh sign", tone: "clay", icon: "paw-print" },
 };
 
-type SheetId = "status" | "ranger" | "dog" | "clue" | "guides" | "bakkie";
+type SheetId = "status" | "ranger" | "dog" | "clue" | "guides" | "bakkie" | "night";
 
 /** Small clay notification dot pinned to a corner of its parent. */
 function NDot() {
@@ -67,6 +67,7 @@ function AvatarButton({ src, alt, dot, onClick }: { src: string; alt: string; do
         <button
             onClick={onClick}
             aria-label={alt}
+            className="kw-press"
             style={{
                 position: "relative",
                 width: 52,
@@ -94,6 +95,7 @@ function DockTab({ icon, label, dot, onClick }: { icon: string; label: string; d
         <button
             onClick={onClick}
             aria-label={label}
+            className="kw-press"
             style={{
                 position: "relative",
                 display: "flex",
@@ -393,30 +395,32 @@ function MapInner() {
                 />
             )}
 
-            {/* time of day: sun or moon with the clock */}
-            <div
-                style={{
-                    position: "absolute",
-                    left: "50%",
-                    top: 12,
-                    transform: "translateX(-50%)",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 6,
-                    padding: "0.3rem 0.7rem",
-                    background: "rgba(250,246,236,0.9)",
-                    backdropFilter: "blur(8px)",
-                    WebkitBackdropFilter: "blur(8px)",
-                    border: "1px solid var(--border-subtle)",
-                    borderRadius: "var(--radius-pill)",
-                    boxShadow: "var(--shadow-sm)",
-                }}
-                aria-label={`${PHASE_META[phase].label}, ${formatClock(hour, minute)}`}
-            >
-                <i className={`ph-fill ph-${PHASE_META[phase].icon}`} style={{ fontSize: 15, color: night ? "var(--text-secondary)" : "var(--ochre-600)" }} />
-                <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.68rem", letterSpacing: "0.08em", fontWeight: 700, color: "var(--text-primary)" }}>
-                    {formatClock(hour, minute)}
-                </span>
+            {/* time of day: sun or moon with the clock; opens the Kruger nights note */}
+            <div style={{ position: "absolute", left: "50%", top: 12, transform: "translateX(-50%)" }}>
+                <button
+                    onClick={() => setSheet("night")}
+                    className="kw-press"
+                    style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        padding: "0.42rem 0.75rem",
+                        background: "rgba(250,246,236,0.9)",
+                        backdropFilter: "blur(8px)",
+                        WebkitBackdropFilter: "blur(8px)",
+                        border: "1px solid var(--border-subtle)",
+                        borderRadius: "var(--radius-pill)",
+                        boxShadow: "var(--shadow-sm)",
+                        cursor: "pointer",
+                    }}
+                    aria-label={`${PHASE_META[phase].label}, ${formatClock(hour, minute)}. About nights in the Kruger`}
+                >
+                    <i className={`ph-fill ph-${PHASE_META[phase].icon}`} style={{ fontSize: 15, color: night ? "var(--text-secondary)" : "var(--ochre-600)" }} />
+                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.68rem", letterSpacing: "0.08em", fontWeight: 700, color: "var(--text-primary)" }}>
+                        {formatClock(hour, minute)}
+                    </span>
+                    <i className="ph ph-info" style={{ fontSize: 13, color: "var(--text-muted)" }} />
+                </button>
             </div>
 
             {/* the team, split: you and your dog, each with their own signal */}
@@ -432,6 +436,7 @@ function MapInner() {
                 <button
                     onClick={() => setSheet("status")}
                     aria-label="Round status"
+                    className="kw-press"
                     style={{ width: 40, height: 40, borderRadius: "50%", border: "1px solid var(--border-subtle)", background: "rgba(250,246,236,0.9)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", boxShadow: "var(--shadow-sm)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-primary)" }}
                 >
                     <i className="ph ph-calendar-blank" style={{ fontSize: 18 }} />
@@ -439,6 +444,7 @@ function MapInner() {
                 <button
                     onClick={() => router.push("/prizes")}
                     aria-label="Prizes and how to win"
+                    className="kw-press"
                     style={{ width: 40, height: 40, borderRadius: "50%", border: "1px solid var(--border-subtle)", background: "rgba(250,246,236,0.9)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", boxShadow: "var(--shadow-sm)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-primary)" }}
                 >
                     <i className="ph ph-trophy" style={{ fontSize: 18 }} />
@@ -845,6 +851,41 @@ function MapInner() {
                             </Button>
                         </div>
                     )}
+                </Sheet>
+            )}
+
+            {sheet === "night" && (
+                <Sheet onClose={() => setSheet(null)}>
+                    <Eyebrow rule>Nights in the Kruger</Eyebrow>
+                    <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", margin: "var(--space-4) 0" }}>
+                        <span style={{ flex: "none", width: 44, height: 44, borderRadius: "var(--radius-md)", background: "var(--accent-soft)", color: "var(--ochre-700)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>
+                            <i className={`ph-fill ph-${PHASE_META[phase].icon}`} />
+                        </span>
+                        <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.7rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-primary)", fontWeight: 700 }}>
+                            {PHASE_META[phase].label} · {formatClock(hour, minute)}
+                        </div>
+                    </div>
+                    <p style={{ fontSize: "0.88rem", color: "var(--text-secondary)", lineHeight: 1.6, margin: 0 }}>
+                        Night in the Kruger belongs to the animals. The park holds more of its life after dark than most people ever see.
+                    </p>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)", margin: "var(--space-4) 0 0" }}>
+                        {[
+                            { icon: "paw-print", text: "Lion do most of their hunting at night, and leopard slip down from the trees to work the dark. Spotted hyena patrol the roads in clans." },
+                            { icon: "drop", text: "Hippo leave the rivers after sunset to graze on land, and are among the most dangerous animals to meet on foot." },
+                            { icon: "moon-stars", text: "Elephant and buffalo move to the waterholes, and honey badgers, civets and owls take over the veld." },
+                        ].map((row) => (
+                            <div key={row.icon} style={{ display: "flex", gap: "0.7rem", alignItems: "flex-start" }}>
+                                <i className={`ph ph-${row.icon}`} style={{ color: "var(--ochre-600)", fontSize: 18, marginTop: 2 }} />
+                                <span style={{ fontSize: "0.84rem", color: "var(--text-secondary)", lineHeight: 1.55 }}>{row.text}</span>
+                            </div>
+                        ))}
+                    </div>
+                    <p style={{ fontSize: "0.88rem", color: "var(--text-secondary)", lineHeight: 1.6, margin: "var(--space-4) 0 0" }}>
+                        That is why no ranger walks the bush at night, and neither does yours. At {CAMP_HOUR}:00 you and {dogName} make camp behind the firelight, and the trail waits for first light.
+                    </p>
+                    <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.64rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-muted)", marginTop: "var(--space-4)" }}>
+                        Camp at {CAMP_HOUR}:00 · Move again at 05:00
+                    </div>
                 </Sheet>
             )}
 

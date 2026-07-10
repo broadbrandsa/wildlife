@@ -42,6 +42,33 @@ const SOUTH_SPLIT_X = 187.2;
 /** Lebombo ridge overlay along the Mozambique border. */
 const LEBOMBO = { x: 309.6, y0: 380, y1: 653.6 };
 
+// ---------------------------------------------------------------------------
+// Cartography. Everything below is survey-map dressing derived from the real
+// projection: a graticule with degree labels, neighbouring territory, contour
+// rings around the park and named rivers. Decorative only; never interactive.
+
+/** ViewBox x for a longitude, y for a latitude (same projection as the pins). */
+const lngX = (lng: number) => ((lng - PROJ.lng0) / PROJ.lngSpan) * VW;
+const latY = (lat: number) => ((PROJ.lat0 - lat) / PROJ.latSpan) * VH;
+
+const GRID_LNGS = [31.0, 31.5, 32.0];
+const GRID_LATS = [-22.5, -23, -23.5, -24, -24.5, -25];
+
+/** Main rivers, labelled in the water's own voice. Positions hand-set. */
+const RIVER_LABELS = [
+    { name: "Luvuvhu", x: 200, y: 38, rot: -8 },
+    { name: "Shingwedzi", x: 122, y: 220, rot: -10 },
+    { name: "Letaba", x: 168, y: 350, rot: -6 },
+    { name: "Olifants", x: 196, y: 402, rot: -4 },
+    { name: "Sabie", x: 286, y: 612, rot: -8 },
+];
+
+/** Little hill glyphs along the Lebombo rhyolite ridge. */
+const LEBOMBO_HILLS = Array.from({ length: 8 }, (_, i) => ({
+    x: i % 2 === 0 ? 323 : 337,
+    y: LEBOMBO.y0 + 22 + i * 32,
+}));
+
 interface KrugerMapProps {
     pin: { x: number; y: number; locked?: boolean } | null;
     onPlace?: (x: number, y: number) => void;
@@ -216,7 +243,68 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                             <clipPath id="park-clip">
                                 <path d={PARK_PATH} />
                             </clipPath>
+                            {/* paper grain: a whisper of texture over the veld */}
+                            <pattern id="kw-grain" width="16" height="16" patternUnits="userSpaceOnUse">
+                                <circle cx="3" cy="4" r="0.7" fill="rgba(33,28,20,0.09)" />
+                                <circle cx="11" cy="12" r="0.7" fill="rgba(33,28,20,0.06)" />
+                                <circle cx="8" cy="7" r="0.5" fill="rgba(245,239,226,0.07)" />
+                            </pattern>
                         </defs>
+
+                        {/* graticule: the survey grid behind the park, with degree labels */}
+                        <g pointerEvents="none">
+                            {GRID_LNGS.map((lng) => (
+                                <g key={lng}>
+                                    <line x1={lngX(lng)} y1={0} x2={lngX(lng)} y2={VH} stroke="rgba(245,239,226,0.07)" strokeWidth="0.7" />
+                                    <text x={lngX(lng) + 3} y={9} style={{ fontFamily: "var(--font-mono)", fontSize: 6, letterSpacing: "0.08em", fill: "rgba(245,239,226,0.30)" }}>
+                                        {lng.toFixed(1).replace(".0", "")}° E
+                                    </text>
+                                </g>
+                            ))}
+                            {GRID_LATS.map((lat) => (
+                                <g key={lat}>
+                                    <line x1={0} y1={latY(lat)} x2={VW} y2={latY(lat)} stroke="rgba(245,239,226,0.07)" strokeWidth="0.7" />
+                                    <text x={VW - 4} y={latY(lat) - 3} textAnchor="end" style={{ fontFamily: "var(--font-mono)", fontSize: 6, letterSpacing: "0.08em", fill: "rgba(245,239,226,0.30)" }}>
+                                        {Math.abs(lat).toFixed(1).replace(".0", "")}° S
+                                    </text>
+                                </g>
+                            ))}
+                        </g>
+
+                        {/* neighbouring territory: the park's east boundary is the border */}
+                        <g pointerEvents="none">
+                            <text
+                                x={352}
+                                y={190}
+                                transform="rotate(90 352 190)"
+                                textAnchor="middle"
+                                style={{ fontFamily: "var(--font-mono)", fontSize: 7.5, letterSpacing: "0.42em", fill: "rgba(245,239,226,0.26)" }}
+                            >
+                                MOZAMBIQUE
+                            </text>
+                            <text
+                                x={12}
+                                y={470}
+                                transform="rotate(-90 12 470)"
+                                textAnchor="middle"
+                                style={{ fontFamily: "var(--font-mono)", fontSize: 7.5, letterSpacing: "0.42em", fill: "rgba(245,239,226,0.26)" }}
+                            >
+                                SOUTH AFRICA
+                            </text>
+                            {[180, 250, 320, 390, 460, 530, 600].map((y) => (
+                                <g key={y} stroke="rgba(245,239,226,0.16)" strokeWidth="0.8">
+                                    <line x1={349} y1={y} x2={355} y2={y} />
+                                    <line x1={352} y1={y - 3} x2={352} y2={y + 3} />
+                                </g>
+                            ))}
+                        </g>
+
+                        {/* contour rings: the park sits in its ground like a survey plate */}
+                        <g pointerEvents="none" fill="none">
+                            <path d={PARK_PATH} stroke="rgba(245,239,226,0.04)" strokeWidth="14" />
+                            <path d={PARK_PATH} stroke="rgba(245,239,226,0.06)" strokeWidth="7" />
+                            <path d={PARK_PATH} stroke="rgba(245,239,226,0.10)" strokeWidth="2.6" />
+                        </g>
 
                         {/* soft halo behind the park so it reads as land in the veld */}
                         <path d={PARK_PATH} fill="#11201A" transform="translate(2,5)" opacity={0.5} />
@@ -240,6 +328,22 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                                 opacity={dimmed("lebombo") ? 0.4 : 0.9}
                             />
 
+                            {/* zone edges: crisp hairlines where the ground changes */}
+                            <g stroke="rgba(33,28,20,0.14)" strokeWidth="0.8">
+                                {[...BANDS.slice(1).map((b) => b.y), SOUTH_Y].map((y) => (
+                                    <line key={y} x1="0" y1={y} x2={VW} y2={y} />
+                                ))}
+                                <line x1={SOUTH_SPLIT_X} y1={SOUTH_Y} x2={SOUTH_SPLIT_X} y2={VH} />
+                            </g>
+
+                            {/* paper grain across the whole park */}
+                            <rect x="0" y="0" width={VW} height={VH} fill="url(#kw-grain)" />
+
+                            {/* hill glyphs along the Lebombo rhyolite ridge */}
+                            {LEBOMBO_HILLS.map((h, i) => (
+                                <path key={i} d={`M ${h.x} ${h.y} l 5 8 l -10 0 Z`} fill="#8F3B22" opacity={0.4} />
+                            ))}
+
                             {/* koppie texture in the granite south-west */}
                             {[
                                 [104, 640],
@@ -249,6 +353,13 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                                 [116, 690],
                             ].map(([cx, cy], i) => (
                                 <circle key={i} cx={cx} cy={cy} r="4.5" fill="#B7AB92" opacity={0.75} />
+                            ))}
+                            {[
+                                [110, 626],
+                                [146, 660],
+                                [92, 682],
+                            ].map(([x, y], i) => (
+                                <path key={`k${i}`} d={`M ${x} ${y} l 5 8 l -10 0 Z`} fill="#9C8F74" opacity={0.7} />
                             ))}
 
                             {/* rivers: soft riverine corridor under the main channels */}
@@ -267,6 +378,23 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                                     opacity={r.tier === 1 ? 0.95 : 0.6}
                                 />
                             ))}
+
+                            {/* the great rivers, named in the water's voice */}
+                            {showLabels &&
+                                RIVER_LABELS.map((r) => (
+                                    <text
+                                        key={r.name}
+                                        x={r.x}
+                                        y={r.y}
+                                        transform={`rotate(${r.rot} ${r.x} ${r.y})`}
+                                        style={{ fontFamily: "var(--font-serif)", fontStyle: "italic", fontSize: 7.5, letterSpacing: "0.06em", fill: "#33585A", opacity: 0.9 }}
+                                    >
+                                        {r.name}
+                                    </text>
+                                ))}
+
+                            {/* inner highlight: a light rim just inside the boundary */}
+                            <path d={PARK_PATH} fill="none" stroke="rgba(245,239,226,0.35)" strokeWidth="2.2" />
 
                             {/* three thirds: faint dividers */}
                             {showThirds && (

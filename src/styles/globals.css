@@ -71,6 +71,14 @@ ol {
     animation: kw-pin-drop 520ms var(--ease-out) backwards;
 }
 
+/* pressed feedback for floating map controls: quick, calm, transform-only */
+.kw-press {
+    transition: transform 120ms var(--ease-out);
+}
+.kw-press:active {
+    transform: scale(0.94);
+}
+
 @keyframes kw-spin {
     to {
         transform: rotate(360deg);
