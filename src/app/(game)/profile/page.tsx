@@ -46,6 +46,8 @@ export default function ProfilePage() {
     const redeemedCodes = useGameStore((s) => s.redeemedCodes);
     const reset = useGameStore((s) => s.reset);
     const setDemoDay = useGameStore((s) => s.setDemoDay);
+    const demoHour = useGameStore((s) => s.demoHour);
+    const setDemoHour = useGameStore((s) => s.setDemoHour);
     const day = useCurrentDay();
 
     const onReset = () => {
@@ -173,6 +175,30 @@ export default function ProfilePage() {
                     <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", margin: "var(--space-3) 0 0", lineHeight: 1.5 }}>
                         Scrub through the round to show how clues release over the 45 days.
                     </p>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: "var(--space-4)", marginTop: "var(--space-5)" }}>
+                        <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.7rem", letterSpacing: "0.08em", color: "var(--text-secondary)", whiteSpace: "nowrap" }}>
+                            {demoHour == null ? "LIVE TIME" : `${String(demoHour).padStart(2, "0")}:00`}
+                        </span>
+                        <input
+                            type="range"
+                            min={0}
+                            max={23}
+                            value={demoHour ?? 12}
+                            onChange={(e) => setDemoHour(Number(e.target.value))}
+                            aria-label="Simulate time of day"
+                            style={{ flex: 1, accentColor: "var(--green-700)" }}
+                        />
+                        {demoHour != null && (
+                            <button onClick={() => setDemoHour(null)} aria-label="Use the device clock" style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-link)", fontSize: "0.72rem", fontWeight: 600, whiteSpace: "nowrap" }}>
+                                Live
+                            </button>
+                        )}
+                    </div>
+                    <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", margin: "var(--space-3) 0 0", lineHeight: 1.5 }}>
+                        Simulate the time of day. From 20:00 the ranger makes camp and cannot move until dawn.
+                    </p>
+
                     <div style={{ marginTop: "var(--space-4)" }}>
                         <Button size="sm" variant="secondary" fullWidth onClick={() => router.push("/debrief?preview=1")} iconRight={<i className="ph ph-flag-checkered" />}>
                             Preview the round-end debrief

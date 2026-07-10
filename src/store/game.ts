@@ -59,6 +59,8 @@ interface GameState {
     pinMovesToday: { day: number; count: number } | null;
     /** Demo-only day override, driven by the profile page scrubber. */
     demoDay: number | null;
+    /** Demo-only hour override (0-23) for the day/night cycle; null uses the device clock. */
+    demoHour: number | null;
     /** The pin.updatedAt whose scent read the player has opened (dog badge). */
     scentSeenAt: string | null;
     /** The round day on which the player last opened the clue panel (clue badge). */
@@ -102,6 +104,7 @@ interface GameState {
     redeemCode: (raw: string) => RedeemResult;
     setNotifyAsked: () => void;
     setDemoDay: (day: number | null) => void;
+    setDemoHour: (hour: number | null) => void;
     /** Clear the dog badge: the current pin's scent read has been opened. */
     markScentSeen: () => void;
     /** Clear the clue badge for this round day. */
@@ -134,6 +137,7 @@ const initial = {
     notifyAsked: false,
     pinMovesToday: null as { day: number; count: number } | null,
     demoDay: null as number | null,
+    demoHour: null as number | null,
     scentSeenAt: null as string | null,
     cluesSeenDay: null as number | null,
     truckRidesLeft: 2,
@@ -275,6 +279,8 @@ export const useGameStore = create<GameState>()(
             setNotifyAsked: () => set({ notifyAsked: true }),
 
             setDemoDay: (day) => set({ demoDay: day }),
+
+            setDemoHour: (hour) => set({ demoHour: hour }),
 
             markScentSeen: () => set((s) => ({ scentSeenAt: s.pin?.updatedAt ?? null })),
 

@@ -29,6 +29,8 @@ import {
 } from "@/lib/game";
 import type { ScentTier } from "@/lib/game";
 import { NEAR_TARGET_KM, rangersHunting, rangersNearTarget } from "@/lib/community";
+import { CAMP_HOUR, PHASE_META, PHASE_SKY, formatClock, isDusk, isNight, phaseForHour } from "@/lib/daytime";
+import { useClock } from "@/hooks/use-clock";
 import { useCurrentDay, useGameStore } from "@/store/game";
 
 const TIER_META: Record<ScentTier, { label: string; tone: "neutral" | "teal" | "ochre" | "clay"; icon: string }> = {
@@ -104,8 +106,7 @@ function DockTab({ icon, label, dot, onClick }: { icon: string; label: string; d
                 backdropFilter: "blur(8px)",
                 WebkitBackdropFilter: "blur(8px)",
                 border: "1px solid var(--border-subtle)",
-                borderRight: "none",
-                borderRadius: "14px 0 0 14px",
+                borderRadius: 14,
                 boxShadow: "var(--shadow-md)",
                 cursor: "pointer",
             }}
@@ -196,6 +197,12 @@ function MapInner() {
     const day = useCurrentDay();
     const roundOver = isRoundOver(day);
 
+    // Day/night cycle, from the device clock (or the demo scrubber).
+    const { hour, minute } = useClock();
+    const phase = phaseForHour(hour);
+    const night = isNight(hour);
+    const sky = PHASE_SKY[phase];
+
     const available = useMemo(() => {
         const ids = availableClueIds(cluesUnlocked, day);
         return CLUES.filter((c) => ids.has(c.id));
@@ -221,8 +228,11 @@ function MapInner() {
     const maxMoves =
         1 + (inventory.includes("ranger-boots") ? 1 : 0) + (player && EXTRA_MOVE_DOGS.has(player.dogId) ? 1 : 0);
     const movesToday = pinMovesToday?.day === day ? pinMovesToday.count : 0;
-    const canMove = !pin?.locked && movesToday < maxMoves;
+    // At night the ranger and dog have made camp, so no movement until dawn.
+    const canMove = !pin?.locked && movesToday < maxMoves && !night;
     const walkKm = dailyWalkKm(player?.dogId);
+    // Dusk nudge: light is going and the ranger has not moved today.
+    const showDuskPrompt = Boolean(pin && !pin.locked && !roundOver && isDusk(hour) && movesToday === 0);
 
     // Ops-room pressure line: the same shared report for every player.
     const near = rangersNearTarget(day);
@@ -331,8 +341,8 @@ function MapInner() {
         setSheet("dog");
     };
 
-    // The bakkie: only once a pin exists, never on a locked pin or a closed round.
-    const canCallBakkie = Boolean(pin && !pin.locked && !roundOver);
+    // The bakkie: only once a pin exists, never on a locked pin, a closed round or at night.
+    const canCallBakkie = Boolean(pin && !pin.locked && !roundOver && !night);
 
     const callBakkie = () => {
         setSheet(null);
@@ -358,7 +368,7 @@ function MapInner() {
     };
 
     return (
-        <div style={{ position: "relative", height: "calc(100% + 5.5rem)", marginBottom: "-5.5rem", background: "radial-gradient(120% 110% at 50% 0%, #2C4A39 0%, #16110A 92%)" }}>
+        <div style={{ position: "relative", height: "calc(100% + 5.5rem)", marginBottom: "-5.5rem", background: sky.gradient, transition: "background 1.2s var(--ease-out)" }}>
             <KrugerMap
                 pin={pin}
                 onPlace={truckMode ? onPickDestination : onPlace}
@@ -368,6 +378,46 @@ function MapInner() {
                 freeDrag={truckMode}
                 trail={trail}
             />
+
+            {/* time-of-day scrim: tints the whole map toward dawn, dusk or night */}
+            {sky.scrim && (
+                <div
+                    style={{
+                        position: "absolute",
+                        inset: 0,
+                        background: sky.scrim,
+                        pointerEvents: "none",
+                        transition: "background 1.2s var(--ease-out)",
+                    }}
+                    aria-hidden="true"
+                />
+            )}
+
+            {/* time of day: sun or moon with the clock */}
+            <div
+                style={{
+                    position: "absolute",
+                    left: "50%",
+                    top: 12,
+                    transform: "translateX(-50%)",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    padding: "0.3rem 0.7rem",
+                    background: "rgba(250,246,236,0.9)",
+                    backdropFilter: "blur(8px)",
+                    WebkitBackdropFilter: "blur(8px)",
+                    border: "1px solid var(--border-subtle)",
+                    borderRadius: "var(--radius-pill)",
+                    boxShadow: "var(--shadow-sm)",
+                }}
+                aria-label={`${PHASE_META[phase].label}, ${formatClock(hour, minute)}`}
+            >
+                <i className={`ph-fill ph-${PHASE_META[phase].icon}`} style={{ fontSize: 15, color: night ? "var(--text-secondary)" : "var(--ochre-600)" }} />
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.68rem", letterSpacing: "0.08em", fontWeight: 700, color: "var(--text-primary)" }}>
+                    {formatClock(hour, minute)}
+                </span>
+            </div>
 
             {/* the team, split: you and your dog, each with their own signal */}
             {ranger && (
@@ -395,8 +445,8 @@ function MapInner() {
                 </button>
             </div>
 
-            {/* right dock: field clue, field guides and the radio hang off the edge */}
-            <div style={{ position: "absolute", right: 0, top: "46%", transform: "translateY(-50%)", display: "flex", flexDirection: "column", gap: 10 }}>
+            {/* right dock: field clue, field guides and the radio, on the same gutter as the rest */}
+            <div style={{ position: "absolute", right: "var(--gutter)", top: "46%", transform: "translateY(-50%)", display: "flex", flexDirection: "column", gap: 10 }}>
                 <DockTab icon="notebook" label="Clue" dot={newClueToday} onClick={openClueSheet} />
                 <DockTab icon="book-open-text" label="Guides" onClick={() => setSheet("guides")} />
                 <DockTab icon="truck" label="Bakkie" onClick={() => setSheet("bakkie")} />
@@ -430,6 +480,36 @@ function MapInner() {
                 >
                     <i className="ph-fill ph-hand-tap" style={{ fontSize: 16 }} />
                     Tap the map to drop your pin and start the hunt
+                </div>
+            )}
+
+            {/* dusk nudge: move before the ranger makes camp for the night */}
+            {showDuskPrompt && !truckMode && (
+                <div
+                    className="kw-rise"
+                    style={{
+                        position: "absolute",
+                        left: "50%",
+                        bottom: 110,
+                        transform: "translateX(-50%)",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 8,
+                        maxWidth: "84%",
+                        padding: "0.5rem 0.9rem",
+                        background: "var(--ochre-500)",
+                        color: "var(--sand-900)",
+                        borderRadius: "var(--radius-pill)",
+                        boxShadow: "var(--shadow-lg)",
+                        fontSize: "0.8rem",
+                        fontWeight: 700,
+                        pointerEvents: "none",
+                        textAlign: "center",
+                        lineHeight: 1.3,
+                    }}
+                >
+                    <i className="ph-fill ph-sun-horizon" style={{ fontSize: 16, flex: "none" }} />
+                    Dusk is falling. Your ranger makes camp at {CAMP_HOUR}:00, so move while there is light.
                 </div>
             )}
 
@@ -558,7 +638,9 @@ function MapInner() {
                                         <i className="ph-fill ph-campfire" style={{ color: "var(--ochre-600)", fontSize: 17 }} /> Camped for the night.
                                     </div>
                                     <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", margin: "var(--space-1, 0.25rem) 0 0" }}>
-                                        {dogName} settles by the fire. Fresh legs at dawn.
+                                        {night
+                                            ? `The Kruger is dangerous after dark, so ${dogName} settles by the fire. You move again at dawn.`
+                                            : `${dogName} settles by the fire. Fresh legs at dawn.`}
                                     </p>
                                     <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-muted)", marginTop: "var(--space-2)" }}>
                                         TODAY: {truckedToday ? "BY BAKKIE" : `${kmToday} KM`}
