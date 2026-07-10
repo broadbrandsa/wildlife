@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useMemo, useRef, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 
 import { Button, IconButton, Tag } from "@/components/ds";
 import { ClueCard } from "@/components/game/ClueCard";
@@ -53,8 +53,7 @@ function MapInner() {
     const [dismissed, setDismissed] = useState(false);
     const [guideZone, setGuideZone] = useState<Zone | null>(null);
     const [guideJustUnlocked, setGuideJustUnlocked] = useState(false);
-    const [confirmLock, setConfirmLock] = useState(false);
-    const confirmTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const [lockModal, setLockModal] = useState(false);
     const day = useCurrentDay();
     const roundOver = isRoundOver(day);
 
@@ -121,16 +120,9 @@ function MapInner() {
         setGuideJustUnlocked(false);
     };
 
-    const onLockTap = () => {
-        if (!confirmLock) {
-            setConfirmLock(true);
-            if (confirmTimer.current) clearTimeout(confirmTimer.current);
-            confirmTimer.current = setTimeout(() => setConfirmLock(false), 3500);
-            return;
-        }
-        if (confirmTimer.current) clearTimeout(confirmTimer.current);
-        setConfirmLock(false);
+    const confirmLockIn = () => {
         lockPin();
+        setLockModal(false);
     };
 
     const closeWelcome = () => {
@@ -354,21 +346,26 @@ function MapInner() {
                                   : "Locked for the round."}
                         </div>
                         {pin && !pin.locked && (
-                            <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)", marginTop: 4 }}>
-                                {canMove
-                                    ? `You can move ${maxMoves - movesToday} more time${maxMoves - movesToday === 1 ? "" : "s"} today. You lock in once, so lock in when you are sure. Ties go to the earliest lock.`
-                                    : "You have moved as far as you can today. Lock in, or move again tomorrow."}
-                            </div>
+                            <>
+                                <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)", marginTop: 4 }}>
+                                    {canMove
+                                        ? `You have ${maxMoves - movesToday === 1 ? "one ranger move" : `${maxMoves - movesToday} ranger moves`} left today.`
+                                        : "You have moved as far as you can today."}
+                                </div>
+                                <div style={{ fontSize: "0.74rem", color: "var(--text-muted)", marginTop: 3 }}>
+                                    One lock-in for the whole game. Lock in only when you are sure.
+                                </div>
+                            </>
                         )}
                         {pin?.locked && (
                             <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)", marginTop: 4 }}>
-                                You get one lock-in. Changed your mind? A second lock-in from the kit reopens your pin to move once more.
+                                Locked in for the round. Changed your mind? A second lock-in from the kit reopens your pin to move once more.
                             </div>
                         )}
                     </div>
                     {pin && !pin.locked && (
-                        <Button size="sm" variant={confirmLock ? "primary" : "secondary"} onClick={onLockTap}>
-                            {confirmLock ? "Tap to confirm" : "Lock in"}
+                        <Button size="sm" variant="secondary" onClick={() => setLockModal(true)}>
+                            Lock in
                         </Button>
                     )}
                     {pin?.locked && (
@@ -499,6 +496,46 @@ function MapInner() {
                         <div style={{ marginTop: "var(--space-5)" }}>
                             <Button size="lg" fullWidth onClick={closeWelcome} iconRight={<i className="ph ph-map-pin" />}>
                                 Drop my first pin
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Lock-in confirmation: this is the one decision that ranks the player */}
+            {lockModal && pin && (
+                <div
+                    style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: "var(--gutter)", background: "var(--bg-overlay, rgba(17,32,26,0.55))" }}
+                    onClick={() => setLockModal(false)}
+                >
+                    <div
+                        className="kw-rise"
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ width: "100%", maxWidth: 420, background: "var(--surface-page)", borderRadius: "var(--radius-2xl)", padding: "var(--space-6) var(--gutter) var(--space-6)", boxShadow: "var(--shadow-xl)" }}
+                    >
+                        <div style={{ display: "flex", justifyContent: "center", marginBottom: "var(--space-4)" }}>
+                            <span style={{ width: 52, height: 52, borderRadius: "50%", background: "var(--clay-100)", color: "var(--clay-600)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26 }}>
+                                <i className="ph-fill ph-lock-simple" />
+                            </span>
+                        </div>
+                        <h2 style={{ fontSize: "var(--text-h4)", textAlign: "center", margin: 0 }}>Lock in your final answer?</h2>
+                        {pinZone && (
+                            <div style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: "0.66rem", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-accent)", marginTop: "var(--space-2)" }}>
+                                {THIRD_LABEL[rangerThird ?? "south"].replace("the ", "")} · zone {pinZone.number}, {pinZone.name}
+                            </div>
+                        )}
+                        <p style={{ fontSize: "0.86rem", color: "var(--text-secondary)", lineHeight: 1.55, margin: "var(--space-4) 0 0", textAlign: "center" }}>
+                            You get one lock-in for the whole game. This is your final decision, and this pin is the one used to rank you when the round ends.
+                        </p>
+                        <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", lineHeight: 1.5, margin: "var(--space-3) 0 0", textAlign: "center" }}>
+                            Changed your mind later? Only a second lock-in from the kit can reopen your pin.
+                        </p>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)", marginTop: "var(--space-5)" }}>
+                            <Button size="lg" fullWidth onClick={confirmLockIn} iconRight={<i className="ph ph-lock-simple" />}>
+                                Lock in for the round
+                            </Button>
+                            <Button size="lg" fullWidth variant="ghost" onClick={() => setLockModal(false)}>
+                                Keep tracking
                             </Button>
                         </div>
                     </div>
