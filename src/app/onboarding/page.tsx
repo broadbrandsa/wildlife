@@ -42,6 +42,57 @@ function ProgressDots({ index, total }: { index: number; total: number }) {
     );
 }
 
+function CarouselArrow({ dir, onClick }: { dir: "left" | "right"; onClick: () => void }) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            aria-label={dir === "left" ? "Previous" : "Next"}
+            style={{
+                position: "absolute",
+                top: "50%",
+                left: dir === "left" ? 10 : undefined,
+                right: dir === "right" ? 10 : undefined,
+                transform: "translateY(-50%)",
+                width: 44,
+                height: 44,
+                borderRadius: "50%",
+                border: "none",
+                cursor: "pointer",
+                background: "rgba(250,246,236,0.92)",
+                backdropFilter: "blur(6px)",
+                WebkitBackdropFilter: "blur(6px)",
+                boxShadow: "var(--shadow-md)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "var(--text-primary)",
+            }}
+        >
+            <i className={`ph-bold ph-caret-${dir}`} style={{ fontSize: 20 }} />
+        </button>
+    );
+}
+
+function CarouselDots({ index, total }: { index: number; total: number }) {
+    return (
+        <div style={{ display: "flex", gap: 7, justifyContent: "center" }}>
+            {Array.from({ length: total }).map((_, i) => (
+                <span
+                    key={i}
+                    style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: 999,
+                        background: i === index ? "var(--accent)" : "var(--border-default)",
+                        transition: "all var(--dur-base) var(--ease-out)",
+                    }}
+                />
+            ))}
+        </div>
+    );
+}
+
 export default function OnboardingPage() {
     const router = useRouter();
     const setPlayer = useGameStore((s) => s.setPlayer);
@@ -51,17 +102,18 @@ export default function OnboardingPage() {
     const [parentEmail, setParentEmail] = useState("");
     const [name, setName] = useState("");
     const [originSeen, setOriginSeen] = useState(1);
-    const [rangerId, setRangerId] = useState<string | null>(null);
-    const [dogId, setDogId] = useState<string | null>(null);
+    // Ranger and dog are chosen with a carousel: the one on screen is the pick.
+    const [rangerIndex, setRangerIndex] = useState(0);
+    const [dogIndex, setDogIndex] = useState(0);
     const [dogName, setDogName] = useState("");
     const [error, setError] = useState("");
 
-    // Selecting a dog suggests its reference name, but keeps a custom one if typed.
-    const isReferenceName = (v: string) => DOGS.some((d) => d.name === v);
-    const pickDog = (id: string, refName: string) => {
-        setDogId(id);
-        setDogName((curr) => (curr.trim() === "" || isReferenceName(curr.trim()) ? refName : curr));
-    };
+    const selectedRanger = RANGERS[rangerIndex];
+    const selectedDog = DOGS[dogIndex];
+    const rangerId = selectedRanger.id;
+    const dogId = selectedDog.id;
+    const stepThrough = (setIndex: (fn: (i: number) => number) => void, length: number, dir: 1 | -1) =>
+        setIndex((i) => (i + dir + length) % length);
 
     const age = birthYear ? THIS_YEAR - Number(birthYear) : null;
     const isMinor = age != null && age < 18;
@@ -99,8 +151,7 @@ export default function OnboardingPage() {
     };
 
     const finish = () => {
-        if (!rangerId || !dogId) return;
-        const dogFallback = DOGS.find((d) => d.id === dogId)?.name ?? "Your dog";
+        const dogFallback = selectedDog.breed;
         setPlayer({
             id: crypto.randomUUID(),
             displayName: name.trim(),
@@ -113,8 +164,6 @@ export default function OnboardingPage() {
         // The first field guide is unlocked free when the player drops their first pin.
         router.replace("/map?welcome=1");
     };
-
-    const selectedRanger = RANGERS.find((r) => r.id === rangerId);
 
     return (
         <PhoneStage columnStyle={{ flexDirection: "column" }}>
@@ -247,53 +296,24 @@ export default function OnboardingPage() {
                             <Eyebrow>Your ranger</Eyebrow>
                             <h1 style={{ fontSize: "var(--text-h2)", margin: "var(--space-3) 0 0" }}>Pick your look, {name.trim() || "ranger"}</h1>
                             <p style={{ color: "var(--text-secondary)", marginTop: "var(--space-2)" }}>
-                                This is you on the team. The lineup reflects the real rangers of the Greater Kruger. The names below are just ours; you play as {name.trim() || "yourself"}.
+                                This is you on the team. The lineup reflects the real rangers of the Greater Kruger. Step through and pick the one that feels like you; you play as {name.trim() || "yourself"}.
                             </p>
                         </div>
 
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-3)" }}>
-                            {RANGERS.map((r) => {
-                                const on = rangerId === r.id;
-                                return (
-                                    <button
-                                        key={r.id}
-                                        onClick={() => setRangerId(r.id)}
-                                        style={{
-                                            cursor: "pointer",
-                                            textAlign: "left",
-                                            background: on ? "var(--accent-soft)" : "var(--surface-card)",
-                                            border: `1.5px solid ${on ? "var(--ochre-500)" : "var(--border-subtle)"}`,
-                                            borderRadius: "var(--radius-lg)",
-                                            padding: 0,
-                                            overflow: "hidden",
-                                            boxShadow: on ? "0 0 0 3px var(--ochre-100)" : "var(--shadow-xs)",
-                                            transition: "all var(--dur-fast) var(--ease-out)",
-                                        }}
-                                    >
-                                        <div style={{ position: "relative", width: "100%", aspectRatio: "1 / 1", background: "var(--sand-100)" }}>
-                                            <Image src={r.photo} alt={r.name} fill sizes="200px" style={{ objectFit: "cover" }} />
-                                            {on && (
-                                                <span style={{ position: "absolute", top: 8, right: 8, width: 26, height: 26, borderRadius: "50%", background: "var(--ochre-500)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "var(--shadow-sm)" }}>
-                                                    <i className="ph-fill ph-check" style={{ fontSize: 15 }} />
-                                                </span>
-                                            )}
-                                        </div>
-                                        <div style={{ padding: "0.6rem 0.7rem 0.7rem" }}>
-                                            <strong style={{ fontFamily: "var(--font-serif)", fontSize: "1.05rem" }}>{r.name}</strong>
-                                            <div style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginTop: 2, lineHeight: 1.3 }}>{r.who}</div>
-                                        </div>
-                                    </button>
-                                );
-                            })}
+                        <div style={{ position: "relative" }}>
+                            <div style={{ position: "relative", width: "100%", aspectRatio: "4 / 5", background: "var(--sand-100)", borderRadius: "var(--radius-xl)", overflow: "hidden", boxShadow: "var(--shadow-sm)" }}>
+                                <Image key={selectedRanger.id} src={selectedRanger.photo} alt="Ranger portrait" fill sizes="430px" style={{ objectFit: "cover" }} className="kw-rise" />
+                            </div>
+                            <CarouselArrow dir="left" onClick={() => stepThrough(setRangerIndex, RANGERS.length, -1)} />
+                            <CarouselArrow dir="right" onClick={() => stepThrough(setRangerIndex, RANGERS.length, 1)} />
                         </div>
+                        <CarouselDots index={rangerIndex} total={RANGERS.length} />
 
-                        {selectedRanger && (
-                            <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--text-secondary)", fontStyle: "italic", lineHeight: 1.5 }}>
-                                &ldquo;{selectedRanger.personality}&rdquo;
-                            </p>
-                        )}
+                        <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--text-secondary)", fontStyle: "italic", lineHeight: 1.5, textAlign: "center" }}>
+                            &ldquo;{selectedRanger.personality}&rdquo;
+                        </p>
 
-                        <Button size="lg" fullWidth disabled={!rangerId} onClick={() => setStep("dog")} iconRight={<i className="ph ph-arrow-right" />}>
+                        <Button size="lg" fullWidth onClick={() => setStep("dog")} iconRight={<i className="ph ph-arrow-right" />}>
                             Now choose your dog
                         </Button>
                     </div>
@@ -305,61 +325,36 @@ export default function OnboardingPage() {
                             <Eyebrow>Your partner</Eyebrow>
                             <h1 style={{ fontSize: "var(--text-h2)", margin: "var(--space-3) 0 0" }}>Pick your dog</h1>
                             <p style={{ color: "var(--text-secondary)", marginTop: "var(--space-2)" }}>
-                                Each is based on a real SAWC K9 role and gives a small edge on the hunt. You can name your dog below.
+                                Step through the dogs. Each is based on a real SAWC K9 role and gives a small edge on the hunt. Name your dog below.
                             </p>
                         </div>
-                        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
-                            {DOGS.map((d) => {
-                                const on = dogId === d.id;
-                                return (
-                                    <button
-                                        key={d.id}
-                                        onClick={() => pickDog(d.id, d.name)}
-                                        style={{
-                                            textAlign: "left",
-                                            cursor: "pointer",
-                                            background: on ? "var(--accent-soft)" : "var(--surface-card)",
-                                            border: `1.5px solid ${on ? "var(--ochre-500)" : "var(--border-subtle)"}`,
-                                            borderRadius: "var(--radius-lg)",
-                                            padding: 0,
-                                            overflow: "hidden",
-                                            boxShadow: on ? "0 0 0 3px var(--ochre-100)" : "var(--shadow-xs)",
-                                            transition: "all var(--dur-fast) var(--ease-out)",
-                                        }}
-                                    >
-                                        <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 9", background: "var(--sand-100)" }}>
-                                            <Image src={d.photo} alt={d.name} fill sizes="430px" style={{ objectFit: "cover" }} />
-                                            {on && (
-                                                <span style={{ position: "absolute", top: 10, right: 10, width: 28, height: 28, borderRadius: "50%", background: "var(--ochre-500)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "var(--shadow-sm)" }}>
-                                                    <i className="ph-fill ph-check" style={{ fontSize: 16 }} />
-                                                </span>
-                                            )}
-                                        </div>
-                                        <div style={{ padding: "var(--space-4)" }}>
-                                            <span style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
-                                                <strong style={{ fontFamily: "var(--font-serif)", fontSize: "1.15rem" }}>{d.name}</strong>
-                                                <span style={{ fontSize: "0.74rem", color: "var(--text-muted)" }}>{d.breed}</span>
-                                            </span>
-                                            <span style={{ display: "block", fontSize: "0.84rem", color: "var(--text-secondary)", marginTop: 3 }}>{d.personality}</span>
-                                            <span style={{ display: "block", fontFamily: "var(--font-mono)", fontSize: "0.66rem", letterSpacing: "0.06em", color: "var(--ochre-700)", marginTop: 8 }}>
-                                                <i className="ph ph-sparkle" /> {d.effect}
-                                            </span>
-                                        </div>
-                                    </button>
-                                );
-                            })}
+
+                        <div style={{ position: "relative" }}>
+                            <div style={{ position: "relative", width: "100%", aspectRatio: "4 / 3", background: "var(--sand-100)", borderRadius: "var(--radius-xl)", overflow: "hidden", boxShadow: "var(--shadow-sm)" }}>
+                                <Image key={selectedDog.id} src={selectedDog.photo} alt={selectedDog.breed} fill sizes="430px" style={{ objectFit: "cover" }} className="kw-rise" />
+                            </div>
+                            <CarouselArrow dir="left" onClick={() => stepThrough(setDogIndex, DOGS.length, -1)} />
+                            <CarouselArrow dir="right" onClick={() => stepThrough(setDogIndex, DOGS.length, 1)} />
                         </div>
-                        {dogId && (
-                            <Field
-                                label="Name your dog"
-                                icon={<i className="ph ph-paw-print" />}
-                                placeholder="e.g. Storm"
-                                value={dogName}
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDogName(e.target.value)}
-                                hint="This is what we'll call your dog in the game. Keep the suggestion or make it your own."
-                            />
-                        )}
-                        <Button size="lg" fullWidth disabled={!dogId || !dogName.trim()} onClick={finish} iconRight={<i className="ph ph-paw-print" />}>
+                        <CarouselDots index={dogIndex} total={DOGS.length} />
+
+                        <div>
+                            <strong style={{ display: "block", fontFamily: "var(--font-serif)", fontSize: "1.25rem" }}>{selectedDog.breed}</strong>
+                            <span style={{ display: "block", fontSize: "0.84rem", color: "var(--text-secondary)", marginTop: 3 }}>{selectedDog.personality}</span>
+                            <span style={{ display: "block", fontFamily: "var(--font-mono)", fontSize: "0.66rem", letterSpacing: "0.06em", color: "var(--ochre-700)", marginTop: 8 }}>
+                                <i className="ph ph-sparkle" /> {selectedDog.effect}
+                            </span>
+                        </div>
+
+                        <Field
+                            label="Name your dog"
+                            icon={<i className="ph ph-paw-print" />}
+                            placeholder="e.g. Bandit"
+                            value={dogName}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDogName(e.target.value)}
+                            hint="This is what we'll call your dog in the game."
+                        />
+                        <Button size="lg" fullWidth disabled={!dogName.trim()} onClick={finish} iconRight={<i className="ph ph-paw-print" />}>
                             Begin the hunt
                         </Button>
                     </div>
