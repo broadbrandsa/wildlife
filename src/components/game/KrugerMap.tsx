@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
 
 import { ZONES } from "@/data";
@@ -11,16 +11,17 @@ const VW = MAP_W;
 const VH = MAP_H;
 
 /**
- * Scale bar. The frame is a real projection, so a horizontal viewBox length
- * maps to a real ground distance. Derived from PROJ so it tracks the geometry.
+ * The frame is a real projection, so the full map width maps to a real ground
+ * distance. The scale bar reads this live against the current zoom, so the
+ * distance it shows shrinks as you zoom in. Derived from PROJ so it tracks the
+ * geometry.
  */
 const KM_PER_DEG_LNG = 111.32 * Math.cos(((PROJ.lat0 - PROJ.latSpan / 2) * Math.PI) / 180);
 const MAP_WIDTH_KM = PROJ.lngSpan * KM_PER_DEG_LNG;
-const KM_PER_PX = MAP_WIDTH_KM / VW;
-const SCALE_KM = 25;
-const SCALE_PX = SCALE_KM / KM_PER_PX;
-const SCALE_X = 16;
-const SCALE_Y = 596;
+/** Rounded km values the dynamic scale bar snaps to. */
+const SCALE_STEPS = [1, 2, 5, 10, 25, 50, 100, 200];
+/** Target on-screen length of the scale bar, in px. */
+const SCALE_TARGET_PX = 68;
 
 /**
  * Game zone fills, in viewBox px. Band edges follow the real rivers that
@@ -51,11 +52,46 @@ interface KrugerMapProps {
     maxScale?: number;
     /** Draw the faint north / central / south third dividers and labels. */
     showThirds?: boolean;
+    /** Distance from the top of the map to the legend card, clearing any overlay above it. */
+    legendTop?: number;
 }
 
-export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, target = null, maxScale = 4, showThirds = false }: KrugerMapProps) {
+export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, target = null, maxScale = 4, showThirds = false, legendTop = 12 }: KrugerMapProps) {
     const down = useRef<{ x: number; y: number } | null>(null);
     const svgRef = useRef<SVGSVGElement>(null);
+    const barRef = useRef<HTMLSpanElement>(null);
+    const barLabelRef = useRef<HTMLSpanElement>(null);
+
+    // Recompute the scale bar against the SVG's on-screen width, which already
+    // folds in the current pan/zoom. Written imperatively (refs, not state) so
+    // it can update every zoom frame without re-rendering the whole map.
+    const updateScale = () => {
+        const svg = svgRef.current;
+        const bar = barRef.current;
+        const label = barLabelRef.current;
+        if (!svg || !bar || !label) return;
+        // ctm.a is on-screen px per viewBox unit, folding in the letterboxing
+        // (preserveAspectRatio meet) and the current pan/zoom. This is the same
+        // matrix used to place the pin, so the bar tracks the ground exactly.
+        const ctm = svg.getScreenCTM();
+        if (!ctm || !ctm.a) return;
+        const kmPerPx = MAP_WIDTH_KM / VW / ctm.a;
+        const raw = kmPerPx * SCALE_TARGET_PX;
+        let km = SCALE_STEPS[0];
+        for (const step of SCALE_STEPS) if (step <= raw) km = step;
+        bar.style.width = `${Math.round(km / kmPerPx)}px`;
+        label.textContent = `${km} KM`;
+    };
+
+    useEffect(() => {
+        const raf = requestAnimationFrame(updateScale);
+        window.addEventListener("resize", updateScale);
+        return () => {
+            cancelAnimationFrame(raf);
+            window.removeEventListener("resize", updateScale);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const handlePointerDown = (e: React.PointerEvent) => {
         down.current = { x: e.clientX, y: e.clientY };
@@ -87,7 +123,7 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
 
     return (
         <div style={{ position: "relative", width: "100%", height: "100%" }}>
-        <TransformWrapper minScale={1} maxScale={maxScale} doubleClick={{ mode: "zoomIn" }} centerOnInit>
+        <TransformWrapper minScale={1} maxScale={maxScale} doubleClick={{ mode: "zoomIn" }} centerOnInit onTransformed={() => updateScale()}>
             <TransformComponent
                 wrapperStyle={{ width: "100%", height: "100%" }}
                 contentStyle={{ width: "100%", height: "100%", display: "flex", justifyContent: "center" }}
@@ -251,20 +287,6 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                                 K9 BASE
                             </text>
                         </g>
-
-                        {/* scale bar (sits in the western veld, reads real km) */}
-                        <g stroke="var(--sand-50)" strokeWidth="1.6" opacity={0.85}>
-                            <line x1={SCALE_X} y1={SCALE_Y} x2={SCALE_X + SCALE_PX} y2={SCALE_Y} />
-                            <line x1={SCALE_X} y1={SCALE_Y - 4} x2={SCALE_X} y2={SCALE_Y + 4} />
-                            <line x1={SCALE_X + SCALE_PX} y1={SCALE_Y - 4} x2={SCALE_X + SCALE_PX} y2={SCALE_Y + 4} />
-                        </g>
-                        <text
-                            x={SCALE_X}
-                            y={SCALE_Y - 8}
-                            style={{ fontFamily: "var(--font-mono)", fontSize: 8, letterSpacing: "0.14em", fill: "var(--sand-50)", opacity: 0.85 }}
-                        >
-                            {SCALE_KM} KM
-                        </text>
                     </svg>
 
                     {/* the revealed poacher camp (debrief only) */}
@@ -334,59 +356,121 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
             </TransformComponent>
         </TransformWrapper>
 
-            {/* map key: legend + live coordinates, pinned to the base of the map (does not pan or zoom) */}
+            {/* legend: vertical key, top-left, tucked under the ranger pill (does not pan or zoom) */}
             <div
                 style={{
                     position: "absolute",
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
+                    top: legendTop,
+                    left: "var(--gutter)",
                     display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: 8,
-                    padding: "0.4rem var(--gutter)",
-                    background: "rgba(250,246,236,0.92)",
+                    flexDirection: "column",
+                    gap: 6,
+                    padding: "0.45rem 0.6rem",
+                    background: "rgba(250,246,236,0.9)",
                     backdropFilter: "blur(8px)",
                     WebkitBackdropFilter: "blur(8px)",
-                    borderTop: "1px solid var(--border-subtle)",
+                    border: "1px solid var(--border-subtle)",
+                    borderRadius: "var(--radius-md)",
+                    boxShadow: "var(--shadow-sm)",
                     fontFamily: "var(--font-mono)",
-                    fontSize: "0.58rem",
+                    fontSize: "0.56rem",
                     letterSpacing: "0.08em",
                     textTransform: "uppercase",
                     color: "var(--text-muted)",
+                    pointerEvents: "none",
                 }}
             >
-                <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                    <LegendKey label="You">
-                        <i className="ph-fill ph-paw-print" style={{ color: "var(--clay-500)", fontSize: 11 }} />
+                <LegendKey label="You">
+                    <i className="ph-fill ph-paw-print" style={{ color: "var(--clay-500)", fontSize: 11 }} />
+                </LegendKey>
+                <LegendKey label="Camp">
+                    <i className="ph-fill ph-circle" style={{ color: "var(--sand-900)", fontSize: 7 }} />
+                </LegendKey>
+                <LegendKey label="River">
+                    <span style={{ width: 12, height: 0, borderTop: "2px solid var(--teal-500)", display: "inline-block" }} />
+                </LegendKey>
+                {showThirds && (
+                    <LegendKey label="Thirds">
+                        <span style={{ width: 12, height: 0, borderTop: "1.5px dashed var(--sand-600)", display: "inline-block" }} />
                     </LegendKey>
-                    <LegendKey label="Camp">
-                        <i className="ph-fill ph-circle" style={{ color: "var(--sand-900)", fontSize: 7 }} />
-                    </LegendKey>
-                    <LegendKey label="River">
-                        <span style={{ width: 12, height: 0, borderTop: "2px solid var(--teal-500)", display: "inline-block" }} />
-                    </LegendKey>
-                    {showThirds && (
-                        <LegendKey label="Thirds">
-                            <span style={{ width: 12, height: 0, borderTop: "1.5px dashed var(--sand-600)", display: "inline-block" }} />
-                        </LegendKey>
-                    )}
-                </div>
-                {coordText && (
-                    <span style={{ whiteSpace: "nowrap", color: "var(--text-primary)", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 5 }}>
-                        <i className="ph ph-crosshair" style={{ color: "var(--text-accent)", fontSize: 11 }} />
-                        {coordLabel} {coordText}
-                    </span>
                 )}
             </div>
+
+            {/* dynamic scale bar, bottom-left: the km read shrinks as you zoom in */}
+            <div
+                style={{
+                    position: "absolute",
+                    left: "var(--gutter)",
+                    bottom: 10,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 3,
+                    padding: "0.35rem 0.5rem",
+                    background: "rgba(250,246,236,0.9)",
+                    backdropFilter: "blur(8px)",
+                    WebkitBackdropFilter: "blur(8px)",
+                    border: "1px solid var(--border-subtle)",
+                    borderRadius: "var(--radius-sm)",
+                    boxShadow: "var(--shadow-sm)",
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "0.56rem",
+                    letterSpacing: "0.12em",
+                    color: "var(--text-secondary)",
+                    pointerEvents: "none",
+                }}
+            >
+                <span ref={barLabelRef}>25 KM</span>
+                <span
+                    ref={barRef}
+                    style={{
+                        display: "block",
+                        height: 5,
+                        width: 60,
+                        borderBottom: "2px solid var(--text-primary)",
+                        borderLeft: "2px solid var(--text-primary)",
+                        borderRight: "2px solid var(--text-primary)",
+                    }}
+                />
+            </div>
+
+            {/* live coordinates, bottom-right */}
+            {coordText && (
+                <div
+                    style={{
+                        position: "absolute",
+                        right: "var(--gutter)",
+                        bottom: 10,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 5,
+                        padding: "0.35rem 0.5rem",
+                        background: "rgba(250,246,236,0.9)",
+                        backdropFilter: "blur(8px)",
+                        WebkitBackdropFilter: "blur(8px)",
+                        border: "1px solid var(--border-subtle)",
+                        borderRadius: "var(--radius-sm)",
+                        boxShadow: "var(--shadow-sm)",
+                        fontFamily: "var(--font-mono)",
+                        fontSize: "0.56rem",
+                        letterSpacing: "0.08em",
+                        textTransform: "uppercase",
+                        color: "var(--text-primary)",
+                        fontWeight: 700,
+                        whiteSpace: "nowrap",
+                        pointerEvents: "none",
+                    }}
+                >
+                    <i className="ph ph-crosshair" style={{ color: "var(--text-accent)", fontSize: 11 }} />
+                    {coordLabel} {coordText}
+                </div>
+            )}
         </div>
     );
 }
 
 function LegendKey({ label, children }: { label: string; children: React.ReactNode }) {
     return (
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
             <span style={{ display: "inline-flex", width: 13, justifyContent: "center" }}>{children}</span>
             {label}
         </span>

@@ -167,7 +167,7 @@ function MapInner() {
 
             {/* Map */}
             <div style={{ position: "relative", height: "min(52dvh, 460px)", background: "radial-gradient(120% 110% at 50% 0%, #2C4A39 0%, #16110A 92%)" }}>
-                <KrugerMap pin={pin} onPlace={onPlace} maxScale={inventory.includes("pro-binoculars") ? 8 : 4} showThirds />
+                <KrugerMap pin={pin} onPlace={onPlace} maxScale={inventory.includes("pro-binoculars") ? 8 : 4} showThirds legendTop={64} />
                 {(ranger || dog) && (
                     <button
                         onClick={() => router.push("/profile")}
