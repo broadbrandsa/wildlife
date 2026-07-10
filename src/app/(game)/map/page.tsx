@@ -17,6 +17,7 @@ import {
     THIRD_LABEL,
     availableClueIds,
     dailyWalkKm,
+    distanceKm,
     scentDirectionText,
     daysRemaining,
     isRoundOver,
@@ -26,7 +27,7 @@ import {
     zoneAtPoint,
 } from "@/lib/game";
 import type { ScentTier } from "@/lib/game";
-import { rangersHunting } from "@/lib/community";
+import { closestRival, rangersHunting } from "@/lib/community";
 import { useCurrentDay, useGameStore } from "@/store/game";
 
 const TIER_META: Record<ScentTier, { label: string; tone: "neutral" | "teal" | "ochre" | "clay"; icon: string }> = {
@@ -87,6 +88,9 @@ function MapInner() {
     const movesToday = pinMovesToday?.day === day ? pinMovesToday.count : 0;
     const canMove = !pin?.locked && movesToday < maxMoves;
     const walkKm = dailyWalkKm(player?.dogId);
+
+    // Ops-room pressure line: the nearest ranger in the whole game, anonymous.
+    const rival = closestRival(day, pin ? distanceKm(pin, ROUND.poacher) : null);
 
     // The dog reads the ground wherever the ranger currently stands.
     const read = useMemo(
@@ -172,6 +176,32 @@ function MapInner() {
                         <i className="ph ph-users-three" /> {rangersHunting(day).toLocaleString("en-ZA")} RANGERS HUNTING
                     </span>
                 </div>
+
+                {/* ops-room pressure: the nearest ranger in the whole game, anonymous */}
+                {!roundOver && (
+                    <div
+                        style={{
+                            marginTop: "var(--space-3)",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                            padding: "0.45rem 0.65rem",
+                            background: "rgba(245,239,226,0.1)",
+                            border: "1px solid rgba(245,239,226,0.14)",
+                            borderRadius: "var(--radius-sm)",
+                            fontFamily: "var(--font-mono)",
+                            fontSize: "0.62rem",
+                            letterSpacing: "0.1em",
+                            textTransform: "uppercase",
+                            color: "var(--ochre-300)",
+                        }}
+                    >
+                        <i className="ph-fill ph-broadcast" style={{ fontSize: 13 }} />
+                        <span>
+                            Ops room: nearest ranger is {rival.km} km from the suspect · {rival.locked ? "locked in" : "not locked in"}
+                        </span>
+                    </div>
+                )}
             </header>
 
             {/* Map */}
