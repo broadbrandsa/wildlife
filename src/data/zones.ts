@@ -4,6 +4,7 @@ import type { Zone, ZoneId } from "./types";
 export const ZONES: Zone[] = [
     {
         id: "far-north",
+        photo: "/guides/far-north.png",
         areaKm2: 975,
         number: 1,
         name: "Far North",
@@ -18,6 +19,7 @@ export const ZONES: Zone[] = [
     },
     {
         id: "punda-sandveld",
+        photo: "/guides/punda-sandveld.jpg",
         areaKm2: 1950,
         number: 2,
         name: "Northern Sandveld",
@@ -32,6 +34,7 @@ export const ZONES: Zone[] = [
     },
     {
         id: "mopane-shingwedzi",
+        photo: "/guides/mopane-shingwedzi.jpg",
         areaKm2: 4870,
         number: 3,
         name: "Mopane Plains",
@@ -46,6 +49,7 @@ export const ZONES: Zone[] = [
     },
     {
         id: "letaba-olifants",
+        photo: "/guides/letaba-olifants.jpeg",
         areaKm2: 1365,
         number: 4,
         name: "Letaba & Olifants",
@@ -60,6 +64,7 @@ export const ZONES: Zone[] = [
     },
     {
         id: "central-basalt",
+        photo: "/guides/central-basalt.jpg",
         areaKm2: 3900,
         number: 5,
         name: "Central Plains",
@@ -74,6 +79,7 @@ export const ZONES: Zone[] = [
     },
     {
         id: "lebombo",
+        photo: "/guides/lebombo.jpg",
         areaKm2: 1560,
         number: 6,
         name: "Lebombo Ridge",
@@ -88,6 +94,7 @@ export const ZONES: Zone[] = [
     },
     {
         id: "southern-sabie",
+        photo: "/guides/southern-sabie.jpeg",
         areaKm2: 2925,
         number: 7,
         name: "Southern Sabie",
@@ -102,6 +109,7 @@ export const ZONES: Zone[] = [
     },
     {
         id: "sw-granite",
+        photo: "/guides/sw-granite.jpg",
         areaKm2: 1940,
         number: 8,
         name: "South-West Granite",

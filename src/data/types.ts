@@ -32,6 +32,8 @@ export interface Zone {
     wash: "bushveld" | "savanna" | "clay" | "dawn" | "sand";
     /** Ground the zone covers, in km², for the case board's search area. */
     areaKm2: number;
+    /** Field guide photograph of the zone's ground (public/guides). */
+    photo: string;
 }
 
 export type DogId = "storm" | "scout" | "banjo" | "dotty" | "pepper";

@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Tag } from "@/components/ds";
+import { Button, PhotoPlate, Tag } from "@/components/ds";
 import type { Zone } from "@/data";
 
 function GuideRow({ label, icon, value }: { label: string; icon: string; value: string }) {
@@ -73,6 +73,11 @@ export function ZoneSheet({
                 }}
             >
                 <div style={{ width: 44, height: 5, borderRadius: 999, background: "var(--border-default)", margin: "0 auto var(--space-5)" }} />
+
+                {/* the ground itself: each guide opens on a photograph of its zone */}
+                <div style={{ aspectRatio: "16 / 9", marginBottom: "var(--space-5)" }}>
+                    <PhotoPlate src={zone.photo} alt={`${zone.name}: ${zone.subtitle}`} wash={zone.wash} radius="var(--radius-lg)" />
+                </div>
 
                 {justUnlocked && (
                     <div
