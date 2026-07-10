@@ -102,7 +102,7 @@ function ItemCard({
                     <div style={{ marginTop: "0.5rem" }}>
                         <button
                             onClick={() => setShowReal((v) => !v)}
-                            style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "inline-flex", alignItems: "center", gap: 5, fontSize: "0.72rem", fontWeight: 600, color: "var(--text-link)" }}
+                            style={{ background: "none", border: "none", cursor: "pointer", padding: "0.65rem 0", display: "inline-flex", alignItems: "center", gap: 5, fontSize: "0.72rem", fontWeight: 600, color: "var(--text-link)" }}
                         >
                             <i className={`ph ph-${showReal ? "caret-down" : "info"}`} /> What is this really?
                         </button>
@@ -129,7 +129,7 @@ function ItemCard({
                                 <i className="ph-fill ph-check-circle" style={{ marginRight: 4 }} /> Donated
                             </Tag>
                         ) : (
-                            <Button size="sm" onClick={onDonate} iconRight={<i className="ph ph-arrow-right" />}>
+                            <Button size="md" onClick={onDonate} iconRight={<i className="ph ph-arrow-right" />}>
                                 Donate {zar(item.priceZar)}
                             </Button>
                         )}

@@ -296,7 +296,7 @@ function MapInner() {
                                 border: "1px solid var(--border-default)",
                                 background: "var(--surface-card)",
                                 borderRadius: "var(--radius-pill)",
-                                padding: "0.3rem 0.75rem",
+                                padding: "0.5rem 0.85rem", // comfortable touch height
                                 fontSize: "0.74rem",
                                 fontWeight: 600,
                                 color: "var(--text-secondary)",
@@ -320,7 +320,7 @@ function MapInner() {
                                 flex: "none",
                                 border: "none",
                                 background: "none",
-                                padding: "0.3rem 0.2rem",
+                                padding: "0.65rem 0.4rem", // comfortable touch height
                                 fontSize: "0.74rem",
                                 fontWeight: 600,
                                 color: "var(--text-link)",

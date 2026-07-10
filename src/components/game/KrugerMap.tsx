@@ -116,7 +116,7 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
         if (!onPlace || !down.current) return;
         const moved = Math.hypot(e.clientX - down.current.x, e.clientY - down.current.y);
         down.current = null;
-        if (moved > 6) return; // it was a pan, not a tap
+        if (moved > 10) return; // it was a pan, not a tap (fingers wobble more than mice)
         const f = clientToFraction(e.clientX, e.clientY);
         if (f) onPlace(f.x, f.y);
     };
@@ -126,6 +126,23 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
     // and a chip reads out the distance being walked.
     const draggable = Boolean(onPlace && pin && !pin.locked && walkRangeKm != null);
     const [drag, setDrag] = useState<{ x: number; y: number; km: number } | null>(null);
+
+    // react-zoom-pan-pinch listens to NATIVE touch events on its wrapper, which
+    // fire before React's root-delegated handlers, so stopping propagation in
+    // JSX props is too late: the map still pans under a touch drag. Native
+    // listeners on the pin handle itself run first in the bubble path and stop
+    // the pan before the wrapper ever hears the touch.
+    const draggableRef = useRef(draggable);
+    draggableRef.current = draggable;
+    const pinHandleRef = (el: HTMLSpanElement | null) => {
+        if (!el || el.dataset.touchGuard) return;
+        el.dataset.touchGuard = "1";
+        const guard = (e: TouchEvent) => {
+            if (draggableRef.current) e.stopPropagation();
+        };
+        el.addEventListener("touchstart", guard, { passive: false });
+        el.addEventListener("touchmove", guard, { passive: false });
+    };
 
     const onPinPointerDown = (e: React.PointerEvent<HTMLSpanElement>) => {
         if (!draggable || !pin) return;
@@ -400,9 +417,13 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                     )}
 
                     {/* the player's pin (HTML overlay so it can animate crisply).
-                        When movable it is a drag handle: pick it up and walk it. */}
+                        When movable it is a drag handle: pick it up and walk it.
+                        Touch propagation is stopped so react-zoom-pan-pinch (which
+                        listens to raw touch events on its wrapper) never starts a
+                        pan underneath the drag. */}
                     {pin && (
                         <span
+                            ref={pinHandleRef}
                             className={drag ? undefined : "kw-pin-drop"}
                             onPointerDown={onPinPointerDown}
                             onPointerMove={onPinPointerMove}
@@ -412,11 +433,13 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                                 position: "absolute",
                                 left: `${(drag ?? pin).x * 100}%`,
                                 top: `${(drag ?? pin).y * 100}%`,
-                                transform: "translate(-50%, -100%)",
+                                // the tip of the rotated square pokes 2px shy of the
+                                // padded box bottom, so nudge down to keep it exact
+                                transform: "translate(-50%, calc(-100% + 2px))",
                                 pointerEvents: draggable ? "auto" : "none",
                                 touchAction: "none",
                                 cursor: draggable ? (drag ? "grabbing" : "grab") : undefined,
-                                padding: 6, // a slightly larger finger target
+                                padding: 8, // a 46px finger target around the 30px pin
                             }}
                         >
                             {/* teardrop: the sharp corner (bottom-left) swings to the BOTTOM
