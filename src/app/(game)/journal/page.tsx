@@ -61,39 +61,41 @@ function LockedRow({ clue, onAction }: { clue: Clue; onAction: () => void }) {
     );
 }
 
-/** Field guide row: tap to read it if owned, otherwise unlock it in the kit room. */
-function GuideRow({ zone, owned, onRead, onUnlock }: { zone: Zone; owned: boolean; onRead: () => void; onUnlock: () => void }) {
+/** Field guide card: tap to read it if owned, otherwise unlock it in the kit room. */
+function GuideCard({ zone, owned, onRead, onUnlock }: { zone: Zone; owned: boolean; onRead: () => void; onUnlock: () => void }) {
     return (
         <button
             onClick={owned ? onRead : onUnlock}
             aria-label={owned ? `Read the ${zone.name} field guide` : `Unlock the ${zone.name} field guide for R25`}
             style={{
-                width: "100%",
                 textAlign: "left",
                 cursor: "pointer",
                 display: "flex",
-                alignItems: "center",
-                gap: "var(--space-3)",
+                flexDirection: "column",
+                gap: 6,
                 background: owned ? "var(--surface-card)" : "var(--surface-sunken)",
                 border: `1px solid ${owned ? "var(--border-subtle)" : "var(--border-default)"}`,
                 borderRadius: "var(--radius-md)",
-                padding: "0.6rem var(--space-4)",
+                padding: "var(--space-3) var(--space-4)",
+                minHeight: 96,
             }}
         >
-            <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.7rem", color: "var(--text-accent)", width: 14 }}>{zone.number}</span>
-            <span style={{ flex: 1, minWidth: 0 }}>
-                <span style={{ display: "block", fontSize: "0.88rem", fontWeight: 600, color: owned ? "var(--text-primary)" : "var(--text-secondary)" }}>{zone.name}</span>
-                <span style={{ display: "block", fontSize: "0.72rem", color: "var(--text-muted)" }}>{zone.subtitle}</span>
+            <span style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.7rem", color: "var(--text-accent)" }}>{zone.number}</span>
+                {owned ? (
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: "0.74rem", fontWeight: 600, color: "var(--text-link)", whiteSpace: "nowrap" }}>
+                        <i className="ph ph-book-open" /> Read
+                    </span>
+                ) : (
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: "0.74rem", fontWeight: 600, color: "var(--text-muted)", whiteSpace: "nowrap" }}>
+                        <i className="ph ph-lock-simple" /> R25
+                    </span>
+                )}
             </span>
-            {owned ? (
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: "0.76rem", fontWeight: 600, color: "var(--text-link)", whiteSpace: "nowrap" }}>
-                    <i className="ph ph-book-open" /> Read
-                </span>
-            ) : (
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: "0.76rem", fontWeight: 600, color: "var(--text-muted)", whiteSpace: "nowrap" }}>
-                    <i className="ph ph-lock-simple" /> R25
-                </span>
-            )}
+            <span style={{ flex: 1 }}>
+                <span style={{ display: "block", fontSize: "0.9rem", fontWeight: 600, color: owned ? "var(--text-primary)" : "var(--text-secondary)", lineHeight: 1.25 }}>{zone.name}</span>
+                <span style={{ display: "block", fontSize: "0.72rem", color: "var(--text-muted)", marginTop: 2, lineHeight: 1.35 }}>{zone.subtitle}</span>
+            </span>
         </button>
     );
 }
@@ -137,9 +139,9 @@ export default function JournalPage() {
                 <p style={{ fontSize: "0.82rem", color: "var(--text-muted)", margin: "var(--space-2) 0 var(--space-3)" }}>
                     Your first field guide is free: it unlocks for the ground where you drop your first pin. Tap a guide you own to read it. Unlock any other zone for R25.
                 </p>
-                <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-2)" }}>
                     {ZONES.map((z) => (
-                        <GuideRow
+                        <GuideCard
                             key={z.id}
                             zone={z}
                             owned={fieldGuides.includes(z.id)}
