@@ -29,7 +29,7 @@ import {
     tierRank,
     zoneAtPoint,
 } from "@/lib/game";
-import { RARITY_META, rollFirstSpot, rollSpot } from "@/lib/spotting";
+import { RARITY_META, SPOTTER_DOGS, bonusSpotDue, rollFirstSpot, rollSpot } from "@/lib/spotting";
 import type { ScentTier } from "@/lib/game";
 import { NEAR_TARGET_KM, rangersHunting, rangersNearTarget } from "@/lib/community";
 import { CAMP_HOUR, PHASE_META, PHASE_SKY, formatClock, isDusk, isNight, phaseForHour } from "@/lib/daytime";
@@ -44,6 +44,86 @@ const TIER_META: Record<ScentTier, { label: string; tone: "neutral" | "teal" | "
 };
 
 type SheetId = "status" | "ranger" | "dog" | "clue" | "guides" | "bakkie" | "night" | "spots";
+
+type SpotItem = { species: Species; isNew: boolean; count: number; bonus?: boolean };
+
+/**
+ * A trading-card flip: children render the front, the back is the branded
+ * plate. The front's natural height sizes the card; the back covers it.
+ */
+function CardFlip({
+    flipped,
+    onFlip,
+    backIcon,
+    backEyebrow,
+    backLine,
+    children,
+}: {
+    flipped: boolean;
+    onFlip: () => void;
+    backIcon: string;
+    backEyebrow: string;
+    backLine: string;
+    children: React.ReactNode;
+}) {
+    return (
+        <div style={{ perspective: 1400 }}>
+            <div
+                onClick={() => {
+                    if (!flipped) onFlip();
+                }}
+                style={{
+                    position: "relative",
+                    transformStyle: "preserve-3d",
+                    transition: "transform 620ms var(--ease-out)",
+                    transform: flipped ? "none" : "rotateY(180deg)",
+                }}
+            >
+                <div style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}>{children}</div>
+                <div
+                    role="button"
+                    aria-label="Reveal"
+                    style={{
+                        position: "absolute",
+                        inset: 0,
+                        transform: "rotateY(180deg)",
+                        backfaceVisibility: "hidden",
+                        WebkitBackfaceVisibility: "hidden",
+                        borderRadius: "var(--radius-2xl)",
+                        overflow: "hidden",
+                        border: "1px solid var(--border-subtle)",
+                        boxShadow: "var(--shadow-xl)",
+                        background: "linear-gradient(160deg, var(--green-800) 0%, var(--sand-900) 135%)",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                    }}
+                >
+                    <span
+                        aria-hidden="true"
+                        style={{ position: "absolute", inset: 0, background: "repeating-linear-gradient(45deg, rgba(245,239,226,0.05) 0 2px, transparent 2px 14px)" }}
+                    />
+                    <span aria-hidden="true" style={{ position: "absolute", inset: 10, border: "1px solid rgba(245,239,226,0.22)", borderRadius: "var(--radius-xl)" }} />
+                    <span style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center", gap: 10, textAlign: "center", padding: "0 var(--space-6)" }}>
+                        <span style={{ width: 64, height: 64, borderRadius: "50%", border: "1.5px solid rgba(245,239,226,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <i className={`ph-fill ph-${backIcon}`} style={{ fontSize: 30, color: "var(--ochre-400)" }} />
+                        </span>
+                        <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.28em", textTransform: "uppercase", color: "rgba(245,239,226,0.6)" }}>
+                            {backEyebrow}
+                        </span>
+                        <span style={{ fontFamily: "var(--font-serif)", fontStyle: "italic", fontSize: "1.1rem", color: "var(--sand-50)", lineHeight: 1.4 }}>
+                            {backLine}
+                        </span>
+                        <span style={{ marginTop: 14, fontFamily: "var(--font-mono)", fontSize: "0.64rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--ochre-300)", fontWeight: 700 }}>
+                            Tap to reveal
+                        </span>
+                    </span>
+                </div>
+            </div>
+        </div>
+    );
+}
 
 /** Small clay notification dot pinned to a corner of its parent. */
 function NDot() {
@@ -203,10 +283,14 @@ function MapInner() {
     const [truckDest, setTruckDest] = useState<{ x: number; y: number } | null>(null);
     // Which elimination clue was just marked on the case board (confirmation line).
     const [markedClueId, setMarkedClueId] = useState<string | null>(null);
-    // The species just spotted (or a collection card being read).
-    const [spot, setSpot] = useState<{ species: Species; isNew: boolean; count: number } | null>(null);
+    // The species just spotted (or a collection card being read), plus any
+    // bonus card still waiting to be dealt (spotter dog or binoculars).
+    const [spot, setSpot] = useState<SpotItem | null>(null);
+    const [spotQueue, setSpotQueue] = useState<SpotItem[]>([]);
     // Fresh spots deal in face-down like a trading card; a tap flips the reveal.
     const [spotFlipped, setSpotFlipped] = useState(true);
+    // New clues deal in the same way, once per release day.
+    const [clueFlipped, setClueFlipped] = useState(true);
     const day = useCurrentDay();
     const roundOver = isRoundOver(day);
 
@@ -328,11 +412,37 @@ function MapInner() {
         const species = firstEver ? rollFirstSpot(thirdOf(p)) : rollSpot(thirdOf(p));
         const priorCount = useGameStore.getState().sightings.filter((s) => s.speciesId === species.id).length;
         recordSighting(species.id, day);
+        // Every third move a spotter dog or the binoculars turn up ONE bonus
+        // card. Having both never stacks beyond the single extra.
+        const queue: SpotItem[] = [];
+        const totalMoves = useGameStore.getState().trail.length;
+        const hasSpotterDog = Boolean(player && SPOTTER_DOGS.has(player.dogId));
+        if (bonusSpotDue(totalMoves, hasSpotterDog, inventory.includes("pro-binoculars"))) {
+            const extra = rollSpot(thirdOf(p));
+            const extraPrior = useGameStore.getState().sightings.filter((s) => s.speciesId === extra.id).length;
+            recordSighting(extra.id, day);
+            queue.push({ species: extra, isNew: extraPrior === 0, count: extraPrior + 1, bonus: true });
+        }
         // Deal the card face-down; reduced motion goes straight to the reveal.
         const reduced =
             typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        setSpotQueue(queue);
         setSpotFlipped(reduced);
         setSpot({ species, isNew: priorCount === 0, count: priorCount + 1 });
+    };
+
+    // Dismissing a spot card deals the next one in the queue, if any.
+    const advanceSpotCard = () => {
+        if (spotQueue.length > 0) {
+            const [next, ...rest] = spotQueue;
+            const reduced =
+                typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+            setSpotQueue(rest);
+            setSpotFlipped(reduced);
+            setSpot(next);
+        } else {
+            setSpot(null);
+        }
     };
 
     const onPlace = (x: number, y: number) => {
@@ -396,6 +506,11 @@ function MapInner() {
     };
 
     const openClueSheet = () => {
+        // A clue seen for the first time on its release day deals in face-down.
+        const fresh = newClueToday;
+        const reduced =
+            typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        setClueFlipped(!fresh || reduced);
         markCluesSeen(day);
         setSheet("clue");
     };
@@ -828,6 +943,13 @@ function MapInner() {
                         <i className="ph ph-timer" /> {clueCountdown}
                     </div>
                     {latest && (
+                        <CardFlip
+                            flipped={clueFlipped}
+                            onFlip={() => setClueFlipped(true)}
+                            backIcon="notebook"
+                            backEyebrow="Field clue"
+                            backLine="New intel has come in from the field."
+                        >
                         <ClueCard
                             clue={latest}
                             action={
@@ -850,6 +972,7 @@ function MapInner() {
                                 ) : undefined
                             }
                         />
+                        </CardFlip>
                     )}
                 </Sheet>
             )}
@@ -963,6 +1086,7 @@ function MapInner() {
                                                         onClick={() => {
                                                             if (!seen) return;
                                                             setSpotFlipped(true); // a re-read, not a reveal
+                                                            setSpotQueue([]);
                                                             setSpot({
                                                                 species: s,
                                                                 isNew: false,
@@ -1180,22 +1304,16 @@ function MapInner() {
                 <Overlay>
                 <div
                     style={{ position: "fixed", inset: 0, zIndex: 70, display: "flex", alignItems: "center", justifyContent: "center", padding: "var(--gutter)", background: "var(--bg-overlay, rgba(17,32,26,0.6))" }}
-                    onClick={() => (spotFlipped ? setSpot(null) : setSpotFlipped(true))}
+                    onClick={() => (spotFlipped ? advanceSpotCard() : setSpotFlipped(true))}
                 >
-                    <div className="kw-card-pop" style={{ width: "100%", maxWidth: 400, perspective: 1400 }}>
-                    <div
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            if (!spotFlipped) setSpotFlipped(true);
-                        }}
-                        style={{
-                            position: "relative",
-                            transformStyle: "preserve-3d",
-                            transition: "transform 620ms var(--ease-out)",
-                            transform: spotFlipped ? "none" : "rotateY(180deg)",
-                        }}
+                    <div className="kw-card-pop" onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 400 }}>
+                    <CardFlip
+                        flipped={spotFlipped}
+                        onFlip={() => setSpotFlipped(true)}
+                        backIcon="paw-print"
+                        backEyebrow={spot.bonus ? "Bonus spot" : "Spotting log"}
+                        backLine={spot.bonus ? "And something else moved out there." : `${dogName} put something up.`}
                     >
-                    {/* front: the sighting */}
                     <div
                         style={{
                             maxHeight: "88dvh",
@@ -1205,8 +1323,6 @@ function MapInner() {
                             borderRadius: "var(--radius-2xl)",
                             boxShadow: "var(--shadow-xl)",
                             border: spot.species.rarity === "oialt" ? "2px solid var(--clay-500)" : "1px solid var(--border-subtle)",
-                            backfaceVisibility: "hidden",
-                            WebkitBackfaceVisibility: "hidden",
                         }}
                     >
                         <div style={{ position: "relative", aspectRatio: "16 / 10", background: "var(--sand-100)" }}>
@@ -1244,65 +1360,30 @@ function MapInner() {
                                 <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.6rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-muted)", lineHeight: 1.5 }}>
                                     Entered into your collection
                                     <br />
+                                    {spot.bonus ? "Bonus spot · " : ""}
                                     {spot.isNew ? "New species" : `Sighting no. ${spot.count}`}
                                 </div>
-                                <Button
-                                    size="sm"
-                                    variant="secondary"
-                                    onClick={() => {
-                                        setSpot(null);
-                                        setSheet("spots");
-                                    }}
-                                    iconRight={<i className="ph ph-binoculars" />}
-                                >
-                                    View collection
-                                </Button>
+                                {spotQueue.length > 0 ? (
+                                    <Button size="sm" variant="secondary" onClick={advanceSpotCard} iconRight={<i className="ph-fill ph-sparkle" />}>
+                                        Next card
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        size="sm"
+                                        variant="secondary"
+                                        onClick={() => {
+                                            setSpot(null);
+                                            setSheet("spots");
+                                        }}
+                                        iconRight={<i className="ph ph-binoculars" />}
+                                    >
+                                        View collection
+                                    </Button>
+                                )}
                             </div>
                         </div>
                     </div>
-
-                    {/* back: the trading-card face the spot deals in with */}
-                    <div
-                        role="button"
-                        aria-label="Reveal your sighting"
-                        style={{
-                            position: "absolute",
-                            inset: 0,
-                            transform: "rotateY(180deg)",
-                            backfaceVisibility: "hidden",
-                            WebkitBackfaceVisibility: "hidden",
-                            borderRadius: "var(--radius-2xl)",
-                            overflow: "hidden",
-                            border: "1px solid var(--border-subtle)",
-                            boxShadow: "var(--shadow-xl)",
-                            background: "linear-gradient(160deg, var(--green-800) 0%, var(--sand-900) 135%)",
-                            cursor: "pointer",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                        }}
-                    >
-                        <span
-                            aria-hidden="true"
-                            style={{ position: "absolute", inset: 0, background: "repeating-linear-gradient(45deg, rgba(245,239,226,0.05) 0 2px, transparent 2px 14px)" }}
-                        />
-                        <span aria-hidden="true" style={{ position: "absolute", inset: 10, border: "1px solid rgba(245,239,226,0.22)", borderRadius: "var(--radius-xl)" }} />
-                        <span style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center", gap: 10, textAlign: "center", padding: "0 var(--space-6)" }}>
-                            <span style={{ width: 64, height: 64, borderRadius: "50%", border: "1.5px solid rgba(245,239,226,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                <i className="ph-fill ph-paw-print" style={{ fontSize: 30, color: "var(--ochre-400)" }} />
-                            </span>
-                            <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.28em", textTransform: "uppercase", color: "rgba(245,239,226,0.6)" }}>
-                                Spotting log
-                            </span>
-                            <span style={{ fontFamily: "var(--font-serif)", fontStyle: "italic", fontSize: "1.1rem", color: "var(--sand-50)", lineHeight: 1.4 }}>
-                                {dogName} put something up.
-                            </span>
-                            <span style={{ marginTop: 14, fontFamily: "var(--font-mono)", fontSize: "0.64rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--ochre-300)", fontWeight: 700 }}>
-                                Tap to reveal
-                            </span>
-                        </span>
-                    </div>
-                    </div>
+                    </CardFlip>
                     </div>
                 </div>
                 </Overlay>

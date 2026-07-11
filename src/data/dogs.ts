@@ -55,7 +55,7 @@ export const DOGS: Dog[] = [
         name: "Pepper",
         breed: "English Springer Spaniel (guest dog, cross-trains with SAWC)",
         role: "Detection: rhino horn, ivory, ammunition",
-        effect: "Superpower: finds what others miss. Every scent read comes with an exact bearing",
+        effect: "Superpower: finds what others miss. Every read carries an exact bearing, and every third move Pepper turns up a bonus species card",
         personality: "Small, focused, finds what others miss.",
         didYouKnow:
             "Springer Spaniels sniff out horn, ivory and ammunition at park gates. Pepper joins you as a guest detection dog cross-training with SAWC.",

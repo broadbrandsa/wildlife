@@ -36,7 +36,7 @@ export const EQUIPMENT: Equipment[] = [
         tier: "hunt",
         priceZar: 100,
         description: "High-power optics for reading distant ground.",
-        effect: "Doubles your map zoom, for reading the ground closely and placing a precise pin.",
+        effect: "Doubles your map zoom, for reading the ground closely and placing a precise pin. Every third move the glass picks out a bonus species card.",
         fundedEquivalent: "A field ranger's binocular kit",
         icon: "binoculars",
         realWorldNote: "Rangers glass the bush for movement, dust and circling vultures before and during a follow-up.",

@@ -23,6 +23,18 @@ export function rollSpot(region: SpotRegion, rng: () => number = Math.random): S
 }
 
 /**
+ * Pepper's detection nose finds what others miss: every third move she turns
+ * up a bonus species card. The field binoculars grant the same; having both
+ * never stacks beyond the one bonus card.
+ */
+export const SPOTTER_DOGS = new Set(["pepper"]);
+
+/** A bonus card lands on every third move for a spotter dog or binoculars. */
+export function bonusSpotDue(totalMoves: number, hasSpotterDog: boolean, hasBinoculars: boolean): boolean {
+    return (hasSpotterDog || hasBinoculars) && totalMoves > 0 && totalMoves % 3 === 0;
+}
+
+/**
  * The very first spot of the game always comes from the Big, Ugly or Small
  * Five in the ranger's region, so the collection opens with a name the player
  * knows and the bingo lists start working immediately.
