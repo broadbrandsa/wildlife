@@ -271,6 +271,8 @@ function MapInner() {
     const trail = useGameStore((s) => s.trail);
     const sightings = useGameStore((s) => s.sightings);
     const recordSighting = useGameStore((s) => s.recordSighting);
+    const fivesWon = useGameStore((s) => s.fivesWon);
+    const recordFiveWin = useGameStore((s) => s.recordFiveWin);
     const campaignTotal = useCampaignTotal();
 
     const [dismissed, setDismissed] = useState(false);
@@ -291,6 +293,9 @@ function MapInner() {
     const [spotFlipped, setSpotFlipped] = useState(true);
     // New clues deal in the same way, once per release day.
     const [clueFlipped, setClueFlipped] = useState(true);
+    // A completed five: celebrated once the card flow finishes.
+    const [pendingFiveWin, setPendingFiveWin] = useState<(typeof FIVES)[number] | null>(null);
+    const [fiveWin, setFiveWin] = useState<(typeof FIVES)[number] | null>(null);
     const day = useCurrentDay();
     const roundOver = isRoundOver(day);
 
@@ -423,6 +428,14 @@ function MapInner() {
             recordSighting(extra.id, day);
             queue.push({ species: extra, isNew: extraPrior === 0, count: extraPrior + 1, bonus: true });
         }
+        // Bingo: did this move complete one of the fives for the first time?
+        const collected = new Set(useGameStore.getState().sightings.map((s) => s.speciesId));
+        const won = useGameStore.getState().fivesWon;
+        const completed = FIVES.find((f) => !won.includes(f.id) && f.members.every((m) => collected.has(m)));
+        if (completed) {
+            recordFiveWin(completed.id);
+            setPendingFiveWin(completed);
+        }
         // Deal the card face-down; reduced motion goes straight to the reveal.
         const reduced =
             typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -431,7 +444,8 @@ function MapInner() {
         setSpot({ species, isNew: priorCount === 0, count: priorCount + 1 });
     };
 
-    // Dismissing a spot card deals the next one in the queue, if any.
+    // Dismissing a spot card deals the next one; the last card gives way to
+    // the bingo celebration if this move completed a five.
     const advanceSpotCard = () => {
         if (spotQueue.length > 0) {
             const [next, ...rest] = spotQueue;
@@ -442,6 +456,10 @@ function MapInner() {
             setSpot(next);
         } else {
             setSpot(null);
+            if (pendingFiveWin) {
+                setFiveWin(pendingFiveWin);
+                setPendingFiveWin(null);
+            }
         }
     };
 
@@ -521,7 +539,7 @@ function MapInner() {
                 pin={pin}
                 onPlace={truckMode ? onPickDestination : onPlace}
                 maxScale={inventory.includes("pro-binoculars") ? 8 : 4}
-                legendTop={140}
+                legendTop={200}
                 walkRangeKm={!truckMode && pin && !pin.locked && canMove ? walkKm : null}
                 freeDrag={truckMode}
                 trail={trail}
@@ -569,11 +587,58 @@ function MapInner() {
                 </button>
             </div>
 
-            {/* the team, split: you and your dog, each with their own signal */}
+            {/* the team, split: you, your dog and the bakkie, each with their own signal */}
             {ranger && (
                 <div style={{ position: "absolute", left: "var(--gutter)", top: 12, display: "flex", flexDirection: "column", gap: 8 }}>
                     <AvatarButton src={ranger.photo} alt={`${rangerName}, your ranger`} dot={rangerDot} onClick={() => setSheet("ranger")} />
                     {dog && <AvatarButton src={dog.photo} alt={`${dogName}, your dog`} dot={dogDot} onClick={openDogSheet} />}
+                    {/* the bakkie: full colour while it has fuel, grey when the tank is dry */}
+                    <button
+                        onClick={() => setSheet("bakkie")}
+                        aria-label={`Patrol bakkie, ${truckRidesLeft} ride${truckRidesLeft === 1 ? "" : "s"} left`}
+                        className="kw-press"
+                        style={{
+                            position: "relative",
+                            width: 52,
+                            height: 52,
+                            borderRadius: "50%",
+                            border: "2px solid var(--sand-50)",
+                            background: "var(--accent-soft)",
+                            boxShadow: "var(--shadow-md)",
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            filter: truckRidesLeft > 0 ? "none" : "grayscale(1)",
+                            opacity: truckRidesLeft > 0 ? 1 : 0.65,
+                        }}
+                    >
+                        <i className="ph-fill ph-truck" style={{ fontSize: 24, color: "var(--ochre-700)" }} />
+                        {truckRidesLeft > 0 && (
+                            <span
+                                style={{
+                                    position: "absolute",
+                                    top: -3,
+                                    right: -3,
+                                    minWidth: 17,
+                                    height: 17,
+                                    borderRadius: 999,
+                                    background: "var(--ochre-500)",
+                                    color: "var(--sand-900)",
+                                    border: "2px solid var(--sand-50)",
+                                    fontFamily: "var(--font-mono)",
+                                    fontSize: "0.58rem",
+                                    fontWeight: 700,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    boxShadow: "var(--shadow-sm)",
+                                }}
+                            >
+                                {truckRidesLeft}
+                            </span>
+                        )}
+                    </button>
                 </div>
             )}
 
@@ -602,7 +667,6 @@ function MapInner() {
             <div style={{ position: "absolute", right: "var(--gutter)", top: 168, display: "flex", flexDirection: "column", gap: 10 }}>
                 <DockTab icon="notebook" label="Clue" dot={newClueToday} onClick={openClueSheet} />
                 <DockTab icon="book-open-text" label="Guides" onClick={() => setSheet("guides")} />
-                <DockTab icon="truck" label="Bakkie" onClick={() => setSheet("bakkie")} />
                 <DockTab icon="binoculars" label="Spots" onClick={() => setSheet("spots")} />
                 <DockTab icon="radio" label="Radio" onClick={() => router.push("/codes")} />
             </div>
@@ -1038,10 +1102,15 @@ function MapInner() {
                                                 </span>
                                                 {done && (
                                                     <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.6rem", letterSpacing: "0.12em", color: "var(--green-700)", fontWeight: 700 }}>
-                                                        <i className="ph-fill ph-check-circle" /> COMPLETE
+                                                        <i className="ph-fill ph-trophy" /> {fivesWon.includes(five.id) ? "PRIZE WON" : "COMPLETE"}
                                                     </span>
                                                 )}
                                             </div>
+                                            {done && fivesWon.includes(five.id) && (
+                                                <p style={{ fontSize: "0.74rem", color: "var(--green-700)", margin: "0 0 var(--space-2)", lineHeight: 1.4 }}>
+                                                    Instant prize: {five.prize}. It will be waiting with your results at round end.
+                                                </p>
+                                            )}
                                             <div style={{ display: "flex", gap: "var(--space-2)" }}>
                                                 {five.members.map((m) => {
                                                     const sp = SPECIES_BY_ID[m];
@@ -1099,7 +1168,14 @@ function MapInner() {
                                                             aspectRatio: "1",
                                                             borderRadius: "var(--radius-md)",
                                                             overflow: "hidden",
-                                                            border: `1px solid ${s.rarity === "oialt" && seen ? "var(--clay-500)" : "var(--border-subtle)"}`,
+                                                            // gold ring for the fives, clay for once in a lifetime
+                                                            border: seen
+                                                                ? s.rarity === "oialt"
+                                                                    ? "2px solid var(--clay-500)"
+                                                                    : FIVE_OF[s.id]
+                                                                      ? "2px solid var(--ochre-400)"
+                                                                      : "1px solid var(--border-subtle)"
+                                                                : "1px solid var(--border-subtle)",
                                                             background: "var(--surface-sunken)",
                                                             cursor: seen ? "pointer" : "default",
                                                             padding: 0,
@@ -1321,8 +1397,16 @@ function MapInner() {
                             overflowY: "auto",
                             background: "var(--surface-page)",
                             borderRadius: "var(--radius-2xl)",
-                            boxShadow: "var(--shadow-xl)",
-                            border: spot.species.rarity === "oialt" ? "2px solid var(--clay-500)" : "1px solid var(--border-subtle)",
+                            // Gold marks a Big, Ugly or Small Five card; clay marks once in a lifetime.
+                            boxShadow: FIVE_OF[spot.species.id]
+                                ? "var(--shadow-xl), 0 0 0 3px var(--ochre-100)"
+                                : "var(--shadow-xl)",
+                            border:
+                                spot.species.rarity === "oialt"
+                                    ? "2px solid var(--clay-500)"
+                                    : FIVE_OF[spot.species.id]
+                                      ? "2px solid var(--ochre-400)"
+                                      : "1px solid var(--border-subtle)",
                         }}
                     >
                         <div style={{ position: "relative", aspectRatio: "16 / 10", background: "var(--sand-100)" }}>
@@ -1384,6 +1468,64 @@ function MapInner() {
                         </div>
                     </div>
                     </CardFlip>
+                    </div>
+                </div>
+                </Overlay>
+            )}
+
+            {/* spotting bingo: a completed five wins an instant prize */}
+            {fiveWin && (
+                <Overlay>
+                <div
+                    style={{ position: "fixed", inset: 0, zIndex: 75, display: "flex", alignItems: "center", justifyContent: "center", padding: "var(--gutter)", background: "var(--bg-overlay, rgba(17,32,26,0.65))" }}
+                    onClick={() => setFiveWin(null)}
+                >
+                    <div
+                        className="kw-card-pop"
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                            width: "100%",
+                            maxWidth: 400,
+                            maxHeight: "88dvh",
+                            overflowY: "auto",
+                            background: "var(--surface-page)",
+                            borderRadius: "var(--radius-2xl)",
+                            border: "2px solid var(--ochre-400)",
+                            boxShadow: "var(--shadow-xl), 0 0 0 4px var(--ochre-100)",
+                            padding: "var(--space-6) var(--gutter)",
+                            textAlign: "center",
+                        }}
+                    >
+                        <div style={{ display: "flex", justifyContent: "center", marginBottom: "var(--space-4)" }}>
+                            <span style={{ width: 56, height: 56, borderRadius: "50%", background: "var(--accent-soft)", color: "var(--ochre-600)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28 }}>
+                                <i className="ph-fill ph-trophy" />
+                            </span>
+                        </div>
+                        <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.64rem", letterSpacing: "0.24em", textTransform: "uppercase", color: "var(--ochre-700)", fontWeight: 700 }}>
+                            Spotting bingo
+                        </div>
+                        <h2 style={{ fontSize: "var(--text-h3)", margin: "var(--space-2) 0 0" }}>{fiveWin.label}, complete.</h2>
+                        <div style={{ display: "flex", justifyContent: "center", gap: "var(--space-2)", margin: "var(--space-4) 0" }}>
+                            {fiveWin.members.map((m) => {
+                                const sp = SPECIES_BY_ID[m];
+                                return (
+                                    <span key={m} style={{ position: "relative", width: 52, height: 52, borderRadius: "50%", overflow: "hidden", border: "2px solid var(--ochre-400)" }}>
+                                        <Image src={sp.photo} alt={sp.name} fill sizes="52px" style={{ objectFit: "cover" }} />
+                                    </span>
+                                );
+                            })}
+                        </div>
+                        <p style={{ fontSize: "0.88rem", color: "var(--text-secondary)", lineHeight: 1.55, margin: 0 }}>
+                            All five, spotted and logged. An instant prize is yours: {fiveWin.prize}. It will be waiting with your results at round end.
+                        </p>
+                        <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--text-muted)", marginTop: "var(--space-4)" }}>
+                            Instant prize · Banked
+                        </div>
+                        <div style={{ marginTop: "var(--space-5)" }}>
+                            <Button size="lg" fullWidth onClick={() => setFiveWin(null)} iconRight={<i className="ph ph-paw-print" />}>
+                                Back to the hunt
+                            </Button>
+                        </div>
                     </div>
                 </div>
                 </Overlay>

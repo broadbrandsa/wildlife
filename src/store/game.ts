@@ -85,6 +85,8 @@ interface GameState {
     trail: { x: number; y: number; day: number; via: "walk" | "truck" }[];
     /** The spotting log: one species sighted on every ranger move. */
     sightings: { speciesId: string; day: number }[];
+    /** Completed fives (big, ugly, small) whose instant prize has been won. */
+    fivesWon: string[];
 
     setHasHydrated: (v: boolean) => void;
     setPlayer: (player: Player) => void;
@@ -122,6 +124,8 @@ interface GameState {
     ruleOutZone: (zoneId: ZoneId) => void;
     /** Log the species spotted on this move. */
     recordSighting: (speciesId: string, day: number) => void;
+    /** A five is complete: bank its instant prize (once per five). */
+    recordFiveWin: (fiveId: string) => void;
     reset: () => void;
 }
 
@@ -152,6 +156,7 @@ const initial = {
     zoneMarks: {} as Partial<Record<ZoneId, "suspect" | "ruled-out">>,
     trail: [] as { x: number; y: number; day: number; via: "walk" | "truck" }[],
     sightings: [] as { speciesId: string; day: number }[],
+    fivesWon: [] as string[],
 };
 
 export const useGameStore = create<GameState>()(
@@ -322,6 +327,9 @@ export const useGameStore = create<GameState>()(
             ruleOutZone: (zoneId) => set((s) => ({ zoneMarks: { ...s.zoneMarks, [zoneId]: "ruled-out" as const } })),
 
             recordSighting: (speciesId, day) => set((s) => ({ sightings: [...s.sightings, { speciesId, day }] })),
+
+            recordFiveWin: (fiveId) =>
+                set((s) => (s.fivesWon.includes(fiveId) ? {} : { fivesWon: [...s.fivesWon, fiveId] })),
 
             reset: () => set({ ...initial }),
         }),

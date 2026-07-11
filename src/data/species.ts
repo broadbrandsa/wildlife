@@ -624,14 +624,31 @@ export const SPECIES: Species[] = [
 ];
 
 /**
- * The bingo lists: spot all five of each. Every member id exists in SPECIES.
+ * The bingo lists: spot all five of each and win an instant prize (prize
+ * partners illustrative, as on the prizes page). Every member id exists in
+ * SPECIES.
  * The player's first ever spot is always drawn from these lists, so the game
  * opens with a name they know.
  */
-export const FIVES: { id: "big" | "ugly" | "small"; label: string; members: string[] }[] = [
-    { id: "big", label: "The Big Five", members: ["lion", "leopard", "elephant", "buffalo", "white-rhino"] },
-    { id: "ugly", label: "The Ugly Five", members: ["spotted-hyena", "warthog", "blue-wildebeest", "white-backed-vulture", "marabou-stork"] },
-    { id: "small", label: "The Small Five", members: ["leopard-tortoise", "elephant-shrew", "antlion", "buffalo-weaver", "rhino-beetle"] },
+export const FIVES: { id: "big" | "ugly" | "small"; label: string; members: string[]; prize: string }[] = [
+    {
+        id: "big",
+        label: "The Big Five",
+        members: ["lion", "leopard", "elephant", "buffalo", "white-rhino"],
+        prize: "a SANParks day pass for two",
+    },
+    {
+        id: "ugly",
+        label: "The Ugly Five",
+        members: ["spotted-hyena", "warthog", "blue-wildebeest", "white-backed-vulture", "marabou-stork"],
+        prize: "the official SAWC K9 unit field cap",
+    },
+    {
+        id: "small",
+        label: "The Small Five",
+        members: ["leopard-tortoise", "elephant-shrew", "antlion", "buffalo-weaver", "rhino-beetle"],
+        prize: "a R250 Cape Union Mart gear voucher",
+    },
 ];
 
 /** Which five (if any) a species belongs to, for the card badge. */
