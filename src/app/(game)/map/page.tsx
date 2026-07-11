@@ -1343,11 +1343,11 @@ function MapInner() {
                                                             aspectRatio: "1",
                                                             borderRadius: "var(--radius-md)",
                                                             overflow: "hidden",
-                                                            // gold ring for the fives, clay for once in a lifetime
+                                                            // gold ring for rare sightings and the fives, clay for once in a lifetime
                                                             border: seen
                                                                 ? s.rarity === "oialt"
                                                                     ? "2px solid var(--clay-500)"
-                                                                    : FIVE_OF[s.id]
+                                                                    : s.rarity === "rare" || FIVE_OF[s.id]
                                                                       ? "2px solid var(--ochre-400)"
                                                                       : "1px solid var(--border-subtle)"
                                                                 : "1px solid var(--border-subtle)",
@@ -1567,9 +1567,9 @@ function MapInner() {
                             overflowY: "auto",
                             background: "var(--surface-page)",
                             borderRadius: "var(--radius-2xl)",
-                            // Gold marks a Big, Ugly or Small Five card; clay marks once in
-                            // a lifetime. Unfound cards stay neutral until they are earned.
-                            boxShadow: spot.found !== false && FIVE_OF[spot.species.id]
+                            // Gold marks a rare sighting or a Big, Ugly or Small Five card;
+                            // clay marks once in a lifetime. Unfound cards stay neutral.
+                            boxShadow: spot.found !== false && (spot.species.rarity === "rare" || FIVE_OF[spot.species.id])
                                 ? "var(--shadow-xl), 0 0 0 3px var(--ochre-100)"
                                 : "var(--shadow-xl)",
                             border:
@@ -1577,7 +1577,7 @@ function MapInner() {
                                     ? "1px solid var(--border-subtle)"
                                     : spot.species.rarity === "oialt"
                                       ? "2px solid var(--clay-500)"
-                                      : FIVE_OF[spot.species.id]
+                                      : spot.species.rarity === "rare" || FIVE_OF[spot.species.id]
                                         ? "2px solid var(--ochre-400)"
                                         : "1px solid var(--border-subtle)",
                         }}
