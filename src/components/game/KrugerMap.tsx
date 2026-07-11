@@ -118,8 +118,6 @@ interface KrugerMapProps {
     maxScale?: number;
     /** Draw the faint north / central / south third dividers and labels. */
     showThirds?: boolean;
-    /** Distance from the top of the map to the legend card, clearing any overlay above it. */
-    legendTop?: number;
     /** Today's walking range in km: draws a dashed ring around the pin. */
     walkRangeKm?: number | null;
     /** Bakkie mode: the drag preview goes anywhere, no walking clamp or ring. */
@@ -134,7 +132,7 @@ interface KrugerMapProps {
     focusSignal?: number;
 }
 
-export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, target = null, maxScale = 4, showThirds = false, legendTop = 12, walkRangeKm = null, freeDrag = false, trail = [], markers = [], onSpotMarker, focusSignal = 0 }: KrugerMapProps) {
+export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, target = null, maxScale = 4, showThirds = false, walkRangeKm = null, freeDrag = false, trail = [], markers = [], onSpotMarker, focusSignal = 0 }: KrugerMapProps) {
     const transformRef = useRef<ReactZoomPanPinchRef | null>(null);
 
     // The ranger's Move action zooms the map in on the pin so the walk radius
@@ -886,50 +884,6 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                 <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.04em", color: "var(--text-primary)", lineHeight: 1 }}>N</span>
             </div>
 
-            {/* legend: vertical key, top-left, tucked under the ranger pill (does not pan or zoom) */}
-            <div
-                style={{
-                    position: "absolute",
-                    top: legendTop,
-                    left: "var(--gutter)",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 6,
-                    padding: "0.45rem 0.6rem",
-                    background: "rgba(250,246,236,0.9)",
-                    backdropFilter: "blur(8px)",
-                    WebkitBackdropFilter: "blur(8px)",
-                    border: "1px solid var(--border-subtle)",
-                    borderRadius: "var(--radius-md)",
-                    boxShadow: "var(--shadow-sm)",
-                    fontFamily: "var(--font-mono)",
-                    fontSize: "0.56rem",
-                    letterSpacing: "0.08em",
-                    textTransform: "uppercase",
-                    color: "var(--text-muted)",
-                    pointerEvents: "none",
-                }}
-            >
-                <LegendKey label="You">
-                    <i className="ph-fill ph-paw-print" style={{ color: "var(--clay-500)", fontSize: 11 }} />
-                </LegendKey>
-                <LegendKey label="Camp">
-                    <i className="ph-fill ph-circle" style={{ color: "var(--sand-900)", fontSize: 7 }} />
-                </LegendKey>
-                <LegendKey label="River">
-                    <span style={{ width: 12, height: 0, borderTop: "2px solid var(--teal-500)", display: "inline-block" }} />
-                </LegendKey>
-                {walkRangeKm != null && (
-                    <LegendKey label="Day's walk">
-                        <span style={{ width: 10, height: 10, borderRadius: "50%", border: "1.5px dashed var(--clay-500)", display: "inline-block" }} />
-                    </LegendKey>
-                )}
-                {showThirds && (
-                    <LegendKey label="Thirds">
-                        <span style={{ width: 12, height: 0, borderTop: "1.5px dashed var(--sand-600)", display: "inline-block" }} />
-                    </LegendKey>
-                )}
-            </div>
 
             {/* dynamic scale bar, bottom-left: the km read shrinks as you zoom in */}
             <div
@@ -1003,11 +957,3 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
     );
 }
 
-function LegendKey({ label, children }: { label: string; children: React.ReactNode }) {
-    return (
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
-            <span style={{ display: "inline-flex", width: 13, justifyContent: "center" }}>{children}</span>
-            {label}
-        </span>
-    );
-}

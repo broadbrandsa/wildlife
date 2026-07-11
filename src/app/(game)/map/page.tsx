@@ -657,7 +657,6 @@ function MapInner() {
                 pin={pin}
                 onPlace={truckMode ? onPickDestination : onPlace}
                 maxScale={inventory.includes("pro-binoculars") ? 8 : 4}
-                legendTop={200}
                 walkRangeKm={!truckMode && pin && !pin.locked && canMove ? walkKm : null}
                 freeDrag={truckMode}
                 trail={trail}
