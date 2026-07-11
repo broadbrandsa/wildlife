@@ -657,3 +657,60 @@ export const FIVE_OF: Record<string, string> = Object.fromEntries(
 );
 
 export const SPECIES_BY_ID: Record<string, Species> = Object.fromEntries(SPECIES.map((s) => [s.id, s]));
+
+/**
+ * When a species is out and about, so spotting can follow the day/night cycle:
+ * "day" species only turn up in daylight, "night" species only after dark, and
+ * "any" species (trees, cathemeral mammals, reptiles) turn up at either time.
+ * Species default to day; the two sets below carry the exceptions.
+ */
+export type SpeciesActivity = "day" | "night" | "any";
+
+/** Nocturnal and crepuscular species: only spotted after the sun is down. */
+const NOCTURNAL = new Set([
+    "pels-fishing-owl",
+    "sharpes-grysbok",
+    "pangolin",
+    "honey-badger",
+    "lion",
+    "spotted-hyena",
+    "leopard",
+    "rhino-beetle",
+]);
+
+/** Cathemeral or always-there species (trees, big grazers, reptiles): spotted at any hour. */
+const ANYTIME = new Set([
+    "elephant",
+    "nyala",
+    "kudu",
+    "hippo",
+    "nile-crocodile",
+    "baobab",
+    "mopane",
+    "fever-tree",
+    "marula",
+    "knob-thorn",
+    "sycamore-fig",
+    "silver-cluster-leaf",
+    "jackalberry",
+    "mopane-worm",
+    "dung-beetle",
+    "black-rhino",
+    "white-rhino",
+    "bushbuck",
+    "grey-duiker",
+    "orb-web-spider",
+    "antlion",
+]);
+
+export function speciesActivity(id: string): SpeciesActivity {
+    if (NOCTURNAL.has(id)) return "night";
+    if (ANYTIME.has(id)) return "any";
+    return "day";
+}
+
+/** Whether a species can be spotted given the time of day. */
+export function spottableAt(id: string, night: boolean): boolean {
+    const a = speciesActivity(id);
+    return a === "any" || (night ? a === "night" : a === "day");
+}

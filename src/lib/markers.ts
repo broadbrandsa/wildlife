@@ -65,6 +65,7 @@ export function makeMarker(
     pin: { x: number; y: number },
     hasBinoculars: boolean,
     firstEver: boolean,
+    night: boolean,
     rng: () => number = Math.random,
 ): Omit<SpotMarker, "id" | "spawnAt"> {
     const reach = hasBinoculars ? REACH_PX_BINOCULARS : REACH_PX;
@@ -73,7 +74,7 @@ export function makeMarker(
     const x = clamp(pin.x + (dist * Math.cos(theta)) / MAP_W, 0.08, 0.92);
     const y = clamp(pin.y + (dist * Math.sin(theta)) / MAP_H, 0.05, 0.95);
     const region = thirdOf({ x, y });
-    const species: Species = firstEver ? rollFirstSpot(region, rng) : rollSpot(region, rng);
+    const species: Species = firstEver ? rollFirstSpot(region, night, rng) : rollSpot(region, night, rng);
     return { x, y, speciesId: species.id, type: species.type, rarity: species.rarity, ttlMs: markerTtlMs(species.rarity) };
 }
 

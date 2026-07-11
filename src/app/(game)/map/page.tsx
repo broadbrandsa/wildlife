@@ -12,7 +12,7 @@ import { ImpactHighlight, useCampaignTotal } from "@/components/game/impact";
 import { KrugerMap } from "@/components/game/KrugerMap";
 import { Overlay } from "@/components/game/Overlay";
 import { ZoneSheet } from "@/components/game/ZoneSheet";
-import { CLUE_BY_ID, CLUES, DOG_BY_ID, FIVES, FIVE_OF, RANGER_BY_ID, ROUND, SPECIES, SPECIES_BY_ID, ZONES, ZONE_BY_ID } from "@/data";
+import { CLUE_BY_ID, CLUES, DOG_BY_ID, FIVES, FIVE_OF, RANGER_BY_ID, ROUND, SPECIES, SPECIES_BY_ID, ZONES, ZONE_BY_ID, speciesActivity } from "@/data";
 import type { Clue, Species, Zone } from "@/data";
 import {
     SCENT_TEXT,
@@ -456,10 +456,11 @@ function MapInner() {
         }
     };
 
-    // Live spotting: while a pin is down, in daylight, before the round closes,
-    // species markers fade onto the map near the ranger at random intervals. A
-    // spotter dog makes them come faster; the binoculars widen where they land.
-    const canSpot = Boolean(pin && !night && !roundOver);
+    // Live spotting: while a pin is down, before the round closes, species
+    // markers fade onto the map near the ranger at random intervals, day and
+    // night. The pool follows the clock, so nocturnal species only appear after
+    // dark. A spotter dog makes them come faster; binoculars widen where they land.
+    const canSpot = Boolean(pin && !roundOver);
     useEffect(() => {
         if (!canSpot) return;
         let timer: ReturnType<typeof setTimeout>;
@@ -471,7 +472,7 @@ function MapInner() {
                 if (p) {
                     setMarkers((cur) => {
                         if (cur.length >= MARKER_CAP) return cur;
-                        const base = makeMarker(p, s.inventory.includes("pro-binoculars"), s.sightings.length === 0);
+                        const base = makeMarker(p, s.inventory.includes("pro-binoculars"), s.sightings.length === 0, night);
                         return [...cur, { ...base, id: `mk${markerSeq.current++}`, spawnAt: Date.now() }];
                     });
                 }
@@ -481,7 +482,7 @@ function MapInner() {
         schedule();
         return () => clearTimeout(timer);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [canSpot, player?.dogId]);
+    }, [canSpot, player?.dogId, night]);
 
     // Markers reset whenever the ranger moves or spotting stops, so they only
     // ever sit near where the ranger currently stands.
@@ -1263,7 +1264,7 @@ function MapInner() {
                                     {spotted.size} of {SPECIES.length} species spotted
                                 </div>
                                 <p style={{ fontSize: "0.82rem", color: "var(--text-muted)", margin: "0.3rem 0 0", lineHeight: 1.5 }}>
-                                    Watch the map: species appear near your ranger for a short while, then move on. Tap one to add it to your log. The rarer it is, the less time you have, and a once in a lifetime sighting is linked to prizes at round end. Tap any card below to read it, found or not.
+                                    Watch the map: species appear near your ranger for a short while, then move on. Tap one to add it to your log. The rarer it is, the less time you have. Spotting follows the clock too, so nocturnal animals only show after dark. A once in a lifetime sighting is linked to prizes at round end. Tap any card below to read it, found or not.
                                 </p>
 
                                 {/* the fives: spot all five of each to complete the row */}
@@ -1614,6 +1615,12 @@ function MapInner() {
                                         <i className={`ph-fill ph-${RARITY_META[spot.species.rarity].icon}`} style={{ marginRight: 4 }} />
                                         {RARITY_META[spot.species.rarity].label}
                                     </Tag>
+                                    {speciesActivity(spot.species.id) !== "any" && (
+                                        <Tag tone="neutral" size="sm">
+                                            <i className={`ph-fill ph-${speciesActivity(spot.species.id) === "night" ? "moon-stars" : "sun"}`} style={{ marginRight: 4 }} />
+                                            {speciesActivity(spot.species.id) === "night" ? "After dark" : "By day"}
+                                        </Tag>
+                                    )}
                                 </span>
                             </div>
                             <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: 1.55, margin: "var(--space-3) 0 0" }}>
