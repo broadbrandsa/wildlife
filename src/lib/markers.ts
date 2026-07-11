@@ -33,17 +33,18 @@ const REACH_PX = 66;
 /** Field binoculars widen the reach, so more ground is in play at once. */
 const REACH_PX_BINOCULARS = 120;
 
-/** At most this many markers sit on the map at once, to keep it readable. */
-export const MARKER_CAP = 3;
+/** Only one marker shows on the map at a time. */
+export const MARKER_CAP = 1;
 
 /**
  * How long a marker shows for, by rarity: the rarer the sighting, the smaller
- * the window to catch it. Common lingers, once in a lifetime is a blink.
+ * the window to catch it. A common lingers about a minute, a rare is a quick
+ * twenty seconds, and a once in a lifetime is a blink.
  */
 export function markerTtlMs(rarity: SpeciesRarity): number {
-    if (rarity === "oialt") return 45_000;
-    if (rarity === "rare") return 150_000;
-    return 300_000;
+    if (rarity === "oialt") return 12_000;
+    if (rarity === "rare") return 20_000;
+    return 60_000;
 }
 
 /** Random gap until the next marker appears. A spotter dog makes them come faster. */
