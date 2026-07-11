@@ -205,6 +205,8 @@ function MapInner() {
     const [markedClueId, setMarkedClueId] = useState<string | null>(null);
     // The species just spotted (or a collection card being read).
     const [spot, setSpot] = useState<{ species: Species; isNew: boolean; count: number } | null>(null);
+    // Fresh spots deal in face-down like a trading card; a tap flips the reveal.
+    const [spotFlipped, setSpotFlipped] = useState(true);
     const day = useCurrentDay();
     const roundOver = isRoundOver(day);
 
@@ -326,6 +328,10 @@ function MapInner() {
         const species = firstEver ? rollFirstSpot(thirdOf(p)) : rollSpot(thirdOf(p));
         const priorCount = useGameStore.getState().sightings.filter((s) => s.speciesId === species.id).length;
         recordSighting(species.id, day);
+        // Deal the card face-down; reduced motion goes straight to the reveal.
+        const reduced =
+            typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        setSpotFlipped(reduced);
         setSpot({ species, isNew: priorCount === 0, count: priorCount + 1 });
     };
 
@@ -954,14 +960,15 @@ function MapInner() {
                                                 return (
                                                     <button
                                                         key={s.id}
-                                                        onClick={() =>
-                                                            seen &&
+                                                        onClick={() => {
+                                                            if (!seen) return;
+                                                            setSpotFlipped(true); // a re-read, not a reveal
                                                             setSpot({
                                                                 species: s,
                                                                 isNew: false,
                                                                 count: sightings.filter((x) => x.speciesId === s.id).length,
-                                                            })
-                                                        }
+                                                            });
+                                                        }}
                                                         aria-label={seen ? s.name : "Not yet spotted"}
                                                         style={{
                                                             position: "relative",
@@ -1168,19 +1175,29 @@ function MapInner() {
                 </Overlay>
             )}
 
-            {/* the spotting card: dealt onto the table as the ranger arrives */}
+            {/* the spotting card: dealt face-down like a trading card, tap to flip */}
             {spot && (
                 <Overlay>
                 <div
                     style={{ position: "fixed", inset: 0, zIndex: 70, display: "flex", alignItems: "center", justifyContent: "center", padding: "var(--gutter)", background: "var(--bg-overlay, rgba(17,32,26,0.6))" }}
-                    onClick={() => setSpot(null)}
+                    onClick={() => (spotFlipped ? setSpot(null) : setSpotFlipped(true))}
                 >
+                    <div className="kw-card-pop" style={{ width: "100%", maxWidth: 400, perspective: 1400 }}>
                     <div
-                        className="kw-card-pop"
-                        onClick={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if (!spotFlipped) setSpotFlipped(true);
+                        }}
                         style={{
-                            width: "100%",
-                            maxWidth: 400,
+                            position: "relative",
+                            transformStyle: "preserve-3d",
+                            transition: "transform 620ms var(--ease-out)",
+                            transform: spotFlipped ? "none" : "rotateY(180deg)",
+                        }}
+                    >
+                    {/* front: the sighting */}
+                    <div
+                        style={{
                             maxHeight: "88dvh",
                             overflowX: "hidden",
                             overflowY: "auto",
@@ -1188,6 +1205,8 @@ function MapInner() {
                             borderRadius: "var(--radius-2xl)",
                             boxShadow: "var(--shadow-xl)",
                             border: spot.species.rarity === "oialt" ? "2px solid var(--clay-500)" : "1px solid var(--border-subtle)",
+                            backfaceVisibility: "hidden",
+                            WebkitBackfaceVisibility: "hidden",
                         }}
                     >
                         <div style={{ position: "relative", aspectRatio: "16 / 10", background: "var(--sand-100)" }}>
@@ -1240,6 +1259,50 @@ function MapInner() {
                                 </Button>
                             </div>
                         </div>
+                    </div>
+
+                    {/* back: the trading-card face the spot deals in with */}
+                    <div
+                        role="button"
+                        aria-label="Reveal your sighting"
+                        style={{
+                            position: "absolute",
+                            inset: 0,
+                            transform: "rotateY(180deg)",
+                            backfaceVisibility: "hidden",
+                            WebkitBackfaceVisibility: "hidden",
+                            borderRadius: "var(--radius-2xl)",
+                            overflow: "hidden",
+                            border: "1px solid var(--border-subtle)",
+                            boxShadow: "var(--shadow-xl)",
+                            background: "linear-gradient(160deg, var(--green-800) 0%, var(--sand-900) 135%)",
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                        }}
+                    >
+                        <span
+                            aria-hidden="true"
+                            style={{ position: "absolute", inset: 0, background: "repeating-linear-gradient(45deg, rgba(245,239,226,0.05) 0 2px, transparent 2px 14px)" }}
+                        />
+                        <span aria-hidden="true" style={{ position: "absolute", inset: 10, border: "1px solid rgba(245,239,226,0.22)", borderRadius: "var(--radius-xl)" }} />
+                        <span style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center", gap: 10, textAlign: "center", padding: "0 var(--space-6)" }}>
+                            <span style={{ width: 64, height: 64, borderRadius: "50%", border: "1.5px solid rgba(245,239,226,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                <i className="ph-fill ph-paw-print" style={{ fontSize: 30, color: "var(--ochre-400)" }} />
+                            </span>
+                            <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.28em", textTransform: "uppercase", color: "rgba(245,239,226,0.6)" }}>
+                                Spotting log
+                            </span>
+                            <span style={{ fontFamily: "var(--font-serif)", fontStyle: "italic", fontSize: "1.1rem", color: "var(--sand-50)", lineHeight: 1.4 }}>
+                                {dogName} put something up.
+                            </span>
+                            <span style={{ marginTop: 14, fontFamily: "var(--font-mono)", fontSize: "0.64rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--ochre-300)", fontWeight: 700 }}>
+                                Tap to reveal
+                            </span>
+                        </span>
+                    </div>
+                    </div>
                     </div>
                 </div>
                 </Overlay>
