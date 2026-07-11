@@ -35,7 +35,7 @@ import {
     zoneAtPoint,
 } from "@/lib/game";
 import { RARITY_META, SPOTTER_DOGS } from "@/lib/spotting";
-import { FAMILY_ICON, makeMarker, spawnDelayMs } from "@/lib/markers";
+import { FAMILY_ICON, FAMILY_LABEL, makeMarker, spawnDelayMs } from "@/lib/markers";
 import type { SpotMarker } from "@/lib/markers";
 import type { ScentTier } from "@/lib/game";
 import { NEAR_TARGET_KM, rangersHunting, rangersNearTarget } from "@/lib/community";
@@ -1654,57 +1654,78 @@ function MapInner() {
                                         : "1px solid var(--border-subtle)",
                         }}
                     >
-                        <div style={{ position: "relative", aspectRatio: "16 / 10", background: "var(--sand-100)" }}>
-                            <Image
-                                src={spot.species.photo}
-                                alt={spot.species.name}
-                                fill
-                                sizes="400px"
-                                style={{ objectFit: "cover", filter: spot.found === false ? "grayscale(1)" : undefined }}
-                            />
-                            <span style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(24,45,35,0) 55%, rgba(24,45,35,0.45) 100%)" }} />
-                            <span style={{ position: "absolute", left: 14, bottom: 10, fontFamily: "var(--font-mono)", fontSize: "0.6rem", letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--sand-50)" }}>
-                                {spot.found === false ? "Still out there" : "Spotted"} · {spot.species.type}
-                            </span>
-                        </div>
-                        <div style={{ padding: "var(--space-5) var(--space-5) var(--space-6)" }}>
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-3)", flexWrap: "wrap" }}>
-                                <h2 style={{ fontSize: "var(--text-h4)", margin: 0 }}>{spot.species.name}</h2>
-                                <span style={{ display: "inline-flex", gap: 6, flexWrap: "wrap", justifyContent: "flex-end" }}>
-                                    {spot.found === false && (
-                                        <Tag tone="neutral" size="sm">
-                                            <i className="ph ph-eye-slash" style={{ marginRight: 4 }} />
-                                            Not found
-                                        </Tag>
-                                    )}
-                                    {FIVE_OF[spot.species.id] && (
-                                        <Tag tone="teal" size="sm">
-                                            <i className="ph-fill ph-seal-check" style={{ marginRight: 4 }} />
-                                            {FIVE_OF[spot.species.id].replace("The ", "")}
-                                        </Tag>
-                                    )}
-                                    <Tag tone={RARITY_META[spot.species.rarity].tone} size="sm">
-                                        <i className={`ph-fill ph-${RARITY_META[spot.species.rarity].icon}`} style={{ marginRight: 4 }} />
-                                        {RARITY_META[spot.species.rarity].label}
-                                    </Tag>
-                                    {speciesActivity(spot.species.id) !== "any" && (
-                                        <Tag tone="neutral" size="sm">
-                                            <i className={`ph-fill ph-${speciesActivity(spot.species.id) === "night" ? "moon-stars" : "sun"}`} style={{ marginRight: 4 }} />
-                                            {speciesActivity(spot.species.id) === "night" ? "After dark" : "By day"}
-                                        </Tag>
-                                    )}
-                                </span>
-                            </div>
-                            <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: 1.55, margin: "var(--space-3) 0 0" }}>
-                                {spot.species.info}
-                            </p>
-                            {spot.species.rarity === "oialt" && (
-                                <p style={{ fontSize: "0.82rem", color: "var(--clay-600)", fontWeight: 600, lineHeight: 1.5, margin: "var(--space-3) 0 0" }}>
-                                    {spot.found === false
-                                        ? "A once in a lifetime card. Sightings like this one are linked to prizes when the round closes."
-                                        : "A once in a lifetime sighting. Hold onto this card: sightings like this one are linked to prizes when the round closes."}
-                                </p>
-                            )}
+                        {(() => {
+                            const found = spot.found !== false;
+                            const five = FIVE_OF[spot.species.id];
+                            const rMeta = RARITY_META[spot.species.rarity];
+                            const gold = found && (spot.species.rarity === "rare" || Boolean(five));
+                            const clay = found && spot.species.rarity === "oialt";
+                            const accent = clay ? "var(--clay-500)" : gold ? "var(--ochre-400)" : "var(--border-subtle)";
+                            // A rare or once in a lifetime chip glows in its own colour.
+                            const rarityBg = spot.species.rarity === "oialt" ? "var(--clay-500)" : spot.species.rarity === "rare" ? "var(--ochre-500)" : "rgba(24,45,35,0.55)";
+                            const act = speciesActivity(spot.species.id);
+                            return (
+                                <>
+                                    <div style={{ position: "relative", aspectRatio: "16 / 11", background: "var(--sand-100)" }}>
+                                        <Image
+                                            src={spot.species.photo}
+                                            alt={spot.species.name}
+                                            fill
+                                            sizes="400px"
+                                            style={{ objectFit: "cover", filter: found ? undefined : "grayscale(1)" }}
+                                        />
+                                        <span style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(24,45,35,0) 38%, rgba(24,45,35,0.8) 100%)" }} />
+                                        {/* family badge, top-left */}
+                                        <span style={{ position: "absolute", top: 12, left: 12, display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 10px 5px 8px", borderRadius: 999, background: "rgba(24,45,35,0.5)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", border: "1px solid rgba(245,239,226,0.25)" }}>
+                                            <i className={`ph-fill ph-${FAMILY_ICON[spot.species.type]}`} style={{ fontSize: 14, color: "var(--sand-50)" }} />
+                                            <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.56rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--sand-50)", fontWeight: 700 }}>{FAMILY_LABEL[spot.species.type]}</span>
+                                        </span>
+                                        {/* rarity chip, top-right */}
+                                        <span style={{ position: "absolute", top: 12, right: 12, display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 10px", borderRadius: 999, background: rarityBg, border: "1px solid rgba(245,239,226,0.35)", boxShadow: spot.species.rarity !== "common" ? "0 2px 12px rgba(0,0,0,0.3)" : "none" }}>
+                                            <i className={`ph-fill ph-${rMeta.icon}`} style={{ fontSize: 13, color: "var(--sand-50)" }} />
+                                            <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.56rem", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--sand-50)", fontWeight: 700 }}>{rMeta.label}</span>
+                                        </span>
+                                        {/* name and status, over the gradient */}
+                                        <div style={{ position: "absolute", left: 16, right: 16, bottom: 13 }}>
+                                            <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.54rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(245,239,226,0.72)", marginBottom: 3 }}>
+                                                {found ? "Spotted" : "Still out there"}
+                                            </div>
+                                            <h2 style={{ margin: 0, fontFamily: "var(--font-serif)", fontSize: "1.55rem", lineHeight: 1.1, color: "#fff", textShadow: "0 2px 14px rgba(0,0,0,0.55)" }}>{spot.species.name}</h2>
+                                            {five && (
+                                                <span style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 6, fontFamily: "var(--font-mono)", fontSize: "0.56rem", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--ochre-300)", fontWeight: 700 }}>
+                                                    <i className="ph-fill ph-seal-check" /> {five.replace("The ", "")} member
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    {/* rarity accent stripe */}
+                                    <div style={{ height: 4, background: accent }} />
+                                    <div style={{ padding: "var(--space-5) var(--space-5) var(--space-6)" }}>
+                                        {(!found || act !== "any") && (
+                                            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: "var(--space-3)" }}>
+                                                {!found && (
+                                                    <Tag tone="neutral" size="sm">
+                                                        <i className="ph ph-eye-slash" style={{ marginRight: 4 }} /> Not found
+                                                    </Tag>
+                                                )}
+                                                {act !== "any" && (
+                                                    <Tag tone="neutral" size="sm">
+                                                        <i className={`ph-fill ph-${act === "night" ? "moon-stars" : "sun"}`} style={{ marginRight: 4 }} />
+                                                        {act === "night" ? "After dark" : "By day"}
+                                                    </Tag>
+                                                )}
+                                            </div>
+                                        )}
+                                        <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: 1.55, margin: 0 }}>
+                                            {spot.species.info}
+                                        </p>
+                                        {spot.species.rarity === "oialt" && (
+                                            <p style={{ fontSize: "0.82rem", color: "var(--clay-600)", fontWeight: 600, lineHeight: 1.5, margin: "var(--space-3) 0 0" }}>
+                                                {found
+                                                    ? "A once in a lifetime sighting. Hold onto this card: sightings like this one are linked to prizes when the round closes."
+                                                    : "A once in a lifetime card. Sightings like this one are linked to prizes when the round closes."}
+                                            </p>
+                                        )}
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-3)", marginTop: "var(--space-4)", paddingTop: "var(--space-3)", borderTop: "1px dashed var(--border-default)" }}>
                                 <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.6rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-muted)", lineHeight: 1.5 }}>
                                     {spot.found === false ? (
@@ -1744,7 +1765,10 @@ function MapInner() {
                                     </Button>
                                 )}
                             </div>
-                        </div>
+                                    </div>
+                                </>
+                            );
+                        })()}
                     </div>
                 </DealtCard>
             )}

@@ -95,7 +95,17 @@ export const FAMILY_ICON: Record<SpeciesType, string> = {
     mammal: "paw-print",
     bird: "bird",
     tree: "tree",
-    reptile: "shrimp",
+    reptile: "shield-checkered",
     insect: "bug",
     fish: "fish",
+};
+
+/** Human label for a family, for captions on the reveal card. */
+export const FAMILY_LABEL: Record<SpeciesType, string> = {
+    mammal: "Mammal",
+    bird: "Bird",
+    tree: "Tree",
+    reptile: "Reptile",
+    insect: "Insect",
+    fish: "Fish",
 };
