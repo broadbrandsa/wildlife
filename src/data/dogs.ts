@@ -7,7 +7,7 @@ export const DOGS: Dog[] = [
         name: "Storm",
         breed: "Belgian Malinois",
         role: "Apprehension & detection all-rounder",
-        effect: "Superpower: relentless drive. Malinois stamina earns your ranger a second move every day",
+        effect: "Superpower: relentless drive. Malinois stamina keeps your ranger moving, halving the rest your ranger needs between moves",
         personality: "Brave, fast, will protect you.",
         didYouKnow:
             "Malinois are the SAWC unit's apprehension specialists, fearless under pressure and quick to follow a handler's command.",
@@ -55,7 +55,7 @@ export const DOGS: Dog[] = [
         name: "Pepper",
         breed: "English Springer Spaniel (guest dog, cross-trains with SAWC)",
         role: "Detection: rhino horn, ivory, ammunition",
-        effect: "Superpower: finds what others miss. Every read carries an exact bearing, and every third move Pepper turns up a bonus species card",
+        effect: "Superpower: finds what others miss. Every read carries an exact bearing, and her nose keeps working, so species markers appear more often around you",
         personality: "Small, focused, finds what others miss.",
         didYouKnow:
             "Springer Spaniels sniff out horn, ivory and ammunition at park gates. Pepper joins you as a guest detection dog cross-training with SAWC.",

@@ -23,16 +23,11 @@ export function rollSpot(region: SpotRegion, rng: () => number = Math.random): S
 }
 
 /**
- * Pepper's detection nose finds what others miss: every third move she turns
- * up a bonus species card. The field binoculars grant the same; having both
- * never stacks beyond the one bonus card.
+ * Pepper's detection nose is always working, so species markers appear more
+ * often around her ranger. The field binoculars help a different way: they
+ * widen the ground markers can appear across (see lib/markers.ts).
  */
 export const SPOTTER_DOGS = new Set(["pepper"]);
-
-/** A bonus card lands on every third move for a spotter dog or binoculars. */
-export function bonusSpotDue(totalMoves: number, hasSpotterDog: boolean, hasBinoculars: boolean): boolean {
-    return (hasSpotterDog || hasBinoculars) && totalMoves > 0 && totalMoves % 3 === 0;
-}
 
 /**
  * The very first spot of the game always comes from the Big, Ugly or Small

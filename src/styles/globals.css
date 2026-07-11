@@ -103,11 +103,52 @@ ol {
     animation: kw-spin 1.1s linear infinite;
 }
 
+/* Live species markers: fade in near the ranger, hold, then fade out. The
+   duration is set inline per marker (rarer species get a shorter window), so
+   these keyframes only carry the opacity envelope. */
+@keyframes kw-marker-life {
+    0% {
+        opacity: 0;
+    }
+    4% {
+        opacity: 1;
+    }
+    88% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+/* Gentle pulse ring drawing the eye to a fresh marker. */
+@keyframes kw-marker-pulse {
+    0% {
+        transform: scale(1);
+        opacity: 0.65;
+    }
+    70%,
+    100% {
+        transform: scale(1.9);
+        opacity: 0;
+    }
+}
+.kw-marker-ring {
+    animation: kw-marker-pulse 2s var(--ease-out) infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
     .kw-rise,
     .kw-pin-drop,
     .kw-spin,
-    .kw-card-pop {
+    .kw-card-pop,
+    .kw-marker-ring {
         animation: none;
+    }
+    /* Markers still need to disappear, so keep them fully opaque and let the
+       prune timer remove them rather than fading. */
+    [style*="kw-marker-life"] {
+        animation: none !important;
+        opacity: 1 !important;
     }
 }

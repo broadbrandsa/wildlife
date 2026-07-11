@@ -133,6 +133,51 @@ export const EXTRA_MOVE_DOGS = new Set(["storm"]);
 export const BUSH_WISE_DOGS = new Set(["dotty"]);
 
 /**
+ * A ranger and dog cannot work without rest. After a move the ranger recovers
+ * before moving again; after a track the dog rests before it can track again.
+ * A dog ration from the kit refuels the dog right away, and the ranger's boots
+ * and a driven dog speed the ranger's recovery. Real time, so the bars fill
+ * while you play.
+ */
+export const MOVE_COOLDOWN_MS = 6 * 60 * 60 * 1000; // ranger: 6 hours
+export const TRACK_COOLDOWN_MS = 12 * 60 * 60 * 1000; // dog: 12 hours
+
+/** Whether enough of the cooldown has passed to be rested and ready. */
+export function isRested(lastAt: number | null, now: number, cooldownMs: number): boolean {
+    return lastAt == null || now - lastAt >= cooldownMs;
+}
+
+/** 0..1 recovery progress since the last action (1 when fully rested). */
+export function restProgress(lastAt: number | null, now: number, cooldownMs: number): number {
+    if (lastAt == null) return 1;
+    return Math.min(1, Math.max(0, (now - lastAt) / cooldownMs));
+}
+
+/** A short "5h 12m" read of the rest time remaining. */
+export function restRemainingLabel(lastAt: number | null, now: number, cooldownMs: number): string {
+    if (lastAt == null) return "ready";
+    const ms = Math.max(0, lastAt + cooldownMs - now);
+    const total = Math.ceil(ms / 1000);
+    const h = Math.floor(total / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    const s = total % 60;
+    if (h > 0) return `${h}h ${m}m`;
+    if (m > 0) return `${m}m`;
+    return `${s}s`;
+}
+
+/**
+ * The ranger's effective move cooldown. Field boots and a driven dog (Storm)
+ * each halve the recovery, so a well-kitted ranger is ready sooner.
+ */
+export function moveCooldownMs(dogId?: string | null, hasBoots?: boolean): number {
+    let ms = MOVE_COOLDOWN_MS;
+    if (hasBoots) ms *= 0.5;
+    if (dogId && EXTRA_MOVE_DOGS.has(dogId)) ms *= 0.5;
+    return ms;
+}
+
+/**
  * Clamp a tap to walking range: past the limit, the ranger walks as far as
  * they can along the same bearing and stops there.
  */

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
+import type { ReactZoomPanPinchRef } from "react-zoom-pan-pinch";
 
 import { ZONES } from "@/data";
 import type { ZoneId } from "@/data";
@@ -125,9 +126,42 @@ interface KrugerMapProps {
     freeDrag?: boolean;
     /** Breadcrumb trail of every position held, oldest first, ending at the pin. */
     trail?: { x: number; y: number; day: number; via: "walk" | "truck" }[];
+    /** Live species markers: fade onto the map near the ranger; tap one to spot it. */
+    markers?: { id: string; x: number; y: number; ttlMs: number; icon: string; gold: boolean }[];
+    /** Called with a marker id when the player taps it. */
+    onSpotMarker?: (id: string) => void;
+    /** Bumping this number zooms the map in on the pin (the ranger's Move action). */
+    focusSignal?: number;
 }
 
-export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, target = null, maxScale = 4, showThirds = false, legendTop = 12, walkRangeKm = null, freeDrag = false, trail = [] }: KrugerMapProps) {
+export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, target = null, maxScale = 4, showThirds = false, legendTop = 12, walkRangeKm = null, freeDrag = false, trail = [], markers = [], onSpotMarker, focusSignal = 0 }: KrugerMapProps) {
+    const transformRef = useRef<ReactZoomPanPinchRef | null>(null);
+
+    // The ranger's Move action zooms the map in on the pin so the walk radius
+    // is easy to read and the drag is comfortable.
+    useEffect(() => {
+        if (!focusSignal || !pin) return;
+        const t = setTimeout(() => {
+            // Centre the pin at a comfortable zoom. zoomToElement misjudges the
+            // absolutely-positioned pin, so compute the transform from the pin's
+            // on-screen rect against the current pan/zoom.
+            const api = transformRef.current;
+            const wrapper = rootRef.current?.querySelector(".react-transform-wrapper") as HTMLElement | null;
+            const pinEl = document.getElementById("kw-pin-focus");
+            const cur = api?.instance?.transformState;
+            if (!api || !wrapper || !pinEl || !cur) return;
+            const wRect = wrapper.getBoundingClientRect();
+            const pRect = pinEl.getBoundingClientRect();
+            const px = pRect.left + pRect.width / 2 - wRect.left;
+            const py = pRect.top + pRect.height / 2 - wRect.top;
+            const ux = (px - cur.positionX) / cur.scale;
+            const uy = (py - cur.positionY) / cur.scale;
+            const newScale = Math.min(maxScale, 3);
+            api.setTransform(wRect.width / 2 - ux * newScale, wRect.height / 2 - uy * newScale, newScale, 400);
+        }, 60);
+        return () => clearTimeout(t);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [focusSignal]);
     const down = useRef<{ x: number; y: number } | null>(null);
     const svgRef = useRef<SVGSVGElement>(null);
     const barRef = useRef<HTMLSpanElement>(null);
@@ -221,6 +255,16 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
         el.addEventListener("touchmove", guard, { passive: false });
     };
 
+    // Species markers stop touch propagation the same way, so a tap spots the
+    // species instead of panning the map or dropping a pin underneath it.
+    const markerGuardRef = (el: HTMLButtonElement | null) => {
+        if (!el || el.dataset.touchGuard) return;
+        el.dataset.touchGuard = "1";
+        const stop = (e: TouchEvent) => e.stopPropagation();
+        el.addEventListener("touchstart", stop, { passive: false });
+        el.addEventListener("touchmove", stop, { passive: false });
+    };
+
     const onPinPointerDown = (e: React.PointerEvent<HTMLSpanElement>) => {
         if (!draggable || !pin) return;
         e.stopPropagation(); // keep the map from panning under the drag
@@ -258,6 +302,7 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
     return (
         <div ref={rootRef} style={{ position: "relative", width: "100%", height: "100%" }}>
         <TransformWrapper
+            ref={transformRef}
             minScale={1}
             maxScale={maxScale}
             doubleClick={{ mode: "zoomIn" }}
@@ -679,6 +724,58 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                         </span>
                     )}
 
+                    {/* live species markers: fade in near the ranger, tap to spot.
+                        Common families show a generic family glyph; a rare or once
+                        in a lifetime sighting shows a gold star instead. */}
+                    {markers.map((m) => (
+                        <button
+                            key={m.id}
+                            ref={markerGuardRef}
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onPointerUp={(e) => {
+                                e.stopPropagation();
+                                onSpotMarker?.(m.id);
+                            }}
+                            className="kw-press"
+                            aria-label={m.gold ? "Spot the rare species here" : "Spot the species here"}
+                            style={{
+                                position: "absolute",
+                                left: `${m.x * 100}%`,
+                                top: `${m.y * 100}%`,
+                                transform: "translate(-50%, -50%) scale(var(--kw-pin-scale, 1))",
+                                transformOrigin: "50% 50%",
+                                animation: `kw-marker-life ${m.ttlMs}ms linear forwards`,
+                                touchAction: "none",
+                                cursor: "pointer",
+                                padding: 8, // a comfortable finger target around the token
+                                border: "none",
+                                background: "transparent",
+                            }}
+                        >
+                            <span
+                                style={{
+                                    position: "relative",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    width: 32,
+                                    height: 32,
+                                    borderRadius: "50%",
+                                    background: m.gold ? "var(--ochre-100)" : "var(--sand-50)",
+                                    border: `2px solid ${m.gold ? "var(--ochre-400)" : "#fff"}`,
+                                    boxShadow: m.gold ? "var(--shadow-md), 0 0 0 3px var(--ochre-100)" : "var(--shadow-md)",
+                                }}
+                            >
+                                <span
+                                    aria-hidden="true"
+                                    className="kw-marker-ring"
+                                    style={{ position: "absolute", inset: -2, borderRadius: "50%", border: `2px solid ${m.gold ? "var(--ochre-500)" : "var(--clay-500)"}` }}
+                                />
+                                <i className={`ph-fill ph-${m.icon}`} style={{ fontSize: 16, color: m.gold ? "var(--ochre-600)" : "var(--green-800)" }} />
+                            </span>
+                        </button>
+                    ))}
+
                     {/* the player's pin (HTML overlay so it can animate crisply).
                         When movable it is a drag handle: pick it up and walk it.
                         Touch propagation is stopped so react-zoom-pan-pinch (which
@@ -687,6 +784,7 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                     {pin && (
                         <span
                             ref={pinHandleRef}
+                            id="kw-pin-focus"
                             className={drag ? undefined : "kw-pin-drop"}
                             onPointerDown={onPinPointerDown}
                             onPointerMove={onPinPointerMove}

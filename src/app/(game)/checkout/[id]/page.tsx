@@ -248,6 +248,25 @@ export default function CheckoutPage() {
                             </div>
                         )}
 
+                        {item.id === "dog-ration" && (
+                            <div
+                                style={{
+                                    display: "flex",
+                                    gap: "var(--space-3)",
+                                    alignItems: "flex-start",
+                                    background: "var(--ochre-100)",
+                                    border: "1px solid var(--ochre-200)",
+                                    borderRadius: "var(--radius-lg)",
+                                    padding: "var(--space-4)",
+                                }}
+                            >
+                                <i className="ph-fill ph-bone" style={{ fontSize: 20, color: "var(--ochre-700)", marginTop: 2 }} />
+                                <span style={{ fontSize: "0.86rem", color: "var(--text-secondary)", lineHeight: 1.55 }}>
+                                    Your dog is fed and rested: it can track again right away. Open the dog on the map to send it back on the scent.
+                                </span>
+                            </div>
+                        )}
+
                         {item.id === "extra-lockin" && (
                             <div
                                 style={{

@@ -71,6 +71,18 @@ interface GameState {
      * come from the consumable truck-fuel kit item.
      */
     truckRidesLeft: number;
+    /**
+     * Epoch ms the ranger last moved. The ranger then recovers for a cooldown
+     * before moving again (boots and a driven dog shorten it). Null means
+     * fully rested and ready.
+     */
+    lastMoveAt: number | null;
+    /**
+     * Epoch ms the dog last tracked. The dog then rests for a cooldown before
+     * it can track again; a consumable dog ration refuels it early. Null means
+     * fully rested and ready.
+     */
+    lastTrackAt: number | null;
     /** `${day}:${pin.updatedAt}` of the last scent reveal that played. */
     lastRevealKey: string | null;
     /** The read before the current one, for the warmer / colder delta line. */
@@ -109,6 +121,10 @@ interface GameState {
     setNotifyAsked: () => void;
     setDemoDay: (day: number | null) => void;
     setDemoHour: (hour: number | null) => void;
+    /** The dog just tracked: start its rest cooldown. */
+    recordTrack: () => void;
+    /** Refuel the dog with a ration so it can track again right away. */
+    refuelDog: () => void;
     /** Clear the dog badge: the current pin's scent read has been opened. */
     markScentSeen: () => void;
     /** Clear the clue badge for this round day. */
@@ -149,6 +165,8 @@ const initial = {
     scentSeenAt: null as string | null,
     cluesSeenDay: null as number | null,
     truckRidesLeft: 2,
+    lastMoveAt: null as number | null,
+    lastTrackAt: null as number | null,
     lastRevealKey: null as string | null,
     prevRead: null as { day: number; tier: ScentTier } | null,
     lastRead: null as { day: number; tier: ScentTier } | null,
@@ -181,6 +199,7 @@ export const useGameStore = create<GameState>()(
                     return {
                         pin: { x: target.x, y: target.y, updatedAt: new Date().toISOString(), locked: false },
                         pinMovesToday: { day, count },
+                        lastMoveAt: Date.now(),
                         trail: [...s.trail, { x: target.x, y: target.y, day, via: "walk" as const }],
                     };
                 }),
@@ -192,9 +211,10 @@ export const useGameStore = create<GameState>()(
                         // The bakkie goes anywhere: no clampWalk on a ride.
                         pin: { x, y, updatedAt: new Date().toISOString(), locked: false },
                         truckRidesLeft: s.truckRidesLeft - 1,
-                        // The drive takes the rest of the day: the daily move
-                        // gate reads pinMovesToday, so mark the day used up.
+                        // The drive tires the ranger like a move, so the recovery
+                        // starts here too; pinMovesToday is kept for the day tally.
                         pinMovesToday: { day, count: 99 },
+                        lastMoveAt: Date.now(),
                         trail: [...s.trail, { x, y, day, via: "truck" as const }],
                     };
                 }),
@@ -237,6 +257,8 @@ export const useGameStore = create<GameState>()(
                     const reopen = equipmentId === "extra-lockin";
                     // Bakkie fuel is consumable too: each purchase adds one ride.
                     const fuel = equipmentId === "truck-fuel";
+                    // A dog ration is consumable: it rests the dog right away.
+                    const ration = equipmentId === "dog-ration";
                     return {
                         inventory: item?.consumable ? s.inventory : [...new Set([...s.inventory, equipmentId])],
                         cluesUnlocked: clues,
@@ -245,7 +267,10 @@ export const useGameStore = create<GameState>()(
                         donationsTotal: s.donationsTotal + donation.amountZar,
                         pin: reopen && s.pin ? { ...s.pin, locked: false } : s.pin,
                         pinMovesToday: reopen ? null : s.pinMovesToday,
+                        // A second lock-in also rests the ranger, so the reopened pin can move at once.
+                        lastMoveAt: reopen ? null : s.lastMoveAt,
                         truckRidesLeft: fuel ? s.truckRidesLeft + 1 : s.truckRidesLeft,
+                        lastTrackAt: ration ? null : s.lastTrackAt,
                     };
                 });
                 return donation;
@@ -291,6 +316,10 @@ export const useGameStore = create<GameState>()(
             setDemoDay: (day) => set({ demoDay: day }),
 
             setDemoHour: (hour) => set({ demoHour: hour }),
+
+            recordTrack: () => set({ lastTrackAt: Date.now() }),
+
+            refuelDog: () => set({ lastTrackAt: null }),
 
             markScentSeen: () => set((s) => ({ scentSeenAt: s.pin?.updatedAt ?? null })),
 

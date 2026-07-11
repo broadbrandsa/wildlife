@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button, Eyebrow, Tag } from "@/components/ds";
 import { DealtCard, prefersReducedMotion } from "@/components/game/CardFlip";
@@ -15,23 +15,28 @@ import { ZoneSheet } from "@/components/game/ZoneSheet";
 import { CLUE_BY_ID, CLUES, DOG_BY_ID, FIVES, FIVE_OF, RANGER_BY_ID, ROUND, SPECIES, SPECIES_BY_ID, ZONES, ZONE_BY_ID } from "@/data";
 import type { Clue, Species, Zone } from "@/data";
 import {
-    EXTRA_MOVE_DOGS,
     SCENT_TEXT,
     THIRD_LABEL,
     availableClueIds,
     dailyWalkKm,
     distanceKm,
     scentDirectionText,
+    TRACK_COOLDOWN_MS,
     daysRemaining,
+    isRested,
     isRoundOver,
+    moveCooldownMs,
     nextClueLabel,
     poacherThird,
+    restProgress,
+    restRemainingLabel,
     scentRead,
-    thirdOf,
     tierRank,
     zoneAtPoint,
 } from "@/lib/game";
-import { RARITY_META, SPOTTER_DOGS, bonusSpotDue, rollFirstSpot, rollSpot } from "@/lib/spotting";
+import { RARITY_META, SPOTTER_DOGS } from "@/lib/spotting";
+import { FAMILY_ICON, MARKER_CAP, makeMarker, nextSpawnDelayMs } from "@/lib/markers";
+import type { SpotMarker } from "@/lib/markers";
 import type { ScentTier } from "@/lib/game";
 import { NEAR_TARGET_KM, rangersHunting, rangersNearTarget } from "@/lib/community";
 import { CAMP_HOUR, PHASE_META, PHASE_SKY, formatClock, isDusk, isNight, phaseForHour } from "@/lib/daytime";
@@ -70,31 +75,81 @@ function NDot() {
     );
 }
 
-/** Round avatar button for the split ranger / dog team icons. */
-function AvatarButton({ src, alt, dot, onClick }: { src: string; alt: string; dot: boolean; onClick: () => void }) {
+/** Round avatar button for the split ranger / dog team icons. A green border
+ *  and ring mark the ranger or dog as rested and ready to use. */
+function AvatarButton({ src, alt, ready, onClick }: { src: string; alt: string; ready: boolean; onClick: () => void }) {
     return (
         <button
             onClick={onClick}
-            aria-label={alt}
+            aria-label={ready ? `${alt}, ready` : alt}
             className="kw-press"
             style={{
                 position: "relative",
                 width: 52,
                 height: 52,
                 borderRadius: "50%",
-                border: "2px solid var(--sand-50)",
+                border: `2px solid ${ready ? "var(--success)" : "var(--sand-50)"}`,
                 background: "var(--sand-100)",
-                boxShadow: "var(--shadow-md)",
+                boxShadow: ready ? "var(--shadow-md), 0 0 0 3px var(--success-soft)" : "var(--shadow-md)",
                 cursor: "pointer",
                 padding: 0,
                 overflow: "visible",
+                transition: "box-shadow 200ms var(--ease-out), border-color 200ms var(--ease-out)",
             }}
         >
             <span style={{ position: "absolute", inset: 0, borderRadius: "50%", overflow: "hidden" }}>
                 <Image src={src} alt={alt} fill sizes="52px" style={{ objectFit: "cover" }} />
             </span>
-            {dot && <NDot />}
         </button>
+    );
+}
+
+/** A compact recovery chip sitting to the right of a team icon: a fill bar over
+ *  a small countdown of the rest time left (or "Ready"). Kept narrow so it
+ *  clears the centred time chip on small screens. */
+function RestBar({ progress, ready, label }: { progress: number; ready: boolean; label: string }) {
+    return (
+        <div
+            style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 2,
+                padding: "4px 6px",
+                borderRadius: 10,
+                background: "rgba(250,246,236,0.9)",
+                backdropFilter: "blur(8px)",
+                WebkitBackdropFilter: "blur(8px)",
+                border: "1px solid var(--border-subtle)",
+                boxShadow: "var(--shadow-sm)",
+            }}
+        >
+            <span style={{ display: "block", width: 40, height: 5, borderRadius: 999, background: "var(--surface-sunken)", overflow: "hidden" }}>
+                <span
+                    style={{
+                        display: "block",
+                        height: "100%",
+                        width: `${Math.round(progress * 100)}%`,
+                        borderRadius: 999,
+                        background: ready ? "var(--success)" : "var(--ochre-500)",
+                        transition: "width 2s linear, background 200ms var(--ease-out)",
+                    }}
+                />
+            </span>
+            <span
+                style={{
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "0.5rem",
+                    letterSpacing: "0.04em",
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    color: ready ? "var(--success)" : "var(--text-primary)",
+                    lineHeight: 1,
+                }}
+            >
+                {label}
+            </span>
+        </div>
     );
 }
 
@@ -181,13 +236,15 @@ function MapInner() {
     const cluesUnlocked = useGameStore((s) => s.cluesUnlocked);
     const inventory = useGameStore((s) => s.inventory);
     const fieldGuides = useGameStore((s) => s.fieldGuides);
-    const pinMovesToday = useGameStore((s) => s.pinMovesToday);
     const scentSeenAt = useGameStore((s) => s.scentSeenAt);
     const cluesSeenDay = useGameStore((s) => s.cluesSeenDay);
     const markScentSeen = useGameStore((s) => s.markScentSeen);
     const markCluesSeen = useGameStore((s) => s.markCluesSeen);
     const truckRidesLeft = useGameStore((s) => s.truckRidesLeft);
     const rideTruck = useGameStore((s) => s.rideTruck);
+    const lastMoveAt = useGameStore((s) => s.lastMoveAt);
+    const lastTrackAt = useGameStore((s) => s.lastTrackAt);
+    const recordTrack = useGameStore((s) => s.recordTrack);
     const lastRevealKey = useGameStore((s) => s.lastRevealKey);
     const prevRead = useGameStore((s) => s.prevRead);
     const hotStreak = useGameStore((s) => s.hotStreak);
@@ -210,20 +267,24 @@ function MapInner() {
     const [truckDest, setTruckDest] = useState<{ x: number; y: number } | null>(null);
     // Which elimination clue was just marked on the case board (confirmation line).
     const [markedClueId, setMarkedClueId] = useState<string | null>(null);
-    // The species just spotted (or a collection card being read), plus any
-    // bonus card still waiting to be dealt (spotter dog or binoculars).
+    // The species just spotted, or a collection card being read.
     const [spot, setSpot] = useState<SpotItem | null>(null);
     const [spotQueue, setSpotQueue] = useState<SpotItem[]>([]);
     // Fresh spots deal in face-down like a trading card; a tap flips the reveal.
     const [spotFlipped, setSpotFlipped] = useState(true);
+    // Live species markers on the map (ephemeral session state).
+    const [markers, setMarkers] = useState<SpotMarker[]>([]);
+    const markerSeq = useRef(0);
+    // Wall-clock tick that drives the ranger and dog rest bars.
+    const [nowMs, setNowMs] = useState(() => Date.now());
+    // Bumped by the ranger's Move action to zoom the map in on the pin.
+    const [focusSignal, setFocusSignal] = useState(0);
     // New clues deal onto the screen the same way, once per release day.
     const [clueCard, setClueCard] = useState<Clue | null>(null);
     const [clueFlipped, setClueFlipped] = useState(true);
-    // A freshly unlocked field guide deals in as a card too. The first free
-    // guide waits its turn behind the first spot card (pendingGuide).
+    // A freshly unlocked field guide deals in as a card too.
     const [guideCard, setGuideCard] = useState<Zone | null>(null);
     const [guideFlipped, setGuideFlipped] = useState(true);
-    const [pendingGuide, setPendingGuide] = useState<Zone | null>(null);
     // A completed five: celebrated once the card flow finishes.
     const [pendingFiveWin, setPendingFiveWin] = useState<(typeof FIVES)[number] | null>(null);
     const [fiveWin, setFiveWin] = useState<(typeof FIVES)[number] | null>(null);
@@ -257,15 +318,27 @@ function MapInner() {
     const pinZone = pin ? ZONE_BY_ID[zoneAtPoint(pin)] : null;
     const clueCountdown = nextClueLabel(day);
 
-    // Movement: one move a day, plus one for boots, plus one for Storm's drive.
-    const maxMoves =
-        1 + (inventory.includes("ranger-boots") ? 1 : 0) + (player && EXTRA_MOVE_DOGS.has(player.dogId) ? 1 : 0);
-    const movesToday = pinMovesToday?.day === day ? pinMovesToday.count : 0;
-    // At night the ranger and dog have made camp, so no movement until dawn.
-    const canMove = !pin?.locked && movesToday < maxMoves && !night;
+    // Movement is paced by a real-time recovery: after a move the ranger rests
+    // before moving again. Boots and a driven dog shorten the recovery. The dog
+    // rests longer after a track. At night both make camp, so neither can work.
+    const moveCd = moveCooldownMs(player?.dogId, inventory.includes("ranger-boots"));
+    const rangerRested = isRested(lastMoveAt, nowMs, moveCd);
+    const dogRested = isRested(lastTrackAt, nowMs, TRACK_COOLDOWN_MS);
+    const rangerReady = Boolean(pin && !pin.locked && !night && !roundOver && rangerRested);
+    const dogTrackReady = Boolean(pin && !night && !roundOver && dogRested);
+    // The ranger can move when rested; the very first pin drops with no pin yet.
+    const canMove = !pin ? true : rangerReady;
     const walkKm = dailyWalkKm(player?.dogId);
-    // Dusk nudge: light is going and the ranger has not moved today.
-    const showDuskPrompt = Boolean(pin && !pin.locked && !roundOver && isDusk(hour) && movesToday === 0);
+    // Rest bars for the team icons and their profiles.
+    const rangerRestPct = restProgress(lastMoveAt, nowMs, moveCd);
+    const rangerRestLabel = restRemainingLabel(lastMoveAt, nowMs, moveCd);
+    const dogRestPct = restProgress(lastTrackAt, nowMs, TRACK_COOLDOWN_MS);
+    const dogRestLabel = restRemainingLabel(lastTrackAt, nowMs, TRACK_COOLDOWN_MS);
+    // Bar label under each icon: the time left, or the reason it is not ready.
+    const rangerBarLabel = !rangerRested ? rangerRestLabel : night ? "Camp" : "Ready";
+    const dogBarLabel = !dogRested ? dogRestLabel : night ? "Camp" : "Ready";
+    // Dusk nudge: light is going and the ranger is rested and could still move.
+    const showDuskPrompt = Boolean(pin && !pin.locked && !roundOver && isDusk(hour) && rangerReady);
 
     // Ops-room pressure line: the same shared report for every player.
     const near = rangersNearTarget(day);
@@ -334,32 +407,15 @@ function MapInner() {
         trail.reduce((sum, p, i) => (i > 0 && p.day === day && p.via === "walk" ? sum + distanceKm(trail[i - 1], p) : sum), 0),
     );
 
-    // Notification badges.
-    const rangerDot = Boolean(pin && canMove);
-    const dogDot = Boolean(pin && pin.updatedAt !== scentSeenAt);
     const newClueToday = CLUES.some((c) => c.source === "free" && c.releaseDay === day) && cluesSeenDay !== day;
 
-    // Every move turns up one species from the ground the ranger now stands on.
-    // The first spot of the game always comes from the Big, Ugly or Small Five.
-    const spotAtCurrentPin = () => {
-        const p = useGameStore.getState().pin;
-        if (!p) return;
-        const firstEver = useGameStore.getState().sightings.length === 0;
-        const species = firstEver ? rollFirstSpot(thirdOf(p)) : rollSpot(thirdOf(p));
+    // Spotting a species: record it, check the bingo lists, and deal the reveal
+    // card face-down for the flip. Shared by tapping a live marker and (until
+    // markers exist) any other spot path.
+    const commitSpot = (species: Species) => {
         const priorCount = useGameStore.getState().sightings.filter((s) => s.speciesId === species.id).length;
         recordSighting(species.id, day);
-        // Every third move a spotter dog or the binoculars turn up ONE bonus
-        // card. Having both never stacks beyond the single extra.
-        const queue: SpotItem[] = [];
-        const totalMoves = useGameStore.getState().trail.length;
-        const hasSpotterDog = Boolean(player && SPOTTER_DOGS.has(player.dogId));
-        if (bonusSpotDue(totalMoves, hasSpotterDog, inventory.includes("pro-binoculars"))) {
-            const extra = rollSpot(thirdOf(p));
-            const extraPrior = useGameStore.getState().sightings.filter((s) => s.speciesId === extra.id).length;
-            recordSighting(extra.id, day);
-            queue.push({ species: extra, isNew: extraPrior === 0, count: extraPrior + 1, bonus: true });
-        }
-        // Bingo: did this move complete one of the fives for the first time?
+        // Bingo: did this sighting complete one of the fives for the first time?
         const collected = new Set(useGameStore.getState().sightings.map((s) => s.speciesId));
         const won = useGameStore.getState().fivesWon;
         const completed = FIVES.find((f) => !won.includes(f.id) && f.members.every((m) => collected.has(m)));
@@ -368,30 +424,26 @@ function MapInner() {
             setPendingFiveWin(completed);
         }
         // Deal the card face-down; reduced motion goes straight to the reveal.
-        setSpotQueue(queue);
+        setSpotQueue([]);
         setSpotFlipped(prefersReducedMotion());
         setSpot({ species, isNew: priorCount === 0, count: priorCount + 1 });
     };
 
-    // Dismissing a spot card deals the next one; the last card gives way to
-    // the free field-guide card on the first pin, then the bingo celebration
-    // if this move completed a five.
+    // Tapping a live marker spots that species and removes the marker.
+    const spotMarker = (id: string) => {
+        const m = markers.find((x) => x.id === id);
+        if (!m) return;
+        setMarkers((cur) => cur.filter((x) => x.id !== id));
+        commitSpot(SPECIES_BY_ID[m.speciesId]);
+    };
+
+    // Dismissing a spot card gives way to the bingo celebration if this
+    // sighting completed a five.
     const advanceSpotCard = () => {
-        if (spotQueue.length > 0) {
-            const [next, ...rest] = spotQueue;
-            setSpotQueue(rest);
-            setSpotFlipped(prefersReducedMotion());
-            setSpot(next);
-        } else {
-            setSpot(null);
-            if (pendingGuide) {
-                setGuideFlipped(prefersReducedMotion());
-                setGuideCard(pendingGuide);
-                setPendingGuide(null);
-            } else if (pendingFiveWin) {
-                setFiveWin(pendingFiveWin);
-                setPendingFiveWin(null);
-            }
+        setSpot(null);
+        if (pendingFiveWin) {
+            setFiveWin(pendingFiveWin);
+            setPendingFiveWin(null);
         }
     };
 
@@ -404,17 +456,68 @@ function MapInner() {
         }
     };
 
+    // Live spotting: while a pin is down, in daylight, before the round closes,
+    // species markers fade onto the map near the ranger at random intervals. A
+    // spotter dog makes them come faster; the binoculars widen where they land.
+    const canSpot = Boolean(pin && !night && !roundOver);
+    useEffect(() => {
+        if (!canSpot) return;
+        let timer: ReturnType<typeof setTimeout>;
+        const schedule = () => {
+            const hasSpotterDog = Boolean(player && SPOTTER_DOGS.has(player.dogId));
+            timer = setTimeout(() => {
+                const s = useGameStore.getState();
+                const p = s.pin;
+                if (p) {
+                    setMarkers((cur) => {
+                        if (cur.length >= MARKER_CAP) return cur;
+                        const base = makeMarker(p, s.inventory.includes("pro-binoculars"), s.sightings.length === 0);
+                        return [...cur, { ...base, id: `mk${markerSeq.current++}`, spawnAt: Date.now() }];
+                    });
+                }
+                schedule();
+            }, nextSpawnDelayMs(hasSpotterDog));
+        };
+        schedule();
+        return () => clearTimeout(timer);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [canSpot, player?.dogId]);
+
+    // Markers reset whenever the ranger moves or spotting stops, so they only
+    // ever sit near where the ranger currently stands.
+    useEffect(() => {
+        setMarkers([]);
+    }, [pin?.updatedAt, night, roundOver]);
+
+    // Prune markers whose window has closed (the fade-out finishes at ttl).
+    useEffect(() => {
+        const iv = setInterval(() => {
+            const now = Date.now();
+            setMarkers((cur) => {
+                const next = cur.filter((m) => now < m.spawnAt + m.ttlMs);
+                return next.length === cur.length ? cur : next;
+            });
+        }, 1000);
+        return () => clearInterval(iv);
+    }, []);
+
+    // Tick the wall clock so the ranger and dog rest bars fill live.
+    useEffect(() => {
+        const iv = setInterval(() => setNowMs(Date.now()), 2000);
+        return () => clearInterval(iv);
+    }, []);
+
     const onPlace = (x: number, y: number) => {
         if (!canMove && pin) return; // out of moves today; existing pin stays put
         const firstPin = fieldGuides.length === 0;
         moveRanger(x, y, day);
-        spotAtCurrentPin();
-        // Your first field guide is free: unlock it for the ground you first pin.
-        // Its card deals in right after the first spot card is put away.
+        // Your first field guide is free: unlock it for the ground you first pin,
+        // and deal its card straight away.
         if (firstPin) {
             const zoneId = zoneAtPoint({ x, y });
             grantFieldGuide(zoneId);
-            setPendingGuide(ZONE_BY_ID[zoneId]);
+            setGuideFlipped(prefersReducedMotion());
+            setGuideCard(ZONE_BY_ID[zoneId]);
         }
     };
 
@@ -437,8 +540,21 @@ function MapInner() {
 
     const openDogSheet = () => {
         markScentSeen();
-        startReveal();
         setSheet("dog");
+    };
+
+    // Send the dog to track: it reads the ground, then rests before it can
+    // track again. The reveal only plays on this tap, never on opening the sheet.
+    const track = () => {
+        recordTrack();
+        startReveal();
+    };
+
+    // The ranger's Move action: close the profile and zoom the map in on the
+    // pin so the walk radius is easy to read and drag along.
+    const startMove = () => {
+        setSheet(null);
+        setFocusSignal((n) => n + 1);
     };
 
     // The bakkie: only once a pin exists, never on a locked pin, a closed round or at night.
@@ -454,7 +570,6 @@ function MapInner() {
     const confirmRide = () => {
         if (truckDest) {
             rideTruck(truckDest.x, truckDest.y, day);
-            spotAtCurrentPin();
         }
         setTruckDest(null);
         setTruckMode(false);
@@ -508,6 +623,20 @@ function MapInner() {
                 walkRangeKm={!truckMode && pin && !pin.locked && canMove ? walkKm : null}
                 freeDrag={truckMode}
                 trail={trail}
+                markers={
+                    truckMode
+                        ? []
+                        : markers.map((m) => ({
+                              id: m.id,
+                              x: m.x,
+                              y: m.y,
+                              ttlMs: m.ttlMs,
+                              gold: m.rarity !== "common",
+                              icon: m.rarity !== "common" ? "star" : FAMILY_ICON[m.type],
+                          }))
+                }
+                onSpotMarker={spotMarker}
+                focusSignal={focusSignal}
             />
 
             {/* time-of-day scrim: tints the whole map toward dawn, dusk or night */}
@@ -552,11 +681,20 @@ function MapInner() {
                 </button>
             </div>
 
-            {/* the team, split: you, your dog and the bakkie, each with their own signal */}
+            {/* the team, split: you, your dog and the bakkie. The ranger and dog
+                each carry a rest bar and turn green-ringed when ready to use. */}
             {ranger && (
                 <div style={{ position: "absolute", left: "var(--gutter)", top: 12, display: "flex", flexDirection: "column", gap: 8 }}>
-                    <AvatarButton src={ranger.photo} alt={`${rangerName}, your ranger`} dot={rangerDot} onClick={() => setSheet("ranger")} />
-                    {dog && <AvatarButton src={dog.photo} alt={`${dogName}, your dog`} dot={dogDot} onClick={openDogSheet} />}
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <AvatarButton src={ranger.photo} alt={`${rangerName}, your ranger`} ready={rangerReady} onClick={() => setSheet("ranger")} />
+                        {pin && <RestBar progress={rangerRestPct} ready={rangerReady} label={rangerBarLabel} />}
+                    </div>
+                    {dog && (
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <AvatarButton src={dog.photo} alt={`${dogName}, your dog`} ready={dogTrackReady} onClick={openDogSheet} />
+                            {pin && <RestBar progress={dogRestPct} ready={dogTrackReady} label={dogBarLabel} />}
+                        </div>
+                    )}
                     {/* the bakkie: full colour while it has fuel, grey when the tank is dry */}
                     <button
                         onClick={() => setSheet("bakkie")}
@@ -811,24 +949,42 @@ function MapInner() {
                     </p>
                     {pin && !pin.locked && (
                         <>
-                            {canMove ? (
-                                <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", margin: "var(--space-3) 0 0" }}>
-                                    {`${maxMoves - movesToday === 1 ? "One move" : `${maxMoves - movesToday} moves`} left today, up to ${walkKm} km each. Drag your pin to walk. The ring is your reach.`}
-                                </p>
-                            ) : (
+                            {rangerReady ? (
+                                <div style={{ margin: "var(--space-4) 0 0" }}>
+                                    <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", margin: "0 0 var(--space-3)", lineHeight: 1.55 }}>
+                                        {rangerName} is rested and ready. Move up to {walkKm} km. Tap Move to zoom in on your pin, then drag it along the ring.
+                                    </p>
+                                    <Button size="lg" fullWidth onClick={startMove} iconLeft={<i className="ph-fill ph-boot" />}>
+                                        Move your ranger
+                                    </Button>
+                                </div>
+                            ) : night ? (
                                 <div style={{ margin: "var(--space-3) 0 0" }}>
                                     <div style={{ fontWeight: 700, fontSize: "0.92rem", display: "flex", alignItems: "center", gap: 8 }}>
                                         <i className="ph-fill ph-campfire" style={{ color: "var(--ochre-600)", fontSize: 17 }} /> Camped for the night.
                                     </div>
                                     <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", margin: "var(--space-1, 0.25rem) 0 0" }}>
-                                        {night
-                                            ? `The Kruger is dangerous after dark, so ${dogName} settles by the fire. You move again at dawn.`
-                                            : `${dogName} settles by the fire. Fresh legs at dawn.`}
+                                        The Kruger is dangerous after dark, so {rangerName} and {dogName} settle by the fire. You move again at dawn.
                                     </p>
                                     <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-muted)", marginTop: "var(--space-2)" }}>
                                         TODAY: {truckedToday ? "BY BAKKIE" : `${kmToday} KM`}
-                                        {read ? ` · ${TIER_META[read.tier].label.toUpperCase()}` : ""} · {clueCountdown}
+                                        {clueCountdown ? ` · ${clueCountdown}` : ""}
                                     </div>
+                                </div>
+                            ) : (
+                                <div style={{ margin: "var(--space-4) 0 0" }}>
+                                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-3)" }}>
+                                        <span style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: "0.86rem", fontWeight: 600, color: "var(--text-primary)" }}>
+                                            <i className="ph-fill ph-boot" style={{ color: "var(--ochre-600)" }} /> {rangerName} is recovering
+                                        </span>
+                                        <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.66rem", letterSpacing: "0.1em", color: "var(--text-muted)" }}>{rangerRestLabel}</span>
+                                    </div>
+                                    <div style={{ marginTop: "var(--space-3)", height: 8, borderRadius: 999, background: "var(--surface-sunken)", overflow: "hidden" }}>
+                                        <div style={{ height: "100%", width: `${Math.round(rangerRestPct * 100)}%`, borderRadius: 999, background: "var(--ochre-500)", transition: "width 2s linear" }} />
+                                    </div>
+                                    <p style={{ margin: "var(--space-3) 0 0", fontSize: "0.8rem", color: "var(--text-muted)", lineHeight: 1.5 }}>
+                                        A ranger covers hard ground on foot and needs rest between moves. {rangerName} will be ready to move again in {rangerRestLabel}.
+                                    </p>
                                 </div>
                             )}
                             <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", margin: "var(--space-2) 0 0" }}>
@@ -881,7 +1037,13 @@ function MapInner() {
             {sheet === "dog" && (
                 <Sheet onClose={() => setSheet(null)}>
                     {(() => {
-                        const hot = Boolean(read && !revealing && read.tier === "hot");
+                        // Tracking here already played its reveal, so its read is safe to show.
+                        const trackedHere = Boolean(pin && revealKey && revealKey === lastRevealKey);
+                        const resting = Boolean(pin && !dogRested);
+                        const progress = dogRestPct;
+                        const remaining = dogRestLabel;
+                        const showRead = Boolean(pin && read && trackedHere && !revealing);
+                        const hot = Boolean(showRead && read && read.tier === "hot");
                         return (
                             <div
                                 style={{
@@ -896,7 +1058,7 @@ function MapInner() {
                                     <span style={{ display: "inline-flex", alignItems: "center", gap: 8, fontFamily: "var(--font-mono)", fontSize: "0.64rem", letterSpacing: "0.12em", textTransform: "uppercase", color: hot ? "var(--clay-600)" : "var(--text-accent)" }}>
                                         <i className="ph ph-paw-print" /> Scent read
                                     </span>
-                                    {pin && read && !revealing && (
+                                    {showRead && read && (
                                         <Tag tone={TIER_META[read.tier].tone} size="sm">
                                             <i className={`ph ph-${TIER_META[read.tier].icon}`} style={{ marginRight: 4 }} />
                                             {TIER_META[read.tier].label}
@@ -906,7 +1068,7 @@ function MapInner() {
 
                                 {!pin || !read ? (
                                     <p style={{ margin: "var(--space-4) 0 0", fontSize: "0.88rem", color: "var(--text-secondary)", lineHeight: 1.55 }}>
-                                        {dogName} is waiting for you to place your ranger. Tap the map and the dog reads the ground there.
+                                        {dogName} is waiting for you to place your ranger. Tap the map to deploy, then send the dog to track.
                                     </p>
                                 ) : revealing ? (
                                     <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "var(--space-5) 0 var(--space-3)", fontFamily: "var(--font-mono)", fontSize: "0.7rem", letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--text-muted)" }}>
@@ -914,45 +1076,114 @@ function MapInner() {
                                         {dogName} is casting...
                                     </div>
                                 ) : (
-                                    <div className="kw-rise">
-                                        {prevRead == null && (
-                                            <p style={{ margin: "var(--space-3) 0 0", fontSize: "0.78rem", lineHeight: 1.5, color: "var(--text-muted)" }}>
-                                                {dogName} reads the ground where you stand. Hunt for the scent, then close in.
-                                            </p>
-                                        )}
-                                        <p style={{ margin: "var(--space-4) 0 0", fontFamily: "var(--font-serif)", fontSize: "1.05rem", lineHeight: 1.55, color: "var(--sand-900)" }}>
-                                            {SCENT_TEXT[read.tier].replace("{dog}", dogName) + " " + scentDirectionText(read, dogName)}
-                                            {read.tier === "hot" && hotStreak === 2 && ` ${dogName} has held this line for two days. The camp is near.`}
-                                            {read.tier === "hot" && hotStreak >= 3 && ` ${dogName} will not leave this ground. Trust the dog.`}
-                                        </p>
-                                        {read.tier === "hot" && inventory.includes("gps-collar") && pin && (
-                                            <div style={{ margin: "var(--space-3) 0 0", fontFamily: "var(--font-mono)", fontSize: "0.66rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--clay-600)", fontWeight: 700 }}>
-                                                Collar fix: {Math.round(distanceKm(pin, ROUND.poacher))} km to the suspect
+                                    <>
+                                        {showRead && read && (
+                                            <div className="kw-rise">
+                                                {prevRead == null && (
+                                                    <p style={{ margin: "var(--space-3) 0 0", fontSize: "0.78rem", lineHeight: 1.5, color: "var(--text-muted)" }}>
+                                                        {dogName} reads the ground where you stand. Hunt for the scent, then close in.
+                                                    </p>
+                                                )}
+                                                <p style={{ margin: "var(--space-4) 0 0", fontFamily: "var(--font-serif)", fontSize: "1.05rem", lineHeight: 1.55, color: "var(--sand-900)" }}>
+                                                    {SCENT_TEXT[read.tier].replace("{dog}", dogName) + " " + scentDirectionText(read, dogName)}
+                                                    {read.tier === "hot" && hotStreak === 2 && ` ${dogName} has held this line for two days. The camp is near.`}
+                                                    {read.tier === "hot" && hotStreak >= 3 && ` ${dogName} will not leave this ground. Trust the dog.`}
+                                                </p>
+                                                {read.tier === "hot" && inventory.includes("gps-collar") && pin && (
+                                                    <div style={{ margin: "var(--space-3) 0 0", fontFamily: "var(--font-mono)", fontSize: "0.66rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--clay-600)", fontWeight: 700 }}>
+                                                        Collar fix: {Math.round(distanceKm(pin, ROUND.poacher))} km to the suspect
+                                                    </div>
+                                                )}
+                                                {read.tier === "cold" && prevRead == null && !roundOver && (
+                                                    <p style={{ margin: "var(--space-3) 0 0", fontSize: "0.82rem", color: "var(--text-secondary)", lineHeight: 1.5 }}>
+                                                        {truckRidesLeft > 0
+                                                            ? `Fresh ground is a drive away. The bakkie has ${truckRidesLeft} ride${truckRidesLeft === 1 ? "" : "s"} left.`
+                                                            : "The bakkie is out of fuel. The kit room can fill the tank."}
+                                                    </p>
+                                                )}
+                                                {deltaLine && (
+                                                    <div style={{ margin: "var(--space-4) 0 0", paddingTop: "var(--space-3)", borderTop: "1px dashed var(--border-default)", fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--text-muted)" }}>
+                                                        {deltaLine}
+                                                    </div>
+                                                )}
+                                                {hasRadio && (
+                                                    <div
+                                                        style={{ marginTop: "var(--space-4)", display: "flex", gap: 8, alignItems: "flex-start", background: "var(--ochre-100)", border: "1px solid var(--ochre-200)", borderRadius: "var(--radius-sm)", padding: "0.55rem 0.7rem" }}
+                                                    >
+                                                        <i className="ph ph-broadcast" style={{ color: "var(--ochre-700)", marginTop: 2 }} />
+                                                        <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)", lineHeight: 1.5 }}>
+                                                            HQ radios in: the freshest scent is in {THIRD_LABEL[targetThird]} of the park.
+                                                        </span>
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
-                                        {read.tier === "cold" && prevRead == null && !roundOver && (
-                                            <p style={{ margin: "var(--space-3) 0 0", fontSize: "0.82rem", color: "var(--text-secondary)", lineHeight: 1.5 }}>
-                                                {truckRidesLeft > 0
-                                                    ? `Fresh ground is a drive away. The bakkie has ${truckRidesLeft} ride${truckRidesLeft === 1 ? "" : "s"} left.`
-                                                    : "The bakkie is out of fuel. The kit room can fill the tank."}
+
+                                        {/* At night the dog is camped and cannot track. */}
+                                        {!resting && night && (
+                                            <p style={{ margin: "var(--space-4) 0 0", fontSize: "0.82rem", color: "var(--text-muted)", lineHeight: 1.5, display: "flex", gap: 8, alignItems: "flex-start" }}>
+                                                <i className="ph-fill ph-campfire" style={{ color: "var(--ochre-600)", marginTop: 2 }} />
+                                                {dogName} is camped for the night. It tracks again at dawn.
                                             </p>
                                         )}
-                                        {deltaLine && (
-                                            <div style={{ margin: "var(--space-4) 0 0", paddingTop: "var(--space-3)", borderTop: "1px dashed var(--border-default)", fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--text-muted)" }}>
-                                                {deltaLine}
+
+                                        {/* Track CTA: the dog is rested and there is fresh ground to read. */}
+                                        {!resting && !night && !trackedHere && (
+                                            <div style={{ marginTop: "var(--space-4)" }}>
+                                                <p style={{ margin: "0 0 var(--space-3)", fontSize: "0.86rem", color: "var(--text-secondary)", lineHeight: 1.55 }}>
+                                                    {dogName} is rested and ready. Send it to read the ground where your ranger stands.
+                                                </p>
+                                                <Button size="lg" fullWidth onClick={track} iconLeft={<i className="ph-fill ph-paw-print" />}>
+                                                    Track this ground
+                                                </Button>
                                             </div>
                                         )}
-                                        {hasRadio && (
+
+                                        {/* Rested, but this ground is already read: move for a new one. */}
+                                        {!resting && !night && trackedHere && (
+                                            <p style={{ margin: "var(--space-4) 0 0", fontSize: "0.82rem", color: "var(--text-muted)", lineHeight: 1.5, display: "flex", gap: 8, alignItems: "flex-start" }}>
+                                                <i className="ph ph-check-circle" style={{ color: "var(--success)", marginTop: 2 }} />
+                                                {dogName} is rested. Move to fresh ground for a new read.
+                                            </p>
+                                        )}
+
+                                        {/* Resting: the dog tires after a track. A ration refuels it early. */}
+                                        {resting && (
                                             <div
-                                                style={{ marginTop: "var(--space-4)", display: "flex", gap: 8, alignItems: "flex-start", background: "var(--ochre-100)", border: "1px solid var(--ochre-200)", borderRadius: "var(--radius-sm)", padding: "0.55rem 0.7rem" }}
+                                                style={{
+                                                    marginTop: showRead ? "var(--space-4)" : "var(--space-3)",
+                                                    paddingTop: showRead ? "var(--space-4)" : 0,
+                                                    borderTop: showRead ? "1px dashed var(--border-default)" : "none",
+                                                }}
                                             >
-                                                <i className="ph ph-broadcast" style={{ color: "var(--ochre-700)", marginTop: 2 }} />
-                                                <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)", lineHeight: 1.5 }}>
-                                                    HQ radios in: the freshest scent is in {THIRD_LABEL[targetThird]} of the park.
-                                                </span>
+                                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-3)" }}>
+                                                    <span style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: "0.86rem", fontWeight: 600, color: "var(--text-primary)" }}>
+                                                        <i className="ph-fill ph-moon-stars" style={{ color: "var(--ochre-600)" }} /> {dogName} is resting
+                                                    </span>
+                                                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.66rem", letterSpacing: "0.1em", color: "var(--text-muted)" }}>{remaining}</span>
+                                                </div>
+                                                <div style={{ marginTop: "var(--space-3)", height: 8, borderRadius: 999, background: "var(--surface-sunken)", overflow: "hidden" }}>
+                                                    <div
+                                                        style={{
+                                                            height: "100%",
+                                                            width: `${Math.round(progress * 100)}%`,
+                                                            borderRadius: 999,
+                                                            background: "var(--ochre-500)",
+                                                            transition: "width 1s linear",
+                                                        }}
+                                                    />
+                                                </div>
+                                                <p style={{ margin: "var(--space-3) 0 0", fontSize: "0.8rem", color: "var(--text-muted)", lineHeight: 1.5 }}>
+                                                    A working dog tires after a track. {dogName} will be ready to track again in {remaining}, or a ration from the kit refuels it now.
+                                                </p>
+                                                <div style={{ marginTop: "var(--space-3)" }}>
+                                                    <Button size="sm" variant="secondary" onClick={() => router.push("/checkout/dog-ration")} iconLeft={<i className="ph-fill ph-bone" />}>
+                                                        Refuel {dogName} with a ration
+                                                    </Button>
+                                                </div>
                                             </div>
                                         )}
-                                    </div>
+                                    </>
                                 )}
                             </div>
                         );
@@ -1032,7 +1263,7 @@ function MapInner() {
                                     {spotted.size} of {SPECIES.length} species spotted
                                 </div>
                                 <p style={{ fontSize: "0.82rem", color: "var(--text-muted)", margin: "0.3rem 0 0", lineHeight: 1.5 }}>
-                                    Every move, you spot something in the bush. Common sightings fill the log, rare ones are a good day, and a once in a lifetime sighting is linked to prizes at round end. Tap any card to read it, found or not.
+                                    Watch the map: species appear near your ranger for a short while, then move on. Tap one to add it to your log. The rarer it is, the less time you have, and a once in a lifetime sighting is linked to prizes at round end. Tap any card below to read it, found or not.
                                 </p>
 
                                 {/* the fives: spot all five of each to complete the row */}
