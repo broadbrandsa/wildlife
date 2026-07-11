@@ -123,16 +123,15 @@ function ItemCard({
                 )}
 
                 {!free && (
-                    <div style={{ marginTop: "var(--space-4)" }}>
-                        {owned ? (
+                    <div style={{ marginTop: "var(--space-4)", display: "flex", alignItems: "center", gap: "var(--space-3)", flexWrap: "wrap" }}>
+                        {owned && (
                             <Tag tone="green">
-                                <i className="ph-fill ph-check-circle" style={{ marginRight: 4 }} /> Donated
+                                <i className="ph-fill ph-check-circle" style={{ marginRight: 4 }} /> In your kit
                             </Tag>
-                        ) : (
-                            <Button size="md" onClick={onDonate} iconRight={<i className="ph ph-arrow-right" />}>
-                                Donate {zar(item.priceZar)}
-                            </Button>
                         )}
+                        <Button size="md" onClick={onDonate} iconRight={<i className="ph ph-arrow-right" />}>
+                            {owned ? `Donate ${zar(item.priceZar)} again` : `Donate ${zar(item.priceZar)}`}
+                        </Button>
                     </div>
                 )}
             </div>

@@ -248,6 +248,25 @@ export default function CheckoutPage() {
                             </div>
                         )}
 
+                        {item.id === "field-radio" && (
+                            <div
+                                style={{
+                                    display: "flex",
+                                    gap: "var(--space-3)",
+                                    alignItems: "flex-start",
+                                    background: "var(--ochre-100)",
+                                    border: "1px solid var(--ochre-200)",
+                                    borderRadius: "var(--radius-lg)",
+                                    padding: "var(--space-4)",
+                                }}
+                            >
+                                <i className="ph-fill ph-broadcast" style={{ fontSize: 20, color: "var(--ochre-700)", marginTop: 2 }} />
+                                <span style={{ fontSize: "0.86rem", color: "var(--text-secondary)", lineHeight: 1.55 }}>
+                                    You are on the net. Open Radio on the map to call HQ and hear which end of the park the freshest scent is in.
+                                </span>
+                            </div>
+                        )}
+
                         {item.id === "dog-ration" && (
                             <div
                                 style={{

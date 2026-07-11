@@ -50,7 +50,7 @@ const TIER_META: Record<ScentTier, { label: string; tone: "neutral" | "teal" | "
     hot: { label: "Fresh sign", tone: "clay", icon: "paw-print" },
 };
 
-type SheetId = "status" | "ranger" | "dog" | "clue" | "guides" | "bakkie" | "night" | "spots";
+type SheetId = "status" | "ranger" | "dog" | "clue" | "guides" | "bakkie" | "night" | "spots" | "radio";
 
 // A card read from the log carries found: false when the species is still out
 // there; the card then shows its photo in black and white with a Not found pill.
@@ -282,6 +282,8 @@ function MapInner() {
     const [nowMs, setNowMs] = useState(() => Date.now());
     // Bumped by the ranger's Move action to zoom the map in on the pin.
     const [focusSignal, setFocusSignal] = useState(0);
+    // Whether the field radio's HQ report has been opened this session (dock dot).
+    const [radioSeen, setRadioSeen] = useState(false);
     // New clues deal onto the screen the same way, once per release day.
     const [clueCard, setClueCard] = useState<Clue | null>(null);
     const [clueFlipped, setClueFlipped] = useState(true);
@@ -564,6 +566,11 @@ function MapInner() {
         setSheet("dog");
     };
 
+    const openRadioSheet = () => {
+        setRadioSeen(true);
+        setSheet("radio");
+    };
+
     // Send the dog to track: it reads the ground, then rests before it can
     // track again. The reveal only plays on this tap, never on opening the sheet.
     const track = () => {
@@ -792,7 +799,7 @@ function MapInner() {
                 <DockTab icon="notebook" label="Clue" dot={newClueToday} onClick={openClueSheet} />
                 <DockTab icon="book-open-text" label="Guides" onClick={() => setSheet("guides")} />
                 <DockTab icon="binoculars" label="Spots" onClick={() => setSheet("spots")} />
-                <DockTab icon="radio" label="Radio" onClick={() => router.push("/codes")} />
+                <DockTab icon="radio" label="Radio" dot={hasRadio && !radioSeen} onClick={openRadioSheet} />
             </div>
 
             {/* first-pin hint */}
@@ -1224,6 +1231,51 @@ function MapInner() {
                         <i className="ph ph-timer" /> {clueCountdown}
                     </div>
                     {latest && <ClueCard clue={latest} action={clueAction(latest)} />}
+                </Sheet>
+            )}
+
+            {sheet === "radio" && (
+                <Sheet onClose={() => setSheet(null)}>
+                    <Eyebrow rule>Field radio</Eyebrow>
+                    {hasRadio ? (
+                        <div
+                            style={{
+                                marginTop: "var(--space-4)",
+                                background: "var(--ochre-100)",
+                                border: "1px solid var(--ochre-200)",
+                                borderRadius: "var(--radius-lg)",
+                                padding: "var(--space-4)",
+                            }}
+                        >
+                            <div style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--ochre-700)" }}>
+                                <i className="ph-fill ph-broadcast" /> HQ operations room
+                            </div>
+                            <p style={{ margin: "var(--space-3) 0 0", fontFamily: "var(--font-serif)", fontSize: "1.05rem", lineHeight: 1.55, color: "var(--sand-900)" }}>
+                                Other teams have picked up the freshest scent in {THIRD_LABEL[targetThird]} of the park. Work that end of the ground.
+                            </p>
+                        </div>
+                    ) : (
+                        <div style={{ marginTop: "var(--space-4)" }}>
+                            <p style={{ fontSize: "0.88rem", color: "var(--text-secondary)", lineHeight: 1.55 }}>
+                                You need a field radio to reach the K9 operations room and hear where other teams have picked up the scent.
+                            </p>
+                            <div style={{ marginTop: "var(--space-4)" }}>
+                                <Button size="lg" fullWidth onClick={() => router.push("/checkout/field-radio")} iconRight={<i className="ph ph-broadcast" />}>
+                                    Get the field radio
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+
+                    <div style={{ marginTop: "var(--space-5)", paddingTop: "var(--space-4)", borderTop: "1px dashed var(--border-default)" }}>
+                        <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--text-accent)" }}>Intel intercept</div>
+                        <p style={{ fontSize: "0.84rem", color: "var(--text-muted)", lineHeight: 1.5, margin: "var(--space-2) 0 var(--space-3)" }}>
+                            Have an intel code from a sponsor or partner? Redeem it for a bonus clue.
+                        </p>
+                        <Button size="md" variant="secondary" onClick={() => router.push("/codes")} iconRight={<i className="ph ph-arrow-right" />}>
+                            Enter an intel code
+                        </Button>
+                    </div>
                 </Sheet>
             )}
 

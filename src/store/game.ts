@@ -313,9 +313,11 @@ export const useGameStore = create<GameState>()(
 
             setNotifyAsked: () => set({ notifyAsked: true }),
 
-            setDemoDay: (day) => set({ demoDay: day }),
+            // Moving the demo clock jumps game time, so the real-time rest
+            // cooldowns reset with it: the ranger and dog are rested again.
+            setDemoDay: (day) => set({ demoDay: day, lastMoveAt: null, lastTrackAt: null }),
 
-            setDemoHour: (hour) => set({ demoHour: hour }),
+            setDemoHour: (hour) => set({ demoHour: hour, lastMoveAt: null, lastTrackAt: null }),
 
             recordTrack: () => set({ lastTrackAt: Date.now() }),
 
