@@ -12,7 +12,7 @@ import { ImpactHighlight, useCampaignTotal } from "@/components/game/impact";
 import { KrugerMap } from "@/components/game/KrugerMap";
 import { Overlay } from "@/components/game/Overlay";
 import { ZoneSheet } from "@/components/game/ZoneSheet";
-import { CLUE_BY_ID, CLUES, DOG_BY_ID, FIVES, FIVE_OF, RANGER_BY_ID, ROUND, SPECIES, SPECIES_BY_ID, ZONES, ZONE_BY_ID, speciesActivity } from "@/data";
+import { CLUE_BY_ID, CLUES, DOG_BY_ID, FIVES, FIVE_OF, RANGER_BY_ID, ROUND, SPECIES, SPECIES_BY_ID, ZONES, ZONE_BY_ID, speciesActivity, speciesStats } from "@/data";
 import type { Clue, Species, Zone } from "@/data";
 import {
     SCENT_TEXT,
@@ -1728,6 +1728,25 @@ function MapInner() {
                                         <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: 1.55, margin: 0 }}>
                                             {spot.species.info}
                                         </p>
+                                        {speciesStats(spot.species.id).length > 0 && (
+                                            <div style={{ marginTop: "var(--space-4)" }}>
+                                                <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.58rem", letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--text-accent)", marginBottom: "var(--space-2)" }}>
+                                                    <i className="ph ph-ruler" style={{ marginRight: 5 }} /> Field stats
+                                                </div>
+                                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-2)" }}>
+                                                    {speciesStats(spot.species.id).map((st) => (
+                                                        <div key={st.label} style={{ background: "var(--surface-sunken)", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-sm)", padding: "0.45rem 0.6rem" }}>
+                                                            <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.54rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-muted)" }}>
+                                                                {st.label}
+                                                            </div>
+                                                            <div style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--text-primary)", lineHeight: 1.3, marginTop: 1 }}>
+                                                                {st.value}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
                                         {spot.species.rarity === "oialt" && (
                                             <p style={{ fontSize: "0.82rem", color: "var(--clay-600)", fontWeight: 600, lineHeight: 1.5, margin: "var(--space-3) 0 0" }}>
                                                 {found

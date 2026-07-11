@@ -714,3 +714,406 @@ export function spottableAt(id: string, night: boolean): boolean {
     const a = speciesActivity(id);
     return a === "any" || (night ? a === "night" : a === "day");
 }
+
+/**
+ * Field-guide stats shown on the species card: a short set of label/value
+ * facts (weight, size, diet, range and the like), chosen to suit each kind of
+ * species. Figures are typical field-guide values, rounded for readability.
+ */
+export interface SpeciesStat {
+    label: string;
+    value: string;
+}
+
+export const SPECIES_STATS: Record<string, SpeciesStat[]> = {
+    // North
+    "racket-tailed-roller": [
+        { label: "Length", value: "36–40 cm" },
+        { label: "Weight", value: "~110 g" },
+        { label: "Diet", value: "Insects, reptiles" },
+        { label: "Where", value: "Far-north mopane" },
+    ],
+    "pels-fishing-owl": [
+        { label: "Height", value: "~63 cm" },
+        { label: "Wingspan", value: "~1.5 m" },
+        { label: "Weight", value: "~2.2 kg" },
+        { label: "Diet", value: "Fish, frogs" },
+    ],
+    "samango-monkey": [
+        { label: "Weight", value: "4–9 kg" },
+        { label: "Body", value: "~55 cm" },
+        { label: "Diet", value: "Fruit, leaves" },
+        { label: "Where", value: "Riverine forest" },
+    ],
+    "crested-guineafowl": [
+        { label: "Length", value: "~50 cm" },
+        { label: "Weight", value: "0.7–1.5 kg" },
+        { label: "Diet", value: "Seeds, insects" },
+        { label: "Where", value: "Riverine thicket" },
+    ],
+    "lichtensteins-hartebeest": [
+        { label: "Weight", value: "120–200 kg" },
+        { label: "Shoulder", value: "~1.2 m" },
+        { label: "Diet", value: "Grazer" },
+        { label: "Herd", value: "Small, reintroduced" },
+    ],
+    eland: [
+        { label: "Weight", value: "Up to 900 kg" },
+        { label: "Shoulder", value: "~1.6 m" },
+        { label: "Diet", value: "Browser & grazer" },
+        { label: "Note", value: "Largest antelope" },
+    ],
+    "sharpes-grysbok": [
+        { label: "Weight", value: "~7.5 kg" },
+        { label: "Shoulder", value: "~50 cm" },
+        { label: "Diet", value: "Browser" },
+        { label: "Active", value: "Dusk & night" },
+    ],
+    elephant: [
+        { label: "Weight", value: "Up to 6,000 kg" },
+        { label: "Shoulder", value: "3–4 m" },
+        { label: "Diet", value: "~250 kg plants/day" },
+        { label: "Lifespan", value: "60–70 yrs" },
+    ],
+    buffalo: [
+        { label: "Weight", value: "500–900 kg" },
+        { label: "Shoulder", value: "1.4–1.7 m" },
+        { label: "Diet", value: "Grazer" },
+        { label: "Herd", value: "Up to hundreds" },
+    ],
+    impala: [
+        { label: "Weight", value: "40–60 kg" },
+        { label: "Shoulder", value: "~90 cm" },
+        { label: "Diet", value: "Grazer & browser" },
+        { label: "Leap", value: "Up to 10 m" },
+    ],
+    nyala: [
+        { label: "Weight", value: "55–125 kg" },
+        { label: "Shoulder", value: "~1.1 m" },
+        { label: "Diet", value: "Browser" },
+        { label: "Where", value: "Luvuvhu thickets" },
+    ],
+    kudu: [
+        { label: "Weight", value: "190–270 kg" },
+        { label: "Horns", value: "Up to 1.8 m" },
+        { label: "Shoulder", value: "~1.5 m" },
+        { label: "Diet", value: "Browser" },
+    ],
+    hippo: [
+        { label: "Weight", value: "1,300–1,500 kg" },
+        { label: "Length", value: "~3.5 m" },
+        { label: "Diet", value: "Grazer" },
+        { label: "Lifespan", value: "~40 yrs" },
+    ],
+    "nile-crocodile": [
+        { label: "Length", value: "Up to 5 m" },
+        { label: "Weight", value: "Up to 750 kg" },
+        { label: "Diet", value: "Carnivore" },
+        { label: "Lifespan", value: "70–100 yrs" },
+    ],
+    baobab: [
+        { label: "Height", value: "Up to 25 m" },
+        { label: "Trunk", value: "Up to 10 m wide" },
+        { label: "Age", value: "1,000+ yrs" },
+    ],
+    mopane: [
+        { label: "Height", value: "4–18 m" },
+        { label: "Leaf", value: "Butterfly-shaped" },
+        { label: "Range", value: "Northern half" },
+    ],
+    "mopane-worm": [
+        { label: "Length", value: "Up to 10 cm" },
+        { label: "Diet", value: "Mopane leaves" },
+        { label: "Becomes", value: "Emperor moth" },
+    ],
+    "fever-tree": [
+        { label: "Height", value: "15–25 m" },
+        { label: "Bark", value: "Lime-green" },
+        { label: "Habitat", value: "Near water" },
+    ],
+    tigerfish: [
+        { label: "Length", value: "Up to 1 m" },
+        { label: "Weight", value: "Up to 15 kg" },
+        { label: "Diet", value: "Predator" },
+        { label: "Note", value: "Leaps for birds" },
+    ],
+    "yellow-billed-hornbill": [
+        { label: "Length", value: "48–60 cm" },
+        { label: "Weight", value: "130–240 g" },
+        { label: "Diet", value: "Omnivore" },
+        { label: "Nest", value: "Sealed in mud" },
+    ],
+    antlion: [
+        { label: "Larva", value: "Sand-pit trapper" },
+        { label: "Adult", value: "Damselfly-like" },
+        { label: "Diet", value: "Ants & insects" },
+    ],
+    "buffalo-weaver": [
+        { label: "Length", value: "~24 cm" },
+        { label: "Weight", value: "~70 g" },
+        { label: "Diet", value: "Seeds, insects" },
+        { label: "Nest", value: "Stick colonies" },
+    ],
+    // Central
+    "roan-antelope": [
+        { label: "Weight", value: "230–300 kg" },
+        { label: "Shoulder", value: "~1.4 m" },
+        { label: "Diet", value: "Grazer" },
+        { label: "Status", value: "Very rare here" },
+    ],
+    pangolin: [
+        { label: "Weight", value: "5–18 kg" },
+        { label: "Length", value: "~1 m" },
+        { label: "Diet", value: "Ants, termites" },
+        { label: "Defence", value: "Rolls into a ball" },
+    ],
+    cheetah: [
+        { label: "Weight", value: "21–72 kg" },
+        { label: "Shoulder", value: "~80 cm" },
+        { label: "Speed", value: "Up to 110 km/h" },
+        { label: "Diet", value: "Carnivore" },
+    ],
+    "saddle-billed-stork": [
+        { label: "Height", value: "~1.5 m" },
+        { label: "Wingspan", value: "~2.5 m" },
+        { label: "Diet", value: "Fish, frogs" },
+        { label: "Pairs", value: "<100 in park" },
+    ],
+    "kori-bustard": [
+        { label: "Weight", value: "Up to 18 kg" },
+        { label: "Height", value: "~1.2 m" },
+        { label: "Diet", value: "Omnivore" },
+        { label: "Note", value: "Heaviest flyer" },
+    ],
+    "honey-badger": [
+        { label: "Weight", value: "9–16 kg" },
+        { label: "Length", value: "60–80 cm" },
+        { label: "Diet", value: "Omnivore" },
+        { label: "Active", value: "Mostly night" },
+    ],
+    ostrich: [
+        { label: "Height", value: "Up to 2.7 m" },
+        { label: "Weight", value: "Up to 130 kg" },
+        { label: "Speed", value: "~70 km/h" },
+        { label: "Diet", value: "Omnivore" },
+    ],
+    lion: [
+        { label: "Weight", value: "120–190 kg (male)" },
+        { label: "Shoulder", value: "~1.2 m" },
+        { label: "Diet", value: "Carnivore" },
+        { label: "Lifespan", value: "10–14 yrs" },
+    ],
+    zebra: [
+        { label: "Weight", value: "200–350 kg" },
+        { label: "Shoulder", value: "~1.3 m" },
+        { label: "Diet", value: "Grazer" },
+        { label: "Note", value: "Unique stripes" },
+    ],
+    "blue-wildebeest": [
+        { label: "Weight", value: "120–250 kg" },
+        { label: "Shoulder", value: "~1.3 m" },
+        { label: "Diet", value: "Grazer" },
+        { label: "Calves", value: "Run in minutes" },
+    ],
+    giraffe: [
+        { label: "Height", value: "Up to 5.5 m" },
+        { label: "Weight", value: "Up to 1,900 kg" },
+        { label: "Diet", value: "Browser" },
+        { label: "Tongue", value: "~45 cm" },
+    ],
+    marula: [
+        { label: "Height", value: "Up to 18 m" },
+        { label: "Fruit", value: "Loved by elephants" },
+        { label: "Season", value: "Late summer" },
+    ],
+    "knob-thorn": [
+        { label: "Height", value: "Up to 18 m" },
+        { label: "Flower", value: "Cream, pre-rains" },
+        { label: "Pollinator", value: "Giraffe" },
+    ],
+    "spotted-hyena": [
+        { label: "Weight", value: "45–80 kg" },
+        { label: "Shoulder", value: "~85 cm" },
+        { label: "Diet", value: "Carnivore" },
+        { label: "Led by", value: "Females" },
+    ],
+    warthog: [
+        { label: "Weight", value: "50–150 kg" },
+        { label: "Shoulder", value: "~65 cm" },
+        { label: "Diet", value: "Grazer" },
+        { label: "Home", value: "Old burrows" },
+    ],
+    waterbuck: [
+        { label: "Weight", value: "200–300 kg" },
+        { label: "Shoulder", value: "~1.25 m" },
+        { label: "Diet", value: "Grazer" },
+        { label: "Note", value: "White rump ring" },
+    ],
+    "lilac-breasted-roller": [
+        { label: "Length", value: "36–38 cm" },
+        { label: "Weight", value: "~110 g" },
+        { label: "Diet", value: "Insects" },
+        { label: "Display", value: "Tumbling flight" },
+    ],
+    "dung-beetle": [
+        { label: "Length", value: "1–3 cm" },
+        { label: "Diet", value: "Dung" },
+        { label: "Note", value: "Rolls 10× its weight" },
+    ],
+    "leopard-tortoise": [
+        { label: "Length", value: "Up to 45 cm" },
+        { label: "Weight", value: "Up to 40 kg" },
+        { label: "Diet", value: "Herbivore" },
+        { label: "Lifespan", value: "80–100 yrs" },
+    ],
+    "red-billed-oxpecker": [
+        { label: "Length", value: "~20 cm" },
+        { label: "Weight", value: "~50 g" },
+        { label: "Diet", value: "Ticks, parasites" },
+        { label: "Rides", value: "Big game" },
+    ],
+    "white-backed-vulture": [
+        { label: "Wingspan", value: "2.1–2.3 m" },
+        { label: "Weight", value: "4–7 kg" },
+        { label: "Diet", value: "Scavenger" },
+        { label: "Status", value: "Critically endangered" },
+    ],
+    "marabou-stork": [
+        { label: "Height", value: "~1.5 m" },
+        { label: "Wingspan", value: "Up to 3.2 m" },
+        { label: "Diet", value: "Scavenger" },
+        { label: "Note", value: "Bald head" },
+    ],
+    "elephant-shrew": [
+        { label: "Weight", value: "45–60 g" },
+        { label: "Length", value: "~12 cm" },
+        { label: "Diet", value: "Insects" },
+        { label: "Note", value: "Trunk-like nose" },
+    ],
+    // South
+    "black-rhino": [
+        { label: "Weight", value: "800–1,400 kg" },
+        { label: "Shoulder", value: "1.4–1.8 m" },
+        { label: "Diet", value: "Browser" },
+        { label: "Lip", value: "Hooked" },
+    ],
+    "narina-trogon": [
+        { label: "Length", value: "32–34 cm" },
+        { label: "Weight", value: "55–90 g" },
+        { label: "Diet", value: "Insects" },
+        { label: "Note", value: "Sits dead still" },
+    ],
+    "wild-dog": [
+        { label: "Weight", value: "18–36 kg" },
+        { label: "Shoulder", value: "~75 cm" },
+        { label: "Diet", value: "Carnivore" },
+        { label: "Pack", value: "Tight-knit" },
+    ],
+    "white-rhino": [
+        { label: "Weight", value: "1,800–2,500 kg" },
+        { label: "Shoulder", value: "~1.8 m" },
+        { label: "Diet", value: "Grazer" },
+        { label: "Lip", value: "Square" },
+    ],
+    "sable-antelope": [
+        { label: "Weight", value: "190–270 kg" },
+        { label: "Horns", value: "Up to 1.5 m" },
+        { label: "Diet", value: "Grazer" },
+        { label: "Where", value: "Pretoriuskop sourveld" },
+    ],
+    "ground-hornbill": [
+        { label: "Height", value: "~1 m" },
+        { label: "Weight", value: "3–6 kg" },
+        { label: "Diet", value: "Carnivore" },
+        { label: "Call", value: "Booming at dawn" },
+    ],
+    "martial-eagle": [
+        { label: "Wingspan", value: "1.9–2.6 m" },
+        { label: "Weight", value: "3–6 kg" },
+        { label: "Diet", value: "Carnivore" },
+        { label: "Note", value: "Africa's most powerful eagle" },
+    ],
+    leopard: [
+        { label: "Weight", value: "30–90 kg" },
+        { label: "Shoulder", value: "~65 cm" },
+        { label: "Diet", value: "Carnivore" },
+        { label: "Lifespan", value: "12–17 yrs" },
+    ],
+    bushbuck: [
+        { label: "Weight", value: "30–80 kg" },
+        { label: "Shoulder", value: "~80 cm" },
+        { label: "Diet", value: "Browser" },
+        { label: "Note", value: "Solitary" },
+    ],
+    "chacma-baboon": [
+        { label: "Weight", value: "15–45 kg" },
+        { label: "Length", value: "~1.1 m" },
+        { label: "Diet", value: "Omnivore" },
+        { label: "Troop", value: "Up to 100" },
+    ],
+    "vervet-monkey": [
+        { label: "Weight", value: "3.5–8 kg" },
+        { label: "Length", value: "~50 cm" },
+        { label: "Diet", value: "Omnivore" },
+        { label: "Note", value: "Distinct alarm calls" },
+    ],
+    "grey-duiker": [
+        { label: "Weight", value: "15–25 kg" },
+        { label: "Shoulder", value: "~50 cm" },
+        { label: "Diet", value: "Browser" },
+        { label: "Note", value: "Dives for cover" },
+    ],
+    "sycamore-fig": [
+        { label: "Height", value: "Up to 25 m" },
+        { label: "Fruit", value: "Figs year-round" },
+        { label: "Feeds", value: "Birds, monkeys, bats" },
+    ],
+    "silver-cluster-leaf": [
+        { label: "Height", value: "10–20 m" },
+        { label: "Leaf", value: "Silver sheen" },
+        { label: "Where", value: "Granite slopes" },
+    ],
+    jackalberry: [
+        { label: "Height", value: "Up to 25 m" },
+        { label: "Fruit", value: "Ebony berries" },
+        { label: "Note", value: "Leopards store kills" },
+    ],
+    "fish-eagle": [
+        { label: "Wingspan", value: "2–2.4 m" },
+        { label: "Weight", value: "2–3.6 kg" },
+        { label: "Diet", value: "Fish" },
+        { label: "Call", value: "Iconic river cry" },
+    ],
+    "goliath-heron": [
+        { label: "Height", value: "Up to 1.5 m" },
+        { label: "Wingspan", value: "~2.3 m" },
+        { label: "Diet", value: "Fish" },
+        { label: "Note", value: "World's largest heron" },
+    ],
+    "orb-web-spider": [
+        { label: "Body", value: "2.5–4 cm (female)" },
+        { label: "Web", value: "Up to 2 m" },
+        { label: "Diet", value: "Insects" },
+    ],
+    tilapia: [
+        { label: "Length", value: "35–40 cm" },
+        { label: "Weight", value: "Up to 1 kg" },
+        { label: "Diet", value: "Omnivore" },
+        { label: "Note", value: "Digs nest craters" },
+    ],
+    "bee-eater": [
+        { label: "Length", value: "~23 cm" },
+        { label: "Weight", value: "28–38 g" },
+        { label: "Diet", value: "Bees, insects" },
+        { label: "Nest", value: "Sand-bank colonies" },
+    ],
+    "rhino-beetle": [
+        { label: "Length", value: "Up to 6 cm" },
+        { label: "Diet", value: "Sap, fruit" },
+        { label: "Strength", value: "~850× its weight" },
+    ],
+};
+
+export function speciesStats(id: string): SpeciesStat[] {
+    return SPECIES_STATS[id] ?? [];
+}
