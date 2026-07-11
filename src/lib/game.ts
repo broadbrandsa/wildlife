@@ -78,6 +78,30 @@ export function hoursUntilNextClue(day: number): number | null {
     return (releaseDay - day) * 24;
 }
 
+/**
+ * A compact live countdown to the next free clue, for the map dock chip:
+ * "5h 12m" or "2h 03m" close to release, "2d 4h" further out, null once every
+ * clue is out. Under a demo/override day the wall clock is out of step, so it
+ * falls back to a whole-day estimate.
+ */
+export function nextClueCountdown(day: number, now: number): string | null {
+    const releaseDay = nextClueReleaseDay(day);
+    if (releaseDay == null) return null;
+    const start = new Date(ROUND.startsAt).getTime();
+    const realDay = Math.floor((now - start) / 86_400_000) + 1;
+    if (realDay === day) {
+        const releaseAt = start + (releaseDay - 1) * 86_400_000;
+        const totalMin = Math.max(0, Math.ceil((releaseAt - now) / 60_000));
+        const d = Math.floor(totalMin / 1440);
+        const h = Math.floor((totalMin % 1440) / 60);
+        const m = totalMin % 60;
+        if (d > 0) return `${d}d ${h}h`;
+        if (h > 0) return `${h}h ${m.toString().padStart(2, "0")}m`;
+        return `${m}m`;
+    }
+    return `${releaseDay - day}d`;
+}
+
 /** How many timed free clues have not released yet. */
 export function freeCluesToCome(day: number): number {
     return CLUES.filter((c) => c.source === "free" && c.releaseDay != null && (c.releaseDay as number) > day).length;

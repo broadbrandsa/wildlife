@@ -26,6 +26,7 @@ import {
     isRested,
     isRoundOver,
     moveCooldownMs,
+    nextClueCountdown,
     nextClueLabel,
     poacherThird,
     restProgress,
@@ -154,11 +155,11 @@ function RestBar({ progress, ready, label }: { progress: number; ready: boolean;
 }
 
 /** Custom side-dock tab: a rounded plate hanging off the right edge of the map. */
-function DockTab({ icon, label, dot, onClick }: { icon: string; label: string; dot?: boolean; onClick: () => void }) {
+function DockTab({ icon, label, dot, sub, onClick }: { icon: string; label: string; dot?: boolean; sub?: string | null; onClick: () => void }) {
     return (
         <button
             onClick={onClick}
-            aria-label={label}
+            aria-label={sub ? `${label}, next clue in ${sub}` : label}
             className="kw-press"
             style={{
                 position: "relative",
@@ -188,6 +189,11 @@ function DockTab({ icon, label, dot, onClick }: { icon: string; label: string; d
             <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.5rem", letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text-muted)" }}>
                 {label}
             </span>
+            {sub && (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 2, marginTop: 1, fontFamily: "var(--font-mono)", fontSize: "0.5rem", letterSpacing: "0.04em", fontWeight: 700, color: "var(--ochre-700)", whiteSpace: "nowrap" }}>
+                    <i className="ph ph-timer" style={{ fontSize: 9 }} /> {sub}
+                </span>
+            )}
         </button>
     );
 }
@@ -413,6 +419,10 @@ function MapInner() {
     );
 
     const newClueToday = CLUES.some((c) => c.source === "free" && c.releaseDay === day) && cluesSeenDay !== day;
+    // Live countdown to the next free clue, shown on the Clue dock chip (nowMs
+    // ticks it). The dot signals a fresh clue today; this always counts to the
+    // next one, and shows nothing once every clue is out.
+    const clueDockSub = nextClueCountdown(day, nowMs);
 
     // Spotting a species: record it, check the bingo lists, and deal the reveal
     // card face-down for the flip. Shared by tapping a live marker and (until
@@ -796,7 +806,7 @@ function MapInner() {
             {/* right dock: anchored below the compass, status and trophy stack so
                 the two columns can never overlap, whatever the screen height */}
             <div style={{ position: "absolute", right: "var(--gutter)", top: 168, display: "flex", flexDirection: "column", gap: 10 }}>
-                <DockTab icon="notebook" label="Clue" dot={newClueToday} onClick={openClueSheet} />
+                <DockTab icon="notebook" label="Clue" dot={newClueToday} sub={clueDockSub} onClick={openClueSheet} />
                 <DockTab icon="book-open-text" label="Guides" onClick={() => setSheet("guides")} />
                 <DockTab icon="binoculars" label="Spots" onClick={() => setSheet("spots")} />
                 <DockTab icon="radio" label="Radio" dot={hasRadio && !radioSeen} onClick={openRadioSheet} />
