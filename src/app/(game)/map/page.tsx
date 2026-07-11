@@ -10,7 +10,7 @@ import { ImpactHighlight, useCampaignTotal } from "@/components/game/impact";
 import { KrugerMap } from "@/components/game/KrugerMap";
 import { Overlay } from "@/components/game/Overlay";
 import { ZoneSheet } from "@/components/game/ZoneSheet";
-import { CLUE_BY_ID, CLUES, DOG_BY_ID, RANGER_BY_ID, ROUND, SPECIES, ZONES, ZONE_BY_ID } from "@/data";
+import { CLUE_BY_ID, CLUES, DOG_BY_ID, FIVES, FIVE_OF, RANGER_BY_ID, ROUND, SPECIES, SPECIES_BY_ID, ZONES, ZONE_BY_ID } from "@/data";
 import type { Species, Zone } from "@/data";
 import {
     EXTRA_MOVE_DOGS,
@@ -29,7 +29,7 @@ import {
     tierRank,
     zoneAtPoint,
 } from "@/lib/game";
-import { RARITY_META, rollSpot } from "@/lib/spotting";
+import { RARITY_META, rollFirstSpot, rollSpot } from "@/lib/spotting";
 import type { ScentTier } from "@/lib/game";
 import { NEAR_TARGET_KM, rangersHunting, rangersNearTarget } from "@/lib/community";
 import { CAMP_HOUR, PHASE_META, PHASE_SKY, formatClock, isDusk, isNight, phaseForHour } from "@/lib/daytime";
@@ -318,10 +318,12 @@ function MapInner() {
     const newClueToday = CLUES.some((c) => c.source === "free" && c.releaseDay === day) && cluesSeenDay !== day;
 
     // Every move turns up one species from the ground the ranger now stands on.
+    // The first spot of the game always comes from the Big, Ugly or Small Five.
     const spotAtCurrentPin = () => {
         const p = useGameStore.getState().pin;
         if (!p) return;
-        const species = rollSpot(thirdOf(p));
+        const firstEver = useGameStore.getState().sightings.length === 0;
+        const species = firstEver ? rollFirstSpot(thirdOf(p)) : rollSpot(thirdOf(p));
         const priorCount = useGameStore.getState().sightings.filter((s) => s.speciesId === species.id).length;
         recordSighting(species.id, day);
         setSpot({ species, isNew: priorCount === 0, count: priorCount + 1 });
@@ -474,8 +476,9 @@ function MapInner() {
                 </button>
             </div>
 
-            {/* right dock: field clue, field guides, bakkie, spots and radio, on the same gutter as the rest */}
-            <div style={{ position: "absolute", right: "var(--gutter)", top: "44%", transform: "translateY(-50%)", display: "flex", flexDirection: "column", gap: 10 }}>
+            {/* right dock: anchored below the compass, status and trophy stack so
+                the two columns can never overlap, whatever the screen height */}
+            <div style={{ position: "absolute", right: "var(--gutter)", top: 168, display: "flex", flexDirection: "column", gap: 10 }}>
                 <DockTab icon="notebook" label="Clue" dot={newClueToday} onClick={openClueSheet} />
                 <DockTab icon="book-open-text" label="Guides" onClick={() => setSheet("guides")} />
                 <DockTab icon="truck" label="Bakkie" onClick={() => setSheet("bakkie")} />
@@ -891,14 +894,62 @@ function MapInner() {
                                 <p style={{ fontSize: "0.82rem", color: "var(--text-muted)", margin: "0.3rem 0 0", lineHeight: 1.5 }}>
                                     Every move, {dogName} puts something up. Common sightings fill the log, rare ones are a good day, and a once in a lifetime sighting is linked to prizes at round end.
                                 </p>
-                                {(["north", "central", "south"] as const).map((region) => (
-                                    <div key={region} style={{ marginTop: "var(--space-5)" }}>
+
+                                {/* the fives: spot all five of each to complete the row */}
+                                {FIVES.map((five) => {
+                                    const done = five.members.every((m) => spotted.has(m));
+                                    return (
+                                        <div
+                                            key={five.id}
+                                            style={{ marginTop: "var(--space-4)", background: done ? "var(--green-100)" : "var(--surface-card)", border: `1px solid ${done ? "var(--green-200)" : "var(--border-subtle)"}`, borderRadius: "var(--radius-lg)", padding: "var(--space-3) var(--space-4)" }}
+                                        >
+                                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "var(--space-2)" }}>
+                                                <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.64rem", letterSpacing: "0.14em", textTransform: "uppercase", color: done ? "var(--green-700)" : "var(--text-primary)", fontWeight: 700 }}>
+                                                    {five.label} · {five.members.filter((m) => spotted.has(m)).length}/5
+                                                </span>
+                                                {done && (
+                                                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.6rem", letterSpacing: "0.12em", color: "var(--green-700)", fontWeight: 700 }}>
+                                                        <i className="ph-fill ph-check-circle" /> COMPLETE
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div style={{ display: "flex", gap: "var(--space-2)" }}>
+                                                {five.members.map((m) => {
+                                                    const sp = SPECIES_BY_ID[m];
+                                                    const seen = spotted.has(m);
+                                                    return (
+                                                        <span key={m} style={{ position: "relative", flex: 1, aspectRatio: "1", borderRadius: "50%", overflow: "hidden", border: `1.5px solid ${seen ? "var(--ochre-500)" : "var(--border-default)"}` }}>
+                                                            <Image
+                                                                src={sp.photo}
+                                                                alt={seen ? sp.name : `${sp.name}, not yet spotted`}
+                                                                fill
+                                                                sizes="64px"
+                                                                style={{ objectFit: "cover", filter: seen ? "none" : "grayscale(1)", opacity: seen ? 1 : 0.35 }}
+                                                            />
+                                                        </span>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                                {(
+                                    [
+                                        { id: "mammal", label: "Mammals" },
+                                        { id: "bird", label: "Birds" },
+                                        { id: "tree", label: "Trees" },
+                                        { id: "reptile", label: "Reptiles" },
+                                        { id: "insect", label: "Insects" },
+                                        { id: "fish", label: "Fish" },
+                                    ] as const
+                                ).map((family) => (
+                                    <div key={family.id} style={{ marginTop: "var(--space-5)" }}>
                                         <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--text-accent)", marginBottom: "var(--space-2)" }}>
-                                            {region === "north" ? "Northern Kruger" : region === "central" ? "Central Kruger" : "Southern Kruger"} ·{" "}
-                                            {SPECIES.filter((s) => s.region === region && spotted.has(s.id)).length}/20
+                                            {family.label} · {SPECIES.filter((s) => s.type === family.id && spotted.has(s.id)).length}/
+                                            {SPECIES.filter((s) => s.type === family.id).length}
                                         </div>
                                         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "var(--space-2)" }}>
-                                            {SPECIES.filter((s) => s.region === region).map((s) => {
+                                            {SPECIES.filter((s) => s.type === family.id).map((s) => {
                                                 const seen = spotted.has(s.id);
                                                 return (
                                                     <button
@@ -923,13 +974,13 @@ function MapInner() {
                                                             padding: 0,
                                                         }}
                                                     >
-                                                        {seen ? (
-                                                            <Image src={s.photo} alt={s.name} fill sizes="90px" style={{ objectFit: "cover" }} />
-                                                        ) : (
-                                                            <span style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)" }}>
-                                                                <i className="ph ph-question" style={{ fontSize: 18 }} />
-                                                            </span>
-                                                        )}
+                                                        <Image
+                                                            src={s.photo}
+                                                            alt={seen ? s.name : `${s.name}, still out there`}
+                                                            fill
+                                                            sizes="90px"
+                                                            style={{ objectFit: "cover", filter: seen ? "none" : "grayscale(1)", opacity: seen ? 1 : 0.32 }}
+                                                        />
                                                         {seen && s.rarity !== "common" && (
                                                             <i
                                                                 className={`ph-fill ph-${RARITY_META[s.rarity].icon}`}
@@ -1149,10 +1200,18 @@ function MapInner() {
                         <div style={{ padding: "var(--space-5) var(--space-5) var(--space-6)" }}>
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-3)" }}>
                                 <h2 style={{ fontSize: "var(--text-h4)", margin: 0 }}>{spot.species.name}</h2>
-                                <Tag tone={RARITY_META[spot.species.rarity].tone} size="sm">
-                                    <i className={`ph-fill ph-${RARITY_META[spot.species.rarity].icon}`} style={{ marginRight: 4 }} />
-                                    {RARITY_META[spot.species.rarity].label}
-                                </Tag>
+                                <span style={{ display: "inline-flex", gap: 6, flex: "none" }}>
+                                    {FIVE_OF[spot.species.id] && (
+                                        <Tag tone="teal" size="sm">
+                                            <i className="ph-fill ph-seal-check" style={{ marginRight: 4 }} />
+                                            {FIVE_OF[spot.species.id].replace("The ", "")}
+                                        </Tag>
+                                    )}
+                                    <Tag tone={RARITY_META[spot.species.rarity].tone} size="sm">
+                                        <i className={`ph-fill ph-${RARITY_META[spot.species.rarity].icon}`} style={{ marginRight: 4 }} />
+                                        {RARITY_META[spot.species.rarity].label}
+                                    </Tag>
+                                </span>
                             </div>
                             <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: 1.55, margin: "var(--space-3) 0 0" }}>
                                 {spot.species.info}
@@ -1162,12 +1221,22 @@ function MapInner() {
                                     A once in a lifetime sighting. Hold onto this card: sightings like this one are linked to prizes when the round closes.
                                 </p>
                             )}
-                            <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--text-muted)", marginTop: "var(--space-4)" }}>
-                                {spot.isNew ? "New in your collection" : `Sighting no. ${spot.count}`}
-                            </div>
-                            <div style={{ marginTop: "var(--space-4)" }}>
-                                <Button size="lg" fullWidth onClick={() => setSpot(null)} iconRight={<i className="ph ph-binoculars" />}>
-                                    Into the collection
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-3)", marginTop: "var(--space-4)", paddingTop: "var(--space-3)", borderTop: "1px dashed var(--border-default)" }}>
+                                <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.6rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-muted)", lineHeight: 1.5 }}>
+                                    Entered into your collection
+                                    <br />
+                                    {spot.isNew ? "New species" : `Sighting no. ${spot.count}`}
+                                </div>
+                                <Button
+                                    size="sm"
+                                    variant="secondary"
+                                    onClick={() => {
+                                        setSpot(null);
+                                        setSheet("spots");
+                                    }}
+                                    iconRight={<i className="ph ph-binoculars" />}
+                                >
+                                    View collection
                                 </Button>
                             </div>
                         </div>

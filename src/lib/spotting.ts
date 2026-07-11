@@ -1,4 +1,4 @@
-import { SPECIES } from "@/data";
+import { FIVES, SPECIES, SPECIES_BY_ID } from "@/data";
 import type { Species, SpotRegion } from "@/data";
 
 /**
@@ -20,6 +20,19 @@ export function rollSpot(region: SpotRegion, rng: () => number = Math.random): S
     const tier = roll < OIALT_CHANCE ? "oialt" : roll < OIALT_CHANCE + RARE_CHANCE ? "rare" : "common";
     const tierPool = pool.filter((s) => s.rarity === tier);
     return tierPool[Math.floor(rng() * tierPool.length)] ?? pool[0];
+}
+
+/**
+ * The very first spot of the game always comes from the Big, Ugly or Small
+ * Five in the ranger's region, so the collection opens with a name the player
+ * knows and the bingo lists start working immediately.
+ */
+export function rollFirstSpot(region: SpotRegion, rng: () => number = Math.random): Species {
+    const members = FIVES.flatMap((f) => f.members)
+        .map((id) => SPECIES_BY_ID[id])
+        .filter((s) => s && s.region === region);
+    if (members.length === 0) return rollSpot(region, rng);
+    return members[Math.floor(rng() * members.length)];
 }
 
 /** Display metadata for the rarity tiers. */

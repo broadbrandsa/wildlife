@@ -1,13 +1,13 @@
 /**
- * The spotting log: 60 real Kruger species, 20 per region (north, central,
+ * The spotting log: 66 real Kruger species across the three regions (north, central,
  * south of the park), matched to where they actually occur. Rarity tiers:
  * common (most moves), rare (a good day) and once-in-a-lifetime (oialt),
  * which appears only in its own region on the rarest of rolls and is linked
  * to round prizes.
  *
- * Photography is hotlinked from Wikimedia Commons for the prototype. Each
- * image carries its own Creative Commons licence; attribution must be
- * surfaced in the UI before production.
+ * Photography: Wikimedia Commons images stored locally in public/species/.
+ * Each carries its own Creative Commons licence; attribution must be surfaced
+ * in the UI (or the photos replaced with licensed originals) before production.
  */
 
 export type SpotRegion = "north" | "central" | "south";
@@ -34,7 +34,7 @@ export const SPECIES: Species[] = [
         rarity: "oialt",
         region: "north",
         info: "A roller of tall mopane woodland, told by the bare shafts and spoons on its tail. In South Africa it is found only in the far north of the Kruger, and even there a sighting is the stuff of legend.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/Coracias_spatulatusPCCA20071227-8449B.jpg/330px-Coracias_spatulatusPCCA20071227-8449B.jpg",
+        photo: "/species/racket-tailed-roller.jpg",
     },
     {
         id: "pels-fishing-owl",
@@ -43,7 +43,7 @@ export const SPECIES: Species[] = [
         rarity: "oialt",
         region: "north",
         info: "A giant rufous owl that fishes by night from branches over the Luvuvhu. Birders travel across the world for one glimpse at Pafuri.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Pel%27s_fishing_owl%2C_Scotopelia_pel.jpg/330px-Pel%27s_fishing_owl%2C_Scotopelia_pel.jpg",
+        photo: "/species/pels-fishing-owl.jpg",
     },
     {
         id: "samango-monkey",
@@ -52,7 +52,7 @@ export const SPECIES: Species[] = [
         rarity: "rare",
         region: "north",
         info: "South Africa's only forest monkey, darker and shyer than the vervet. In the Kruger it lives only in the tall riverine forest at Pafuri.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Blue_monkey_%28Cercopithecus_mitis_stuhlmanni%29.jpg/330px-Blue_monkey_%28Cercopithecus_mitis_stuhlmanni%29.jpg",
+        photo: "/species/samango-monkey.jpg",
     },
     {
         id: "crested-guineafowl",
@@ -61,7 +61,7 @@ export const SPECIES: Species[] = [
         rarity: "rare",
         region: "north",
         info: "A guineafowl with a mop of black curls, scratching through riverine thickets in the far north. Far scarcer than its helmeted cousin.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f5/Guttera_pucherani_-Hluhluwe-Umfolozi_Game_Reserve%2C_South_Africa_-head-8.jpg/330px-Guttera_pucherani_-Hluhluwe-Umfolozi_Game_Reserve%2C_South_Africa_-head-8.jpg",
+        photo: "/species/crested-guineafowl.jpg",
     },
     {
         id: "lichtensteins-hartebeest",
@@ -70,7 +70,7 @@ export const SPECIES: Species[] = [
         rarity: "rare",
         region: "north",
         info: "A rangy antelope reintroduced to the far northern plains after vanishing from the park for a century. Only a small herd exists.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c6/Lichtenstein%27s_Hartebeest.jpg/330px-Lichtenstein%27s_Hartebeest.jpg",
+        photo: "/species/lichtensteins-hartebeest.jpg",
     },
     {
         id: "eland",
@@ -79,7 +79,7 @@ export const SPECIES: Species[] = [
         rarity: "rare",
         region: "north",
         info: "The largest antelope on earth, a bull can weigh close to a ton. Small herds drift through the northern sandveld.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/Taurotragus_oryx_-_young_bull_-_Etosha_2015.jpg/330px-Taurotragus_oryx_-_young_bull_-_Etosha_2015.jpg",
+        photo: "/species/eland.jpg",
     },
     {
         id: "sharpes-grysbok",
@@ -88,7 +88,7 @@ export const SPECIES: Species[] = [
         rarity: "rare",
         region: "north",
         info: "A secretive, russet dwarf antelope of the mopane scrub, mostly seen at dusk. Blink and it is gone.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/Sharpe%27s_Grysbok_%28Raphicerus_sharpei%29_male_%2811838584075%29.jpg/330px-Sharpe%27s_Grysbok_%28Raphicerus_sharpei%29_male_%2811838584075%29.jpg",
+        photo: "/species/sharpes-grysbok.jpg",
     },
     {
         id: "elephant",
@@ -97,7 +97,7 @@ export const SPECIES: Species[] = [
         rarity: "common",
         region: "north",
         info: "The great grey gardeners of the mopane. Northern bulls grow some of the finest tusks in Africa, and the herds bulldoze whole woodlands as they feed.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/178_Male_African_bush_elephant_in_Etosha_National_Park_Photo_by_Giles_Laurent.jpg/330px-178_Male_African_bush_elephant_in_Etosha_National_Park_Photo_by_Giles_Laurent.jpg",
+        photo: "/species/elephant.jpg",
     },
     {
         id: "buffalo",
@@ -106,7 +106,7 @@ export const SPECIES: Species[] = [
         rarity: "common",
         region: "north",
         info: "Herds several hundred strong churn the northern floodplains. Old bulls, the dagga boys, wallow alone and trust nobody.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/13/African_buffalo_%28Syncerus_caffer_caffer%29_male_with_cattle_egret.jpg/330px-African_buffalo_%28Syncerus_caffer_caffer%29_male_with_cattle_egret.jpg",
+        photo: "/species/buffalo.jpg",
     },
     {
         id: "impala",
@@ -115,7 +115,7 @@ export const SPECIES: Species[] = [
         rarity: "common",
         region: "north",
         info: "The bushveld's everywhere antelope, the reason the dogs learn early not to chase. Listen for the rutting roar in autumn.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Impala_%28Aepyceros_melampus%29_male_Kruger.jpg/330px-Impala_%28Aepyceros_melampus%29_male_Kruger.jpg",
+        photo: "/species/impala.jpg",
     },
     {
         id: "nyala",
@@ -124,7 +124,7 @@ export const SPECIES: Species[] = [
         rarity: "common",
         region: "north",
         info: "A striped, shaggy antelope of the northern thickets. The Luvuvhu river drives hold more nyala than anywhere else in the park.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/Nyala_%28Tragelaphus_angasii%29_male_Maputo.jpg/330px-Nyala_%28Tragelaphus_angasii%29_male_Maputo.jpg",
+        photo: "/species/nyala.jpg",
     },
     {
         id: "kudu",
@@ -133,7 +133,7 @@ export const SPECIES: Species[] = [
         rarity: "common",
         region: "north",
         info: "The grey ghost of the bushveld. A bull's spiral horns can make two and a half full turns.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Male_greater_kudu.jpg/330px-Male_greater_kudu.jpg",
+        photo: "/species/kudu.jpg",
     },
     {
         id: "hippo",
@@ -142,7 +142,7 @@ export const SPECIES: Species[] = [
         rarity: "common",
         region: "north",
         info: "Grunting rafts of hippo hold the deep pools of the Luvuvhu and Limpopo. At night they walk kilometres from the water to graze.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Portrait_Hippopotamus_in_the_water.jpg/330px-Portrait_Hippopotamus_in_the_water.jpg",
+        photo: "/species/hippo.jpg",
     },
     {
         id: "nile-crocodile",
@@ -151,7 +151,7 @@ export const SPECIES: Species[] = [
         rarity: "common",
         region: "north",
         info: "The fearful rivers of the north are full of them. Crocodiles here have hunted the same pools since before the park had a name.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/NileCrocodile.jpg/330px-NileCrocodile.jpg",
+        photo: "/species/nile-crocodile.jpg",
     },
     {
         id: "baobab",
@@ -160,7 +160,7 @@ export const SPECIES: Species[] = [
         rarity: "common",
         region: "north",
         info: "The upside-down tree. South of the Tropic of Capricorn they thin out fast, which makes the northern giants signposts you can navigate by.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/Baobab_and_elephant%2C_Tanzania.jpg/330px-Baobab_and_elephant%2C_Tanzania.jpg",
+        photo: "/species/baobab.jpg",
     },
     {
         id: "mopane",
@@ -169,7 +169,7 @@ export const SPECIES: Species[] = [
         rarity: "common",
         region: "north",
         info: "Butterfly-shaped leaves that fold together in the heat. Mopane paints the whole northern half of the park in rust and olive.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Colophospermum_mopane_arbre_MHNT%2C_crop.jpg/330px-Colophospermum_mopane_arbre_MHNT%2C_crop.jpg",
+        photo: "/species/mopane.jpg",
     },
     {
         id: "mopane-worm",
@@ -178,7 +178,7 @@ export const SPECIES: Species[] = [
         rarity: "common",
         region: "north",
         info: "The spiny caterpillar of the emperor moth, harvested and dried as food for generations. Whole trees are stripped in a good season.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/Colophospermum_mopane_50D_0486.jpg/330px-Colophospermum_mopane_50D_0486.jpg",
+        photo: "/species/mopane-worm.jpg",
     },
     {
         id: "fever-tree",
@@ -187,7 +187,7 @@ export const SPECIES: Species[] = [
         rarity: "common",
         region: "north",
         info: "A ghostly acacia with luminous yellow-green bark, marking water in the Pafuri forest. Early travellers blamed it for malaria; the mosquitoes were the culprits.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Ngorongoro_Acacia_xanthophloea.jpg/330px-Ngorongoro_Acacia_xanthophloea.jpg",
+        photo: "/species/fever-tree.jpg",
     },
     {
         id: "tigerfish",
@@ -196,7 +196,7 @@ export const SPECIES: Species[] = [
         rarity: "common",
         region: "north",
         info: "A silver torpedo with orange fins and interlocking teeth, patrolling the Luvuvhu and Limpopo. It has been filmed leaping to snatch swallows from the air.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Hydrocynus_vittatus_The_fishes_of_the_Nile_%28Pl._XVII%29_%286961607491%29.jpg/330px-Hydrocynus_vittatus_The_fishes_of_the_Nile_%28Pl._XVII%29_%286961607491%29.jpg",
+        photo: "/species/tigerfish.jpg",
     },
     {
         id: "yellow-billed-hornbill",
@@ -205,7 +205,7 @@ export const SPECIES: Species[] = [
         rarity: "common",
         region: "north",
         info: "The flying banana of the lowveld camps, hopping for scraps and hawking insects. It walls its nest hole shut with mud, the female sealed inside.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b7/155_Southern_yellow-billed_hornbill_in_Etosha_National_Park_Photo_by_Giles_Laurent.jpg/330px-155_Southern_yellow-billed_hornbill_in_Etosha_National_Park_Photo_by_Giles_Laurent.jpg",
+        photo: "/species/yellow-billed-hornbill.jpg",
     },
     {
         id: "roan-antelope",
@@ -214,7 +214,7 @@ export const SPECIES: Species[] = [
         rarity: "oialt",
         region: "central",
         info: "A horse-sized antelope with a clown-painted face, one of the rarest large mammals in the park. A handful survive on the northern basalt plains.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Roan_antelope_%28Hippotragus_equinus_equinus%29_Mlilwane.jpg/330px-Roan_antelope_%28Hippotragus_equinus_equinus%29_Mlilwane.jpg",
+        photo: "/species/roan-antelope.jpg",
     },
     {
         id: "pangolin",
@@ -223,7 +223,7 @@ export const SPECIES: Species[] = [
         rarity: "oialt",
         region: "central",
         info: "An armoured anteater that walks on its hind legs and rolls into a ball of scales. Rangers can work a lifetime in the bush and never see one.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Manis_temminckii_%2829645803646%29.jpg/330px-Manis_temminckii_%2829645803646%29.jpg",
+        photo: "/species/pangolin.jpg",
     },
     {
         id: "cheetah",
@@ -232,7 +232,7 @@ export const SPECIES: Species[] = [
         rarity: "rare",
         region: "central",
         info: "The open knob-thorn plains of the central district are cheetah country, but only a few hundred live in the whole park. Scan the termite mounds.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/Male_cheetah_facing_left_in_South_Africa.jpg/330px-Male_cheetah_facing_left_in_South_Africa.jpg",
+        photo: "/species/cheetah.jpg",
     },
     {
         id: "saddle-billed-stork",
@@ -241,7 +241,7 @@ export const SPECIES: Species[] = [
         rarity: "rare",
         region: "central",
         info: "A metre and a half of stork with a banded scarlet and black bill. Fewer than a hundred breeding pairs remain in the park, each pair holding its own stretch of river.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Ephippiorhynchus_senegalensis_-Kruger_National_Park%2C_Limpopo%2C_South_Africa-8.jpg/330px-Ephippiorhynchus_senegalensis_-Kruger_National_Park%2C_Limpopo%2C_South_Africa-8.jpg",
+        photo: "/species/saddle-billed-stork.jpg",
     },
     {
         id: "kori-bustard",
@@ -250,7 +250,7 @@ export const SPECIES: Species[] = [
         rarity: "rare",
         region: "central",
         info: "The heaviest flying bird on earth strides the basalt grassland like a small ostrich. Males puff their necks white in display.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/13/Kori_bustard_%28Ardeotis_kori_kori%29_male.jpg/330px-Kori_bustard_%28Ardeotis_kori_kori%29_male.jpg",
+        photo: "/species/kori-bustard.jpg",
     },
     {
         id: "honey-badger",
@@ -259,7 +259,7 @@ export const SPECIES: Species[] = [
         rarity: "rare",
         region: "central",
         info: "Fearless, tireless and armour-skinned. It will raid a beehive, face down a lion and dig out a scorpion in the same night.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Honey_Badger.jpg/330px-Honey_Badger.jpg",
+        photo: "/species/honey-badger.jpg",
     },
     {
         id: "ostrich",
@@ -268,7 +268,7 @@ export const SPECIES: Species[] = [
         rarity: "rare",
         region: "central",
         info: "The central plains are the only place in the park you are likely to meet one. A male's boom carries further than a lion's roar on a still night.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Struthio_camelus_-_Etosha_2014_%283%29.jpg/330px-Struthio_camelus_-_Etosha_2014_%283%29.jpg",
+        photo: "/species/ostrich.jpg",
     },
     {
         id: "lion",
@@ -277,7 +277,7 @@ export const SPECIES: Species[] = [
         rarity: "common",
         region: "central",
         info: "The central district carries the highest lion density in the park, prides built on zebra and wildebeest. Most of the hunting happens after dark.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/020_The_lion_king_Snyggve_in_the_Serengeti_National_Park_Photo_by_Giles_Laurent.jpg/330px-020_The_lion_king_Snyggve_in_the_Serengeti_National_Park_Photo_by_Giles_Laurent.jpg",
+        photo: "/species/lion.jpg",
     },
     {
         id: "zebra",
@@ -286,7 +286,7 @@ export const SPECIES: Species[] = [
         rarity: "common",
         region: "central",
         info: "Every stripe pattern is unique, a fingerprint in black and white. Zebra and wildebeest move the central plains together, one grazing tall grass, the other short.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/Equus_quagga_burchellii_-_Etosha%2C_2014.jpg/330px-Equus_quagga_burchellii_-_Etosha%2C_2014.jpg",
+        photo: "/species/zebra.jpg",
     },
     {
         id: "blue-wildebeest",
@@ -295,7 +295,7 @@ export const SPECIES: Species[] = [
         rarity: "common",
         region: "central",
         info: "The bearded workhorse of the savanna. Calves run with the herd within minutes of being born.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/Blue_Wildebeest%2C_Ngorongoro.jpg/330px-Blue_Wildebeest%2C_Ngorongoro.jpg",
+        photo: "/species/blue-wildebeest.jpg",
     },
     {
         id: "giraffe",
@@ -304,7 +304,7 @@ export const SPECIES: Species[] = [
         rarity: "common",
         region: "central",
         info: "Browsing the tops of the knob-thorns with a half-metre blue tongue. Bulls neck-wrestle in slow motion to settle rank.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/Giraffe_standing.jpg/330px-Giraffe_standing.jpg",
+        photo: "/species/giraffe.jpg",
     },
     {
         id: "marula",
@@ -313,7 +313,7 @@ export const SPECIES: Species[] = [
         rarity: "common",
         region: "central",
         info: "The tree of the central savanna. Elephants queue for the fallen fruit in late summer, and the pips feed everything from squirrels to people.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Marula02.jpg/330px-Marula02.jpg",
+        photo: "/species/marula.jpg",
     },
     {
         id: "knob-thorn",
@@ -322,7 +322,7 @@ export const SPECIES: Species[] = [
         rarity: "common",
         region: "central",
         info: "A tall acacia studded with knobs, flowering cream before the rains. Giraffe do the pollinating as they browse.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Acacia_nigrescens%2C_habitus%2C_Steenbokpan%2C_a.jpg/330px-Acacia_nigrescens%2C_habitus%2C_Steenbokpan%2C_a.jpg",
+        photo: "/species/knob-thorn.jpg",
     },
     {
         id: "spotted-hyena",
@@ -331,7 +331,7 @@ export const SPECIES: Species[] = [
         rarity: "common",
         region: "central",
         info: "Not a scavenger but one of Africa's most successful hunters, run by the females. That whooping call at night is a clan keeping in touch.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dc/Spotted_hyena_%28Crocuta_crocuta%29.jpg/330px-Spotted_hyena_%28Crocuta_crocuta%29.jpg",
+        photo: "/species/spotted-hyena.jpg",
     },
     {
         id: "warthog",
@@ -340,7 +340,7 @@ export const SPECIES: Species[] = [
         rarity: "common",
         region: "central",
         info: "Trots with its tail up like an aerial, kneels to graze, and reverses into its burrow so the tusks face the door.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/Southern_warthog_%28Phacochoerus_africanus_sundevallii%29_male.jpg/330px-Southern_warthog_%28Phacochoerus_africanus_sundevallii%29_male.jpg",
+        photo: "/species/warthog.jpg",
     },
     {
         id: "waterbuck",
@@ -349,7 +349,7 @@ export const SPECIES: Species[] = [
         rarity: "common",
         region: "central",
         info: "A shaggy antelope with a white target ring on its rump, never far from the rivers. When danger comes it heads for deep water.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/069_Waterbuck_at_Queen_Elizabeth_National_Park_Photo_by_Giles_Laurent.jpg/330px-069_Waterbuck_at_Queen_Elizabeth_National_Park_Photo_by_Giles_Laurent.jpg",
+        photo: "/species/waterbuck.jpg",
     },
     {
         id: "lilac-breasted-roller",
@@ -358,7 +358,7 @@ export const SPECIES: Species[] = [
         rarity: "common",
         region: "central",
         info: "The bushveld's painted jewel, hunting from roadside perches. In display it rolls and tumbles out of the sky, which earned the family its name.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/143_Lilac-breasted_roller_in_Etosha_National_Park_Photo_by_Giles_Laurent.jpg/330px-143_Lilac-breasted_roller_in_Etosha_National_Park_Photo_by_Giles_Laurent.jpg",
+        photo: "/species/lilac-breasted-roller.jpg",
     },
     {
         id: "dung-beetle",
@@ -367,7 +367,7 @@ export const SPECIES: Species[] = [
         rarity: "common",
         region: "central",
         info: "The park's clean-up crew, rolling and burying tons of dung a day. Some navigate their dead-straight lines by the Milky Way.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cc/Scarabaeus_viettei_01.jpg/330px-Scarabaeus_viettei_01.jpg",
+        photo: "/species/dung-beetle.jpg",
     },
     {
         id: "leopard-tortoise",
@@ -376,7 +376,7 @@ export const SPECIES: Species[] = [
         rarity: "common",
         region: "central",
         info: "The smallest of the Little Five, patterned like its namesake cat. It can live the better part of a century.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/Leopard_Tortoise_%28Stigmochelys_pardalis%29_%2817331907085%29.jpg/330px-Leopard_Tortoise_%28Stigmochelys_pardalis%29_%2817331907085%29.jpg",
+        photo: "/species/leopard-tortoise.jpg",
     },
     {
         id: "red-billed-oxpecker",
@@ -385,7 +385,7 @@ export const SPECIES: Species[] = [
         rarity: "common",
         region: "central",
         info: "Rides the game like a mounted sentry, feeding on ticks and hissing an alarm that half the bushveld understands.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Buphagus_erythrorhynchus00.jpg/330px-Buphagus_erythrorhynchus00.jpg",
+        photo: "/species/red-billed-oxpecker.jpg",
     },
     {
         id: "black-rhino",
@@ -394,7 +394,7 @@ export const SPECIES: Species[] = [
         rarity: "oialt",
         region: "south",
         info: "The rarer, shyer cousin of the white rhino, a browser with a hooked lip that holds to the thickets. Seeing one is the privilege of a lifetime, and protecting them is why the K9 unit exists.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/Black_Rhino_at_Working_with_Wildlife.jpg/330px-Black_Rhino_at_Working_with_Wildlife.jpg",
+        photo: "/species/black-rhino.jpg",
     },
     {
         id: "narina-trogon",
@@ -403,7 +403,7 @@ export const SPECIES: Species[] = [
         rarity: "oialt",
         region: "south",
         info: "A crimson and emerald ghost of the tall riverine forest. It sits dead still and faces away, green back to the world, which is why almost nobody ever sees one.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Narina_Trogon%2C_Apaloderma_narina_MALE_at_Lekgalameetse_Provincial_Reserve%2C_Limpopo%2C_South_Africa_%2814654439002%29.jpg/330px-Narina_Trogon%2C_Apaloderma_narina_MALE_at_Lekgalameetse_Provincial_Reserve%2C_Limpopo%2C_South_Africa_%2814654439002%29.jpg",
+        photo: "/species/narina-trogon.jpg",
     },
     {
         id: "wild-dog",
@@ -412,7 +412,7 @@ export const SPECIES: Species[] = [
         rarity: "rare",
         region: "south",
         info: "The painted wolf. Fewer than three hundred roam the whole park in tight-knit packs, and a sighting can make a ranger's month.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/75/African_Wild_Dog_at_Working_with_Wildlife.jpg/330px-African_Wild_Dog_at_Working_with_Wildlife.jpg",
+        photo: "/species/wild-dog.jpg",
     },
     {
         id: "white-rhino",
@@ -421,7 +421,7 @@ export const SPECIES: Species[] = [
         rarity: "rare",
         region: "south",
         info: "The great grey grazer of the southern grasslands. The park guards their locations with its life, and so do the dogs.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/109_Male_White_rhinoceros_walking_in_the_Kalahari_Desert_of_Namibia_Photo_by_Giles_Laurent.jpg/330px-109_Male_White_rhinoceros_walking_in_the_Kalahari_Desert_of_Namibia_Photo_by_Giles_Laurent.jpg",
+        photo: "/species/white-rhino.jpg",
     },
     {
         id: "sable-antelope",
@@ -430,7 +430,7 @@ export const SPECIES: Species[] = [
         rarity: "rare",
         region: "south",
         info: "Jet black with sweeping scimitar horns, the finest of them living in the sour grassland around Pretoriuskop.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/Sable_antelope_%28Hippotragus_niger%29_adult_male.jpg/330px-Sable_antelope_%28Hippotragus_niger%29_adult_male.jpg",
+        photo: "/species/sable-antelope.jpg",
     },
     {
         id: "ground-hornbill",
@@ -439,7 +439,7 @@ export const SPECIES: Species[] = [
         rarity: "rare",
         region: "south",
         info: "A turkey-sized hornbill with scarlet wattles, patrolling in family groups. Its dawn booming is often mistaken for distant lion.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Southern_Ground_Hornbill_%28Bucorvus_leadbeateri%29_male_%2812714625605%29%2C_crop.jpg/330px-Southern_Ground_Hornbill_%28Bucorvus_leadbeateri%29_male_%2812714625605%29%2C_crop.jpg",
+        photo: "/species/ground-hornbill.jpg",
     },
     {
         id: "martial-eagle",
@@ -448,7 +448,7 @@ export const SPECIES: Species[] = [
         rarity: "rare",
         region: "south",
         info: "Africa's most powerful eagle, capable of taking a small antelope. Each pair needs a territory the size of a small town.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/61/Martial_eagle_%28Polemaetus_bellicosus%29.jpg/330px-Martial_eagle_%28Polemaetus_bellicosus%29.jpg",
+        photo: "/species/martial-eagle.jpg",
     },
     {
         id: "leopard",
@@ -457,7 +457,7 @@ export const SPECIES: Species[] = [
         rarity: "common",
         region: "south",
         info: "The Sabie river corridor holds one of the highest leopard densities in Africa. Check the horizontal limbs of the big jackalberries.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Leopard_%28Panthera_pardus_pardus%29_Kruger.jpg/330px-Leopard_%28Panthera_pardus_pardus%29_Kruger.jpg",
+        photo: "/species/leopard.jpg",
     },
     {
         id: "bushbuck",
@@ -466,7 +466,7 @@ export const SPECIES: Species[] = [
         rarity: "common",
         region: "south",
         info: "A solitary, dappled antelope of the riverine tangle. Cornered, it is one of the most dangerous antelope in Africa.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Flickr_-_Rainbirder_-_Imbabala_Bushbuck_%28Tragelaphus_sylvaticus%29.jpg/330px-Flickr_-_Rainbirder_-_Imbabala_Bushbuck_%28Tragelaphus_sylvaticus%29.jpg",
+        photo: "/species/bushbuck.jpg",
     },
     {
         id: "chacma-baboon",
@@ -475,7 +475,7 @@ export const SPECIES: Species[] = [
         rarity: "common",
         region: "south",
         info: "Troops of a hundred work the granite koppies, led by old males with dog-like muzzles. Nothing in the veld misses their alarm bark.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Chacma_Baboon_%28Papio_ursinus%29_%2816824823063%29.jpg/330px-Chacma_Baboon_%28Papio_ursinus%29_%2816824823063%29.jpg",
+        photo: "/species/chacma-baboon.jpg",
     },
     {
         id: "vervet-monkey",
@@ -484,7 +484,7 @@ export const SPECIES: Species[] = [
         rarity: "common",
         region: "south",
         info: "Quick hands and a bottomless curiosity. Their alarm calls tell the bush exactly what is coming: eagle, snake or leopard.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Cercopiteco_verde_%28Chlorocebus_pygerythrus%29%2C_parque_nacional_del_lago_Nakuru%2C_Kenia%2C_2024-05-18%2C_DD_77.jpg/330px-Cercopiteco_verde_%28Chlorocebus_pygerythrus%29%2C_parque_nacional_del_lago_Nakuru%2C_Kenia%2C_2024-05-18%2C_DD_77.jpg",
+        photo: "/species/vervet-monkey.jpg",
     },
     {
         id: "grey-duiker",
@@ -493,7 +493,7 @@ export const SPECIES: Species[] = [
         rarity: "common",
         region: "south",
         info: "A knee-high antelope that dives into cover, which is exactly what its Afrikaans name means. Happy on fallen fruit, insects, even carrion.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/C%C3%A9phalophe_de_grimm%2C_crop.jpg/330px-C%C3%A9phalophe_de_grimm%2C_crop.jpg",
+        photo: "/species/grey-duiker.jpg",
     },
     {
         id: "sycamore-fig",
@@ -502,7 +502,7 @@ export const SPECIES: Species[] = [
         rarity: "common",
         region: "south",
         info: "The great fruiting fig of the Sabie banks. When a big one ripens, half the bush arrives for the feast: green pigeons, hornbills, monkeys, bats.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/Ficus_sycomorus_0003.jpg/330px-Ficus_sycomorus_0003.jpg",
+        photo: "/species/sycamore-fig.jpg",
     },
     {
         id: "silver-cluster-leaf",
@@ -511,7 +511,7 @@ export const SPECIES: Species[] = [
         rarity: "common",
         region: "south",
         info: "Catches the afternoon light in silver on the granite slopes around Pretoriuskop. The sourveld's signature tree.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Terminalia_sericea%2C_a%2C_Seringveld.jpg/330px-Terminalia_sericea%2C_a%2C_Seringveld.jpg",
+        photo: "/species/silver-cluster-leaf.jpg",
     },
     {
         id: "jackalberry",
@@ -520,7 +520,7 @@ export const SPECIES: Species[] = [
         rarity: "common",
         region: "south",
         info: "A giant riverine ebony whose fruit feeds jackals, hence the name. Leopards drape their kills across its horizontal boughs.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Chobe_N.P._01.jpg/330px-Chobe_N.P._01.jpg",
+        photo: "/species/jackalberry.jpg",
     },
     {
         id: "fish-eagle",
@@ -529,7 +529,7 @@ export const SPECIES: Species[] = [
         rarity: "common",
         region: "south",
         info: "The voice of the rivers. That ringing cry over the Sabie is the sound most rangers would choose to hear last.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/African_fish_eagle%2C_Haliaeetus_vocifer%2C_at_Chobe_National_Park%2C_Botswana_%2833516612831%29.jpg/330px-African_fish_eagle%2C_Haliaeetus_vocifer%2C_at_Chobe_National_Park%2C_Botswana_%2833516612831%29.jpg",
+        photo: "/species/fish-eagle.jpg",
     },
     {
         id: "goliath-heron",
@@ -538,7 +538,7 @@ export const SPECIES: Species[] = [
         rarity: "common",
         region: "south",
         info: "The world's largest heron, as tall as a person, stalking the Sabie shallows in slow motion for fish the size of your forearm.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Ardea_goliath_-Lake_Baringo%2C_Kenya-8.jpg/330px-Ardea_goliath_-Lake_Baringo%2C_Kenya-8.jpg",
+        photo: "/species/goliath-heron.jpg",
     },
     {
         id: "orb-web-spider",
@@ -547,7 +547,7 @@ export const SPECIES: Species[] = [
         rarity: "common",
         region: "south",
         info: "Strings golden silk across whole game paths, strong enough to stop a small bird. The tiny males live at the edge of the giant female's web.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/da/FloridaOrbWebSpider_NephilaClavipes.jpg/330px-FloridaOrbWebSpider_NephilaClavipes.jpg",
+        photo: "/species/orb-web-spider.jpg",
     },
     {
         id: "tilapia",
@@ -556,7 +556,7 @@ export const SPECIES: Species[] = [
         rarity: "common",
         region: "south",
         info: "The bream of the lowveld rivers. Males dig display craters in the shallows, and kingfishers and herons live on the young.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Oreochromis_mossambicus.JPG/330px-Oreochromis_mossambicus.JPG",
+        photo: "/species/tilapia.jpg",
     },
     {
         id: "bee-eater",
@@ -565,8 +565,78 @@ export const SPECIES: Species[] = [
         rarity: "common",
         region: "south",
         info: "Jewelled flocks nest in colonies dug into the sand banks of the Sabie, hawking bees mid-air and beating the sting out on a branch.",
-        photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/White-fronted_bee-eater_%28Merops_bullockoides%29_Namibia.jpg/330px-White-fronted_bee-eater_%28Merops_bullockoides%29_Namibia.jpg",
+        photo: "/species/bee-eater.jpg",
+    },
+    {
+        id: "white-backed-vulture",
+        name: "White-backed vulture",
+        type: "bird",
+        rarity: "common",
+        region: "central",
+        info: "The clean-up crew of the plains, circling on thermals until one drops and the whole sky follows. One of the Ugly Five, and critically endangered for its trouble.",
+        photo: "/species/white-backed-vulture.jpg",
+    },
+    {
+        id: "marabou-stork",
+        name: "Marabou stork",
+        type: "bird",
+        rarity: "common",
+        region: "central",
+        info: "The undertaker bird: bald head, dangling throat pouch and a tailcoat walk. It stands shoulder to shoulder with the vultures at a carcass, and somehow looks worse.",
+        photo: "/species/marabou-stork.jpg",
+    },
+    {
+        id: "elephant-shrew",
+        name: "Elephant shrew",
+        type: "mammal",
+        rarity: "common",
+        region: "south",
+        info: "A mouse-sized sprinter with a trunk-like nose, dashing along cleared runways between the granite koppies. The elephant of the Small Five.",
+        photo: "/species/elephant-shrew.jpg",
+    },
+    {
+        id: "antlion",
+        name: "Antlion",
+        type: "insect",
+        rarity: "common",
+        region: "north",
+        info: "The lion of the Small Five digs a perfect sand funnel and waits at the bottom for an ant to slip. The adult looks like a drab dragonfly and fools almost everyone.",
+        photo: "/species/antlion.jpg",
+    },
+    {
+        id: "buffalo-weaver",
+        name: "Red-billed buffalo weaver",
+        type: "bird",
+        rarity: "common",
+        region: "north",
+        info: "The buffalo of the Small Five builds huge untidy stick nests in the northern baobabs and thorn trees, whole colonies bickering in one tree.",
+        photo: "/species/buffalo-weaver.jpg",
+    },
+    {
+        id: "rhino-beetle",
+        name: "Rhinoceros beetle",
+        type: "insect",
+        rarity: "common",
+        region: "south",
+        info: "Gram for gram one of the strongest animals on earth, with a horn to match its namesake. The rhino of the Small Five blunders into camp lights on summer nights.",
+        photo: "/species/rhino-beetle.jpg",
     },
 ];
+
+/**
+ * The bingo lists: spot all five of each. Every member id exists in SPECIES.
+ * The player's first ever spot is always drawn from these lists, so the game
+ * opens with a name they know.
+ */
+export const FIVES: { id: "big" | "ugly" | "small"; label: string; members: string[] }[] = [
+    { id: "big", label: "The Big Five", members: ["lion", "leopard", "elephant", "buffalo", "white-rhino"] },
+    { id: "ugly", label: "The Ugly Five", members: ["spotted-hyena", "warthog", "blue-wildebeest", "white-backed-vulture", "marabou-stork"] },
+    { id: "small", label: "The Small Five", members: ["leopard-tortoise", "elephant-shrew", "antlion", "buffalo-weaver", "rhino-beetle"] },
+];
+
+/** Which five (if any) a species belongs to, for the card badge. */
+export const FIVE_OF: Record<string, string> = Object.fromEntries(
+    FIVES.flatMap((f) => f.members.map((m) => [m, f.label])),
+);
 
 export const SPECIES_BY_ID: Record<string, Species> = Object.fromEntries(SPECIES.map((s) => [s.id, s]));
