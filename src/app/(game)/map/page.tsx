@@ -5,13 +5,15 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
 
 import { Button, Eyebrow, Tag } from "@/components/ds";
+import { DealtCard, prefersReducedMotion } from "@/components/game/CardFlip";
 import { ClueCard } from "@/components/game/ClueCard";
+import { GuideCardFront } from "@/components/game/GuideCard";
 import { ImpactHighlight, useCampaignTotal } from "@/components/game/impact";
 import { KrugerMap } from "@/components/game/KrugerMap";
 import { Overlay } from "@/components/game/Overlay";
 import { ZoneSheet } from "@/components/game/ZoneSheet";
 import { CLUE_BY_ID, CLUES, DOG_BY_ID, FIVES, FIVE_OF, RANGER_BY_ID, ROUND, SPECIES, SPECIES_BY_ID, ZONES, ZONE_BY_ID } from "@/data";
-import type { Species, Zone } from "@/data";
+import type { Clue, Species, Zone } from "@/data";
 import {
     EXTRA_MOVE_DOGS,
     SCENT_TEXT,
@@ -45,85 +47,9 @@ const TIER_META: Record<ScentTier, { label: string; tone: "neutral" | "teal" | "
 
 type SheetId = "status" | "ranger" | "dog" | "clue" | "guides" | "bakkie" | "night" | "spots";
 
-type SpotItem = { species: Species; isNew: boolean; count: number; bonus?: boolean };
-
-/**
- * A trading-card flip: children render the front, the back is the branded
- * plate. The front's natural height sizes the card; the back covers it.
- */
-function CardFlip({
-    flipped,
-    onFlip,
-    backIcon,
-    backEyebrow,
-    backLine,
-    children,
-}: {
-    flipped: boolean;
-    onFlip: () => void;
-    backIcon: string;
-    backEyebrow: string;
-    backLine: string;
-    children: React.ReactNode;
-}) {
-    return (
-        <div style={{ perspective: 1400 }}>
-            <div
-                onClick={() => {
-                    if (!flipped) onFlip();
-                }}
-                style={{
-                    position: "relative",
-                    transformStyle: "preserve-3d",
-                    transition: "transform 620ms var(--ease-out)",
-                    transform: flipped ? "none" : "rotateY(180deg)",
-                }}
-            >
-                <div style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}>{children}</div>
-                <div
-                    role="button"
-                    aria-label="Reveal"
-                    style={{
-                        position: "absolute",
-                        inset: 0,
-                        transform: "rotateY(180deg)",
-                        backfaceVisibility: "hidden",
-                        WebkitBackfaceVisibility: "hidden",
-                        borderRadius: "var(--radius-2xl)",
-                        overflow: "hidden",
-                        border: "1px solid var(--border-subtle)",
-                        boxShadow: "var(--shadow-xl)",
-                        background: "linear-gradient(160deg, var(--green-800) 0%, var(--sand-900) 135%)",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                    }}
-                >
-                    <span
-                        aria-hidden="true"
-                        style={{ position: "absolute", inset: 0, background: "repeating-linear-gradient(45deg, rgba(245,239,226,0.05) 0 2px, transparent 2px 14px)" }}
-                    />
-                    <span aria-hidden="true" style={{ position: "absolute", inset: 10, border: "1px solid rgba(245,239,226,0.22)", borderRadius: "var(--radius-xl)" }} />
-                    <span style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center", gap: 10, textAlign: "center", padding: "0 var(--space-6)" }}>
-                        <span style={{ width: 64, height: 64, borderRadius: "50%", border: "1.5px solid rgba(245,239,226,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                            <i className={`ph-fill ph-${backIcon}`} style={{ fontSize: 30, color: "var(--ochre-400)" }} />
-                        </span>
-                        <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.28em", textTransform: "uppercase", color: "rgba(245,239,226,0.6)" }}>
-                            {backEyebrow}
-                        </span>
-                        <span style={{ fontFamily: "var(--font-serif)", fontStyle: "italic", fontSize: "1.1rem", color: "var(--sand-50)", lineHeight: 1.4 }}>
-                            {backLine}
-                        </span>
-                        <span style={{ marginTop: 14, fontFamily: "var(--font-mono)", fontSize: "0.64rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--ochre-300)", fontWeight: 700 }}>
-                            Tap to reveal
-                        </span>
-                    </span>
-                </div>
-            </div>
-        </div>
-    );
-}
+// A card read from the log carries found: false when the species is still out
+// there; the card then shows its photo in black and white with a Not found pill.
+type SpotItem = { species: Species; isNew: boolean; count: number; bonus?: boolean; found?: boolean };
 
 /** Small clay notification dot pinned to a corner of its parent. */
 function NDot() {
@@ -277,7 +203,6 @@ function MapInner() {
 
     const [dismissed, setDismissed] = useState(false);
     const [guideZone, setGuideZone] = useState<Zone | null>(null);
-    const [guideJustUnlocked, setGuideJustUnlocked] = useState(false);
     const [lockModal, setLockModal] = useState(false);
     const [sheet, setSheet] = useState<SheetId | null>(null);
     // Bakkie mode: pick anywhere on the map, then confirm the ride.
@@ -291,8 +216,14 @@ function MapInner() {
     const [spotQueue, setSpotQueue] = useState<SpotItem[]>([]);
     // Fresh spots deal in face-down like a trading card; a tap flips the reveal.
     const [spotFlipped, setSpotFlipped] = useState(true);
-    // New clues deal in the same way, once per release day.
+    // New clues deal onto the screen the same way, once per release day.
+    const [clueCard, setClueCard] = useState<Clue | null>(null);
     const [clueFlipped, setClueFlipped] = useState(true);
+    // A freshly unlocked field guide deals in as a card too. The first free
+    // guide waits its turn behind the first spot card (pendingGuide).
+    const [guideCard, setGuideCard] = useState<Zone | null>(null);
+    const [guideFlipped, setGuideFlipped] = useState(true);
+    const [pendingGuide, setPendingGuide] = useState<Zone | null>(null);
     // A completed five: celebrated once the card flow finishes.
     const [pendingFiveWin, setPendingFiveWin] = useState<(typeof FIVES)[number] | null>(null);
     const [fiveWin, setFiveWin] = useState<(typeof FIVES)[number] | null>(null);
@@ -437,29 +368,39 @@ function MapInner() {
             setPendingFiveWin(completed);
         }
         // Deal the card face-down; reduced motion goes straight to the reveal.
-        const reduced =
-            typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         setSpotQueue(queue);
-        setSpotFlipped(reduced);
+        setSpotFlipped(prefersReducedMotion());
         setSpot({ species, isNew: priorCount === 0, count: priorCount + 1 });
     };
 
     // Dismissing a spot card deals the next one; the last card gives way to
-    // the bingo celebration if this move completed a five.
+    // the free field-guide card on the first pin, then the bingo celebration
+    // if this move completed a five.
     const advanceSpotCard = () => {
         if (spotQueue.length > 0) {
             const [next, ...rest] = spotQueue;
-            const reduced =
-                typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
             setSpotQueue(rest);
-            setSpotFlipped(reduced);
+            setSpotFlipped(prefersReducedMotion());
             setSpot(next);
         } else {
             setSpot(null);
-            if (pendingFiveWin) {
+            if (pendingGuide) {
+                setGuideFlipped(prefersReducedMotion());
+                setGuideCard(pendingGuide);
+                setPendingGuide(null);
+            } else if (pendingFiveWin) {
                 setFiveWin(pendingFiveWin);
                 setPendingFiveWin(null);
             }
+        }
+    };
+
+    // Closing the guide card lets a queued bingo celebration through.
+    const dismissGuideCard = () => {
+        setGuideCard(null);
+        if (pendingFiveWin) {
+            setFiveWin(pendingFiveWin);
+            setPendingFiveWin(null);
         }
     };
 
@@ -468,29 +409,30 @@ function MapInner() {
         const firstPin = fieldGuides.length === 0;
         moveRanger(x, y, day);
         spotAtCurrentPin();
-        // Your first field guide is free: unlock it for the ground you first pin,
-        // then bring it up so the player reads it and learns they can unlock more.
+        // Your first field guide is free: unlock it for the ground you first pin.
+        // Its card deals in right after the first spot card is put away.
         if (firstPin) {
             const zoneId = zoneAtPoint({ x, y });
             grantFieldGuide(zoneId);
-            setGuideZone(ZONE_BY_ID[zoneId]);
-            setGuideJustUnlocked(true);
+            setPendingGuide(ZONE_BY_ID[zoneId]);
         }
     };
 
-    const closeGuide = () => {
-        setGuideZone(null);
-        setGuideJustUnlocked(false);
-    };
+    const closeGuide = () => setGuideZone(null);
 
     const confirmLockIn = () => {
         lockPin();
         setLockModal(false);
     };
 
+    // Leaving the welcome sheet deals the first clue onto the screen as a card,
+    // so the very first read is the same reveal the rest of the game uses.
     const closeWelcome = () => {
         setDismissed(true);
         router.replace("/map");
+        markCluesSeen(day);
+        setClueFlipped(prefersReducedMotion());
+        setClueCard(CLUE_BY_ID["f01"]);
     };
 
     const openDogSheet = () => {
@@ -524,14 +466,37 @@ function MapInner() {
     };
 
     const openClueSheet = () => {
-        // A clue seen for the first time on its release day deals in face-down.
-        const fresh = newClueToday;
-        const reduced =
-            typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-        setClueFlipped(!fresh || reduced);
-        markCluesSeen(day);
-        setSheet("clue");
+        // A clue seen for the first time on its release day deals onto the
+        // screen as a card; after that the dock opens the plain clue sheet.
+        if (newClueToday && latest) {
+            markCluesSeen(day);
+            setClueFlipped(prefersReducedMotion());
+            setClueCard(latest);
+        } else {
+            setSheet("clue");
+        }
     };
+
+    // Footer action for elimination clues, shared by the clue sheet and the
+    // dealt clue card: one tap marks the zone on the case board.
+    const clueAction = (c: Clue) =>
+        c.kind === "elimination" ? (
+            markedClueId === c.id || zoneMarks[c.zoneId] === "ruled-out" ? (
+                <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+                    <i className="ph ph-check" style={{ marginRight: 5 }} /> Marked on your case board.
+                </span>
+            ) : (
+                <button
+                    onClick={() => {
+                        ruleOutZone(c.zoneId);
+                        setMarkedClueId(c.id);
+                    }}
+                    style={{ background: "none", border: "none", cursor: "pointer", padding: "0.2rem 0", fontSize: "0.8rem", fontWeight: 600, color: "var(--text-link)", display: "inline-flex", alignItems: "center", gap: 6 }}
+                >
+                    <i className="ph ph-prohibit" /> Rule it out on your case board
+                </button>
+            )
+        ) : undefined;
 
     return (
         <div style={{ position: "relative", height: "calc(100% + 5.5rem)", marginBottom: "-5.5rem", background: sky.gradient, transition: "background 1.2s var(--ease-out)" }}>
@@ -1006,38 +971,7 @@ function MapInner() {
                     <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: "var(--space-3)", fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.12em", color: "var(--text-muted)" }}>
                         <i className="ph ph-timer" /> {clueCountdown}
                     </div>
-                    {latest && (
-                        <CardFlip
-                            flipped={clueFlipped}
-                            onFlip={() => setClueFlipped(true)}
-                            backIcon="notebook"
-                            backEyebrow="Field clue"
-                            backLine="New intel has come in from the field."
-                        >
-                        <ClueCard
-                            clue={latest}
-                            action={
-                                latest.kind === "elimination" ? (
-                                    markedClueId === latest.id || zoneMarks[latest.zoneId] === "ruled-out" ? (
-                                        <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
-                                            <i className="ph ph-check" style={{ marginRight: 5 }} /> Marked on your case board.
-                                        </span>
-                                    ) : (
-                                        <button
-                                            onClick={() => {
-                                                ruleOutZone(latest.zoneId);
-                                                setMarkedClueId(latest.id);
-                                            }}
-                                            style={{ background: "none", border: "none", cursor: "pointer", padding: "0.2rem 0", fontSize: "0.8rem", fontWeight: 600, color: "var(--text-link)", display: "inline-flex", alignItems: "center", gap: 6 }}
-                                        >
-                                            <i className="ph ph-prohibit" /> Rule it out on your case board
-                                        </button>
-                                    )
-                                ) : undefined
-                            }
-                        />
-                        </CardFlip>
-                    )}
+                    {latest && <ClueCard clue={latest} action={clueAction(latest)} />}
                 </Sheet>
             )}
 
@@ -1079,13 +1013,26 @@ function MapInner() {
                     <Eyebrow rule>Spotting log</Eyebrow>
                     {(() => {
                         const spotted = new Set(sightings.map((s) => s.speciesId));
+                        // Every card in the log opens for a read. Species still out
+                        // there show in black and white with a Not found pill.
+                        const openSpeciesCard = (s: Species) => {
+                            const seen = spotted.has(s.id);
+                            setSpotFlipped(true); // a re-read, not a reveal
+                            setSpotQueue([]);
+                            setSpot({
+                                species: s,
+                                isNew: false,
+                                count: sightings.filter((x) => x.speciesId === s.id).length,
+                                found: seen,
+                            });
+                        };
                         return (
                             <>
                                 <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.72rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-primary)", fontWeight: 700, margin: "var(--space-3) 0 0" }}>
                                     {spotted.size} of {SPECIES.length} species spotted
                                 </div>
                                 <p style={{ fontSize: "0.82rem", color: "var(--text-muted)", margin: "0.3rem 0 0", lineHeight: 1.5 }}>
-                                    Every move, {dogName} puts something up. Common sightings fill the log, rare ones are a good day, and a once in a lifetime sighting is linked to prizes at round end.
+                                    Every move, you spot something in the bush. Common sightings fill the log, rare ones are a good day, and a once in a lifetime sighting is linked to prizes at round end. Tap any card to read it, found or not.
                                 </p>
 
                                 {/* the fives: spot all five of each to complete the row */}
@@ -1116,15 +1063,20 @@ function MapInner() {
                                                     const sp = SPECIES_BY_ID[m];
                                                     const seen = spotted.has(m);
                                                     return (
-                                                        <span key={m} style={{ position: "relative", flex: 1, aspectRatio: "1", borderRadius: "50%", overflow: "hidden", border: `1.5px solid ${seen ? "var(--ochre-500)" : "var(--border-default)"}` }}>
+                                                        <button
+                                                            key={m}
+                                                            onClick={() => openSpeciesCard(sp)}
+                                                            aria-label={seen ? sp.name : `${sp.name}, not yet spotted`}
+                                                            style={{ position: "relative", flex: 1, aspectRatio: "1", borderRadius: "50%", overflow: "hidden", border: `1.5px solid ${seen ? "var(--ochre-500)" : "var(--border-default)"}`, padding: 0, background: "var(--surface-sunken)", cursor: "pointer" }}
+                                                        >
                                                             <Image
                                                                 src={sp.photo}
-                                                                alt={seen ? sp.name : `${sp.name}, not yet spotted`}
+                                                                alt=""
                                                                 fill
                                                                 sizes="64px"
                                                                 style={{ objectFit: "cover", filter: seen ? "none" : "grayscale(1)", opacity: seen ? 1 : 0.35 }}
                                                             />
-                                                        </span>
+                                                        </button>
                                                     );
                                                 })}
                                             </div>
@@ -1152,17 +1104,8 @@ function MapInner() {
                                                 return (
                                                     <button
                                                         key={s.id}
-                                                        onClick={() => {
-                                                            if (!seen) return;
-                                                            setSpotFlipped(true); // a re-read, not a reveal
-                                                            setSpotQueue([]);
-                                                            setSpot({
-                                                                species: s,
-                                                                isNew: false,
-                                                                count: sightings.filter((x) => x.speciesId === s.id).length,
-                                                            });
-                                                        }}
-                                                        aria-label={seen ? s.name : "Not yet spotted"}
+                                                        onClick={() => openSpeciesCard(s)}
+                                                        aria-label={seen ? s.name : `${s.name}, not yet spotted`}
                                                         style={{
                                                             position: "relative",
                                                             aspectRatio: "1",
@@ -1177,7 +1120,7 @@ function MapInner() {
                                                                       : "1px solid var(--border-subtle)"
                                                                 : "1px solid var(--border-subtle)",
                                                             background: "var(--surface-sunken)",
-                                                            cursor: seen ? "pointer" : "default",
+                                                            cursor: "pointer",
                                                             padding: 0,
                                                         }}
                                                     >
@@ -1280,7 +1223,6 @@ function MapInner() {
             <ZoneSheet
                 zone={guideZone}
                 onClose={closeGuide}
-                justUnlocked={guideJustUnlocked}
                 onBuyMore={() => {
                     closeGuide();
                     router.push("/shop");
@@ -1321,13 +1263,12 @@ function MapInner() {
                             </Tag>
                             <h2 style={{ fontSize: "var(--text-h3)", margin: "var(--space-3) 0 0" }}>Drop your first pin</h2>
                             <p style={{ fontSize: "0.86rem", color: "var(--text-secondary)", lineHeight: 1.55, margin: "var(--space-2) 0 0" }}>
-                                Tap the map where you think the suspect is hiding. Your ranger deploys there, and that ground&apos;s field guide unlocks free. From then on you move on foot, about {walkKm} km a day, so read your first clue before you choose.
+                                Tap the map where you think the suspect is hiding. Your ranger deploys there, and that ground&apos;s field guide unlocks free. From then on you move on foot, about {walkKm} km a day. Your first clue is waiting, so read it before you choose.
                             </p>
                         </div>
-                        <ClueCard clue={CLUE_BY_ID["f01"]} />
-                        <div style={{ marginTop: "var(--space-5)" }}>
-                            <Button size="lg" fullWidth onClick={closeWelcome} iconRight={<i className="ph ph-map-pin" />}>
-                                Drop my first pin
+                        <div style={{ marginTop: "var(--space-2)" }}>
+                            <Button size="lg" fullWidth onClick={closeWelcome} iconRight={<i className="ph ph-notebook" />}>
+                                Read my first clue
                             </Button>
                         </div>
                     </div>
@@ -1375,21 +1316,18 @@ function MapInner() {
                 </Overlay>
             )}
 
-            {/* the spotting card: dealt face-down like a trading card, tap to flip */}
+            {/* the spotting card: dealt face-down like a trading card, tap to flip.
+                Cards read from the log for species still out there show the same
+                face in black and white with a Not found pill. */}
             {spot && (
-                <Overlay>
-                <div
-                    style={{ position: "fixed", inset: 0, zIndex: 70, display: "flex", alignItems: "center", justifyContent: "center", padding: "var(--gutter)", background: "var(--bg-overlay, rgba(17,32,26,0.6))" }}
-                    onClick={() => (spotFlipped ? advanceSpotCard() : setSpotFlipped(true))}
+                <DealtCard
+                    flipped={spotFlipped}
+                    onFlip={() => setSpotFlipped(true)}
+                    onDismiss={advanceSpotCard}
+                    backIcon="paw-print"
+                    backEyebrow={spot.bonus ? "Bonus spot" : "Spotting log"}
+                    backLine={spot.bonus ? "And something else moved out there." : "You have spotted something in the bush."}
                 >
-                    <div className="kw-card-pop" onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 400 }}>
-                    <CardFlip
-                        flipped={spotFlipped}
-                        onFlip={() => setSpotFlipped(true)}
-                        backIcon="paw-print"
-                        backEyebrow={spot.bonus ? "Bonus spot" : "Spotting log"}
-                        backLine={spot.bonus ? "And something else moved out there." : `${dogName} put something up.`}
-                    >
                     <div
                         style={{
                             maxHeight: "88dvh",
@@ -1397,29 +1335,44 @@ function MapInner() {
                             overflowY: "auto",
                             background: "var(--surface-page)",
                             borderRadius: "var(--radius-2xl)",
-                            // Gold marks a Big, Ugly or Small Five card; clay marks once in a lifetime.
-                            boxShadow: FIVE_OF[spot.species.id]
+                            // Gold marks a Big, Ugly or Small Five card; clay marks once in
+                            // a lifetime. Unfound cards stay neutral until they are earned.
+                            boxShadow: spot.found !== false && FIVE_OF[spot.species.id]
                                 ? "var(--shadow-xl), 0 0 0 3px var(--ochre-100)"
                                 : "var(--shadow-xl)",
                             border:
-                                spot.species.rarity === "oialt"
-                                    ? "2px solid var(--clay-500)"
-                                    : FIVE_OF[spot.species.id]
-                                      ? "2px solid var(--ochre-400)"
-                                      : "1px solid var(--border-subtle)",
+                                spot.found === false
+                                    ? "1px solid var(--border-subtle)"
+                                    : spot.species.rarity === "oialt"
+                                      ? "2px solid var(--clay-500)"
+                                      : FIVE_OF[spot.species.id]
+                                        ? "2px solid var(--ochre-400)"
+                                        : "1px solid var(--border-subtle)",
                         }}
                     >
                         <div style={{ position: "relative", aspectRatio: "16 / 10", background: "var(--sand-100)" }}>
-                            <Image src={spot.species.photo} alt={spot.species.name} fill sizes="400px" style={{ objectFit: "cover" }} />
+                            <Image
+                                src={spot.species.photo}
+                                alt={spot.species.name}
+                                fill
+                                sizes="400px"
+                                style={{ objectFit: "cover", filter: spot.found === false ? "grayscale(1)" : undefined }}
+                            />
                             <span style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(24,45,35,0) 55%, rgba(24,45,35,0.45) 100%)" }} />
                             <span style={{ position: "absolute", left: 14, bottom: 10, fontFamily: "var(--font-mono)", fontSize: "0.6rem", letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--sand-50)" }}>
-                                Spotted · {spot.species.type}
+                                {spot.found === false ? "Still out there" : "Spotted"} · {spot.species.type}
                             </span>
                         </div>
                         <div style={{ padding: "var(--space-5) var(--space-5) var(--space-6)" }}>
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-3)" }}>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-3)", flexWrap: "wrap" }}>
                                 <h2 style={{ fontSize: "var(--text-h4)", margin: 0 }}>{spot.species.name}</h2>
-                                <span style={{ display: "inline-flex", gap: 6, flex: "none" }}>
+                                <span style={{ display: "inline-flex", gap: 6, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                                    {spot.found === false && (
+                                        <Tag tone="neutral" size="sm">
+                                            <i className="ph ph-eye-slash" style={{ marginRight: 4 }} />
+                                            Not found
+                                        </Tag>
+                                    )}
                                     {FIVE_OF[spot.species.id] && (
                                         <Tag tone="teal" size="sm">
                                             <i className="ph-fill ph-seal-check" style={{ marginRight: 4 }} />
@@ -1437,19 +1390,35 @@ function MapInner() {
                             </p>
                             {spot.species.rarity === "oialt" && (
                                 <p style={{ fontSize: "0.82rem", color: "var(--clay-600)", fontWeight: 600, lineHeight: 1.5, margin: "var(--space-3) 0 0" }}>
-                                    A once in a lifetime sighting. Hold onto this card: sightings like this one are linked to prizes when the round closes.
+                                    {spot.found === false
+                                        ? "A once in a lifetime card. Sightings like this one are linked to prizes when the round closes."
+                                        : "A once in a lifetime sighting. Hold onto this card: sightings like this one are linked to prizes when the round closes."}
                                 </p>
                             )}
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-3)", marginTop: "var(--space-4)", paddingTop: "var(--space-3)", borderTop: "1px dashed var(--border-default)" }}>
                                 <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.6rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-muted)", lineHeight: 1.5 }}>
-                                    Entered into your collection
-                                    <br />
-                                    {spot.bonus ? "Bonus spot · " : ""}
-                                    {spot.isNew ? "New species" : `Sighting no. ${spot.count}`}
+                                    {spot.found === false ? (
+                                        <>
+                                            Not yet in your collection
+                                            <br />
+                                            Keep moving to find it
+                                        </>
+                                    ) : (
+                                        <>
+                                            Entered into your collection
+                                            <br />
+                                            {spot.bonus ? "Bonus spot · " : ""}
+                                            {spot.isNew ? "New species" : `Sighting no. ${spot.count}`}
+                                        </>
+                                    )}
                                 </div>
                                 {spotQueue.length > 0 ? (
                                     <Button size="sm" variant="secondary" onClick={advanceSpotCard} iconRight={<i className="ph-fill ph-sparkle" />}>
                                         Next card
+                                    </Button>
+                                ) : spot.found === false ? (
+                                    <Button size="sm" variant="secondary" onClick={() => setSpot(null)} iconRight={<i className="ph ph-binoculars" />}>
+                                        Back to the log
                                     </Button>
                                 ) : (
                                     <Button
@@ -1467,10 +1436,61 @@ function MapInner() {
                             </div>
                         </div>
                     </div>
-                    </CardFlip>
+                </DealtCard>
+            )}
+
+            {/* a new clue, dealt onto the screen like a card from the deck */}
+            {clueCard && (
+                <DealtCard
+                    flipped={clueFlipped}
+                    onFlip={() => setClueFlipped(true)}
+                    onDismiss={() => setClueCard(null)}
+                    backIcon="notebook"
+                    backEyebrow="Field clue"
+                    backLine="New intel has come in from the field."
+                >
+                    <div
+                        style={{
+                            maxHeight: "88dvh",
+                            overflowX: "hidden",
+                            overflowY: "auto",
+                            background: "var(--surface-page)",
+                            borderRadius: "var(--radius-2xl)",
+                            border: "1px solid var(--border-subtle)",
+                            boxShadow: "var(--shadow-xl)",
+                            padding: "var(--space-4)",
+                        }}
+                    >
+                        <ClueCard clue={clueCard} action={clueAction(clueCard)} />
+                        <div style={{ marginTop: "var(--space-3)", display: "flex", justifyContent: "flex-end" }}>
+                            <Button size="sm" variant="secondary" onClick={() => setClueCard(null)} iconRight={<i className="ph ph-map-pin" />}>
+                                Work the ground
+                            </Button>
+                        </div>
                     </div>
-                </div>
-                </Overlay>
+                </DealtCard>
+            )}
+
+            {/* a freshly unlocked field guide, dealt in the same way */}
+            {guideCard && (
+                <DealtCard
+                    flipped={guideFlipped}
+                    onFlip={() => setGuideFlipped(true)}
+                    onDismiss={dismissGuideCard}
+                    backIcon="book-open-text"
+                    backEyebrow="Field guide"
+                    backLine="New ground, unlocked."
+                >
+                    <GuideCardFront
+                        zone={guideCard}
+                        note="Unlocked free with your first pin. It reads the ground you are standing on: the rock, the plants, the animals and the named places a clue can point to."
+                        onRead={() => {
+                            const z = guideCard;
+                            dismissGuideCard();
+                            setGuideZone(z);
+                        }}
+                    />
+                </DealtCard>
             )}
 
             {/* spotting bingo: a completed five wins an instant prize */}

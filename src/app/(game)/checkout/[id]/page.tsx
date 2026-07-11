@@ -4,8 +4,12 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { Button, Tag } from "@/components/ds";
+import { DealtCard, prefersReducedMotion } from "@/components/game/CardFlip";
 import { ClueCard } from "@/components/game/ClueCard";
-import { CLUE_BY_ID, EQUIPMENT_BY_ID } from "@/data";
+import { GuideCardFront } from "@/components/game/GuideCard";
+import { ZoneSheet } from "@/components/game/ZoneSheet";
+import { CLUE_BY_ID, EQUIPMENT_BY_ID, ZONE_BY_ID } from "@/data";
+import type { Zone } from "@/data";
 import type { Donation } from "@/store/game";
 import { zar } from "@/lib/format";
 import { useGameStore } from "@/store/game";
@@ -30,6 +34,10 @@ export default function CheckoutPage() {
     const [step, setStep] = useState<Step>("amount");
     const [bank, setBank] = useState<string | null>(null);
     const [donation, setDonation] = useState<Donation | null>(null);
+    // A purchased clue or field guide deals onto the screen as a card on success.
+    const [revealCard, setRevealCard] = useState<null | "clue" | "guide">(null);
+    const [revealFlipped, setRevealFlipped] = useState(true);
+    const [readZone, setReadZone] = useState<Zone | null>(null);
 
     useEffect(() => {
         if (step !== "auth") return;
@@ -39,6 +47,14 @@ export default function CheckoutPage() {
         }, 1600);
         return () => clearTimeout(t);
     }, [step, params.id, purchase]);
+
+    useEffect(() => {
+        if (step !== "success" || !item) return;
+        if (item.unlocksClueId || item.unlocksFieldGuideZoneId) {
+            setRevealFlipped(prefersReducedMotion());
+            setRevealCard(item.unlocksClueId ? "clue" : "guide");
+        }
+    }, [step, item]);
 
     if (!item) {
         return (
@@ -50,6 +66,7 @@ export default function CheckoutPage() {
     }
 
     const clue = item.unlocksClueId ? CLUE_BY_ID[item.unlocksClueId] : null;
+    const guideZone = item.unlocksFieldGuideZoneId ? ZONE_BY_ID[item.unlocksFieldGuideZoneId] : null;
     const selectedBank = BANKS.find((b) => b.id === bank);
 
     return (
@@ -261,6 +278,61 @@ export default function CheckoutPage() {
                     </div>
                 )}
             </div>
+
+            {/* the purchased clue, dealt onto the screen like a card from the deck */}
+            {revealCard === "clue" && clue && (
+                <DealtCard
+                    flipped={revealFlipped}
+                    onFlip={() => setRevealFlipped(true)}
+                    onDismiss={() => setRevealCard(null)}
+                    backIcon="notebook"
+                    backEyebrow="Kit intel"
+                    backLine="Your donation just bought new intel."
+                >
+                    <div
+                        style={{
+                            maxHeight: "88dvh",
+                            overflowX: "hidden",
+                            overflowY: "auto",
+                            background: "var(--surface-page)",
+                            borderRadius: "var(--radius-2xl)",
+                            border: "1px solid var(--border-subtle)",
+                            boxShadow: "var(--shadow-xl)",
+                            padding: "var(--space-4)",
+                        }}
+                    >
+                        <ClueCard clue={clue} />
+                        <div style={{ marginTop: "var(--space-3)", display: "flex", justifyContent: "flex-end" }}>
+                            <Button size="sm" variant="secondary" onClick={() => setRevealCard(null)} iconRight={<i className="ph ph-notebook" />}>
+                                Into the journal
+                            </Button>
+                        </div>
+                    </div>
+                </DealtCard>
+            )}
+
+            {/* the purchased field guide, dealt the same way */}
+            {revealCard === "guide" && guideZone && (
+                <DealtCard
+                    flipped={revealFlipped}
+                    onFlip={() => setRevealFlipped(true)}
+                    onDismiss={() => setRevealCard(null)}
+                    backIcon="book-open-text"
+                    backEyebrow="Field guide"
+                    backLine="New ground, unlocked."
+                >
+                    <GuideCardFront
+                        zone={guideZone}
+                        note="Unlocked with your donation. It reads the ground: the rock, the plants, the animals and the named places a clue can point to."
+                        onRead={() => {
+                            setRevealCard(null);
+                            setReadZone(guideZone);
+                        }}
+                    />
+                </DealtCard>
+            )}
+
+            <ZoneSheet zone={readZone} onClose={() => setReadZone(null)} />
         </div>
     );
 }

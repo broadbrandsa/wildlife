@@ -143,12 +143,13 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
         const bar = barRef.current;
         const label = barLabelRef.current;
         if (!svg || !bar || !label) return;
-        // ctm.a is on-screen px per viewBox unit, folding in the letterboxing
-        // (preserveAspectRatio meet) and the current pan/zoom. This is the same
-        // matrix used to place the pin, so the bar tracks the ground exactly.
-        const ctm = svg.getScreenCTM();
-        if (!ctm || !ctm.a) return;
-        const kmPerPx = MAP_WIDTH_KM / VW / ctm.a;
+        // The svg's box matches the viewBox aspect exactly (the parent div pins
+        // the ratio), so its on-screen width IS the park's width in pixels.
+        // Bounding rects fold in the pan/zoom CSS transform on every browser;
+        // getScreenCTM does not on iOS Safari, which froze the bar on phones.
+        const rect = svg.getBoundingClientRect();
+        if (!rect.width) return;
+        const kmPerPx = MAP_WIDTH_KM / rect.width;
         const raw = kmPerPx * SCALE_TARGET_PX;
         let km = SCALE_STEPS[0];
         for (const step of SCALE_STEPS) if (step <= raw) km = step;
@@ -169,16 +170,19 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // Convert a client point through the SVG's own coordinate matrix so it stays
-    // accurate under any pan/zoom (getScreenCTM folds in the transform and the
-    // preserveAspectRatio letterboxing). Fractions are of the viewBox.
+    // Convert a client point to a fraction of the park artwork. The svg's box
+    // matches the viewBox aspect exactly, so the bounding rect maps straight to
+    // viewBox space, and rects fold in the pan/zoom transform on every browser
+    // (getScreenCTM misses ancestor CSS transforms on iOS Safari).
     const clientToFraction = (clientX: number, clientY: number): { x: number; y: number } | null => {
         const svg = svgRef.current;
         if (!svg) return null;
-        const ctm = svg.getScreenCTM();
-        if (!ctm) return null;
-        const local = new DOMPoint(clientX, clientY).matrixTransform(ctm.inverse());
-        return { x: Math.min(Math.max(local.x / VW, 0), 1), y: Math.min(Math.max(local.y / VH, 0), 1) };
+        const rect = svg.getBoundingClientRect();
+        if (!rect.width || !rect.height) return null;
+        return {
+            x: Math.min(Math.max((clientX - rect.left) / rect.width, 0), 1),
+            y: Math.min(Math.max((clientY - rect.top) / rect.height, 0), 1),
+        };
     };
 
     const handlePointerDown = (e: React.PointerEvent) => {

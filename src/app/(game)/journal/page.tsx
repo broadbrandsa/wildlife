@@ -4,7 +4,9 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
 import { Eyebrow } from "@/components/ds";
+import { DealtCard, prefersReducedMotion } from "@/components/game/CardFlip";
 import { ClueCard } from "@/components/game/ClueCard";
+import { GuideCardFront } from "@/components/game/GuideCard";
 import { ZoneSheet } from "@/components/game/ZoneSheet";
 import { CLUES, ZONES } from "@/data";
 import type { Zone } from "@/data";
@@ -137,6 +139,9 @@ export default function JournalPage() {
     const cluesUnlocked = useGameStore((s) => s.cluesUnlocked);
     const day = useCurrentDay();
     const [guideZone, setGuideZone] = useState<Zone | null>(null);
+    // Dotty's free pick deals in as a card before the full guide opens.
+    const [guideCard, setGuideCard] = useState<Zone | null>(null);
+    const [guideFlipped, setGuideFlipped] = useState(true);
 
     // In hand: time-released free clues plus any you have bought or redeemed.
     const available = useMemo(() => {
@@ -192,7 +197,8 @@ export default function JournalPage() {
                             onUnlock={() => {
                                 if (freePickAvailable) {
                                     claimFreeGuide(z.id);
-                                    setGuideZone(z);
+                                    setGuideFlipped(prefersReducedMotion());
+                                    setGuideCard(z);
                                 } else {
                                     router.push(`/checkout/guide-${z.id}`);
                                 }
@@ -268,6 +274,28 @@ export default function JournalPage() {
             </div>
 
             <ZoneSheet zone={guideZone} onClose={() => setGuideZone(null)} />
+
+            {/* the free-pick guide, dealt onto the screen like a card */}
+            {guideCard && (
+                <DealtCard
+                    flipped={guideFlipped}
+                    onFlip={() => setGuideFlipped(true)}
+                    onDismiss={() => setGuideCard(null)}
+                    backIcon="book-open-text"
+                    backEyebrow="Field guide"
+                    backLine="New ground, unlocked."
+                >
+                    <GuideCardFront
+                        zone={guideCard}
+                        note={`${dogName} knows this bush, so this guide is on the house. It reads the ground: the rock, the plants, the animals and the named places a clue can point to.`}
+                        onRead={() => {
+                            const z = guideCard;
+                            setGuideCard(null);
+                            setGuideZone(z);
+                        }}
+                    />
+                </DealtCard>
+            )}
         </div>
     );
 }
