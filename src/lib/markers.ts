@@ -47,11 +47,17 @@ export function markerTtlMs(rarity: SpeciesRarity): number {
     return 60_000;
 }
 
-/** Random gap until the next marker appears. A spotter dog makes them come faster. */
-export function nextSpawnDelayMs(hasSpotterDog: boolean, rng: () => number = Math.random): number {
-    const min = hasSpotterDog ? 8_000 : 14_000;
-    const max = hasSpotterDog ? 20_000 : 34_000;
-    return Math.round(min + rng() * (max - min));
+/**
+ * The gap before each new marker appears, counting from the last move. The
+ * wait grows every time a marker is shown: the first lands 10 s after you
+ * move, the next 20 s later, then a minute, and so on, capping at the last
+ * value. A spotter dog shortens every wait.
+ */
+export const MARKER_DELAYS_SEC = [10, 20, 60, 120, 240];
+
+export function spawnDelayMs(shownSinceMove: number, hasSpotterDog: boolean): number {
+    const base = MARKER_DELAYS_SEC[Math.min(shownSinceMove, MARKER_DELAYS_SEC.length - 1)];
+    return Math.round(base * 1000 * (hasSpotterDog ? 0.6 : 1));
 }
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), hi);

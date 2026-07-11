@@ -35,7 +35,7 @@ import {
     zoneAtPoint,
 } from "@/lib/game";
 import { RARITY_META, SPOTTER_DOGS } from "@/lib/spotting";
-import { FAMILY_ICON, MARKER_CAP, makeMarker, nextSpawnDelayMs } from "@/lib/markers";
+import { FAMILY_ICON, makeMarker, spawnDelayMs } from "@/lib/markers";
 import type { SpotMarker } from "@/lib/markers";
 import type { ScentTier } from "@/lib/game";
 import { NEAR_TARGET_KM, rangersHunting, rangersNearTarget } from "@/lib/community";
@@ -272,9 +272,12 @@ function MapInner() {
     const [spotQueue, setSpotQueue] = useState<SpotItem[]>([]);
     // Fresh spots deal in face-down like a trading card; a tap flips the reveal.
     const [spotFlipped, setSpotFlipped] = useState(true);
-    // Live species markers on the map (ephemeral session state).
+    // Live species markers on the map (ephemeral session state). Only one shows
+    // at a time, and the gap before the next grows with each one shown.
     const [markers, setMarkers] = useState<SpotMarker[]>([]);
     const markerSeq = useRef(0);
+    const shownSinceMove = useRef(0);
+    const nextSpawnAt = useRef<number | null>(null);
     // Wall-clock tick that drives the ranger and dog rest bars.
     const [nowMs, setNowMs] = useState(() => Date.now());
     // Bumped by the ranger's Move action to zoom the map in on the pin.
@@ -456,49 +459,66 @@ function MapInner() {
         }
     };
 
-    // Live spotting: while a pin is down, before the round closes, species
-    // markers fade onto the map near the ranger at random intervals, day and
+    // Live spotting runs while a pin is down and the round is open, day and
     // night. The pool follows the clock, so nocturnal species only appear after
-    // dark. A spotter dog makes them come faster; binoculars widen where they land.
+    // dark; binoculars widen where markers land, and a spotter dog shortens the
+    // waits between them.
     const canSpot = Boolean(pin && !roundOver);
-    useEffect(() => {
-        if (!canSpot) return;
-        let timer: ReturnType<typeof setTimeout>;
-        const schedule = () => {
-            const hasSpotterDog = Boolean(player && SPOTTER_DOGS.has(player.dogId));
-            timer = setTimeout(() => {
-                const s = useGameStore.getState();
-                const p = s.pin;
-                if (p) {
-                    setMarkers((cur) => {
-                        if (cur.length >= MARKER_CAP) return cur;
-                        const base = makeMarker(p, s.inventory.includes("pro-binoculars"), s.sightings.length === 0, night);
-                        return [...cur, { ...base, id: `mk${markerSeq.current++}`, spawnAt: Date.now() }];
-                    });
-                }
-                schedule();
-            }, nextSpawnDelayMs(hasSpotterDog));
-        };
-        schedule();
-        return () => clearTimeout(timer);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [canSpot, player?.dogId, night]);
+    // Refs so the single spawn controller reads fresh state without re-arming.
+    const markersRef = useRef(markers);
+    markersRef.current = markers;
+    const canSpotRef = useRef(canSpot);
+    canSpotRef.current = canSpot;
+    const nightRef = useRef(night);
+    nightRef.current = night;
+    const hasSpotterDog = Boolean(player && SPOTTER_DOGS.has(player.dogId));
+    const spotterRef = useRef(hasSpotterDog);
+    spotterRef.current = hasSpotterDog;
 
-    // Markers reset whenever the ranger moves or spotting stops, so they only
-    // ever sit near where the ranger currently stands.
+    // Each move restarts the escalating schedule: the first marker lands 10 s
+    // later, then the gap grows with every marker shown.
     useEffect(() => {
+        shownSinceMove.current = 0;
+        nextSpawnAt.current = null;
         setMarkers([]);
-    }, [pin?.updatedAt, night, roundOver]);
+    }, [pin?.updatedAt, roundOver]);
 
-    // Prune markers whose window has closed (the fade-out finishes at ttl).
+    // When night flips, drop the current marker so the pool switches over.
+    useEffect(() => {
+        nextSpawnAt.current = null;
+        setMarkers([]);
+    }, [night]);
+
+    // The spawn controller: one marker at a time. While a marker is showing it
+    // waits; once the slot is free it counts the escalating delay, then spawns
+    // one and prunes any whose window has closed.
     useEffect(() => {
         const iv = setInterval(() => {
             const now = Date.now();
+            // Prune an expired marker; freeing the slot restarts the next wait.
             setMarkers((cur) => {
                 const next = cur.filter((m) => now < m.spawnAt + m.ttlMs);
                 return next.length === cur.length ? cur : next;
             });
-        }, 1000);
+            if (!canSpotRef.current || markersRef.current.length > 0) {
+                nextSpawnAt.current = null; // a marker is up (or spotting is off): hold
+                return;
+            }
+            if (nextSpawnAt.current == null) {
+                nextSpawnAt.current = now + spawnDelayMs(shownSinceMove.current, spotterRef.current);
+                return;
+            }
+            if (now >= nextSpawnAt.current) {
+                const s = useGameStore.getState();
+                const p = s.pin;
+                if (p) {
+                    const base = makeMarker(p, s.inventory.includes("pro-binoculars"), s.sightings.length === 0, nightRef.current);
+                    setMarkers([{ ...base, id: `mk${markerSeq.current++}`, spawnAt: now }]);
+                    shownSinceMove.current += 1;
+                }
+                nextSpawnAt.current = null;
+            }
+        }, 500);
         return () => clearInterval(iv);
     }, []);
 
