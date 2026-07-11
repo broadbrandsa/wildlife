@@ -33,8 +33,9 @@ export function PhoneStage({
                     width: "100%",
                     maxWidth: 460,
                     height: "100dvh",
+                    // No -webkit-overflow-scrolling: the legacy property makes iOS
+                    // Safari clip position:fixed descendants to this scroll box.
                     overflowY: scroll ? "auto" : "hidden",
-                    WebkitOverflowScrolling: "touch",
                     display: "flex",
                     flexDirection: "column",
                     background: "var(--surface-page)",

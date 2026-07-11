@@ -1,6 +1,7 @@
 "use client";
 
 import { Button, PhotoPlate, Tag } from "@/components/ds";
+import { Overlay } from "@/components/game/Overlay";
 import type { Zone } from "@/data";
 
 function GuideRow({ label, icon, value }: { label: string; icon: string; value: string }) {
@@ -45,6 +46,7 @@ export function ZoneSheet({
     if (!zone) return null;
 
     return (
+        <Overlay>
         <div
             style={{
                 position: "fixed",
@@ -63,12 +65,12 @@ export function ZoneSheet({
                 style={{
                     width: "100%",
                     maxWidth: 480,
-                    maxHeight: "78dvh",
+                    maxHeight: "82dvh",
                     overflowY: "auto",
                     background: "var(--surface-page)",
                     borderTopLeftRadius: "var(--radius-2xl)",
                     borderTopRightRadius: "var(--radius-2xl)",
-                    padding: "var(--space-5) var(--gutter) var(--space-7)",
+                    padding: "var(--space-5) var(--gutter) calc(var(--space-7) + env(safe-area-inset-bottom))",
                     boxShadow: "var(--shadow-xl)",
                 }}
             >
@@ -166,5 +168,6 @@ export function ZoneSheet({
                 )}
             </div>
         </div>
+        </Overlay>
     );
 }

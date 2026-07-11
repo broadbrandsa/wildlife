@@ -45,9 +45,12 @@ export function GameShell({ children }: { children: React.ReactNode }) {
 
     return (
         <PhoneStage scroll={false}>
+            {/* NOTE: no -webkit-overflow-scrolling here. That legacy property makes
+                iOS Safari clip position:fixed descendants (the bottom sheets and
+                modals) to this scroll box; modern iOS scrolls with momentum anyway. */}
             <main
                 className="kw-noscroll"
-                style={{ flex: 1, minHeight: 0, overflowY: "auto", WebkitOverflowScrolling: "touch", paddingBottom: "5.5rem" }}
+                style={{ flex: 1, minHeight: 0, overflowY: "auto", paddingBottom: "5.5rem" }}
             >
                 {children}
             </main>
@@ -62,7 +65,7 @@ export function GameShell({ children }: { children: React.ReactNode }) {
                         backdropFilter: "blur(12px)",
                         WebkitBackdropFilter: "blur(12px)",
                         borderTop: "1px solid var(--border-subtle)",
-                        padding: "0.5rem 0.5rem 1.3rem",
+                        padding: "0.5rem 0.5rem calc(0.7rem + env(safe-area-inset-bottom))",
                     }}
                 >
                     {TABS.map((t) => {

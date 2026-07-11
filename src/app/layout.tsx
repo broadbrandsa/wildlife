@@ -16,6 +16,9 @@ export const viewport: Viewport = {
     initialScale: 1,
     maximumScale: 1,
     userScalable: false,
+    // Lets the app draw behind the iOS home indicator; safe-area env() insets
+    // keep the tab bar and bottom sheets clear of it.
+    viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -8,6 +8,7 @@ import { Button, Eyebrow, Tag } from "@/components/ds";
 import { ClueCard } from "@/components/game/ClueCard";
 import { ImpactHighlight, useCampaignTotal } from "@/components/game/impact";
 import { KrugerMap } from "@/components/game/KrugerMap";
+import { Overlay } from "@/components/game/Overlay";
 import { ZoneSheet } from "@/components/game/ZoneSheet";
 import { CLUE_BY_ID, CLUES, DOG_BY_ID, RANGER_BY_ID, ROUND, SPECIES, ZONES, ZONE_BY_ID } from "@/data";
 import type { Species, Zone } from "@/data";
@@ -130,32 +131,34 @@ function DockTab({ icon, label, dot, onClick }: { icon: string; label: string; d
     );
 }
 
-/** Bottom sheet shared by every popup on the map. */
+/** Bottom sheet shared by every popup on the map. Portalled above the shell. */
 function Sheet({ onClose, children }: { onClose: () => void; children: React.ReactNode }) {
     return (
-        <div
-            style={{ position: "fixed", inset: 0, zIndex: 55, display: "flex", alignItems: "flex-end", justifyContent: "center", background: "var(--bg-overlay, rgba(17,32,26,0.55))" }}
-            onClick={onClose}
-        >
+        <Overlay>
             <div
-                className="kw-rise"
-                onClick={(e) => e.stopPropagation()}
-                style={{
-                    width: "100%",
-                    maxWidth: 480,
-                    maxHeight: "80dvh",
-                    overflowY: "auto",
-                    background: "var(--surface-page)",
-                    borderTopLeftRadius: "var(--radius-2xl)",
-                    borderTopRightRadius: "var(--radius-2xl)",
-                    padding: "var(--space-5) var(--gutter) var(--space-7)",
-                    boxShadow: "var(--shadow-xl)",
-                }}
+                style={{ position: "fixed", inset: 0, zIndex: 55, display: "flex", alignItems: "flex-end", justifyContent: "center", background: "var(--bg-overlay, rgba(17,32,26,0.55))" }}
+                onClick={onClose}
             >
-                <div style={{ width: 44, height: 5, borderRadius: 999, background: "var(--border-default)", margin: "0 auto var(--space-5)" }} />
-                {children}
+                <div
+                    className="kw-rise"
+                    onClick={(e) => e.stopPropagation()}
+                    style={{
+                        width: "100%",
+                        maxWidth: 480,
+                        maxHeight: "82dvh",
+                        overflowY: "auto",
+                        background: "var(--surface-page)",
+                        borderTopLeftRadius: "var(--radius-2xl)",
+                        borderTopRightRadius: "var(--radius-2xl)",
+                        padding: "var(--space-5) var(--gutter) calc(var(--space-7) + env(safe-area-inset-bottom))",
+                        boxShadow: "var(--shadow-xl)",
+                    }}
+                >
+                    <div style={{ width: 44, height: 5, borderRadius: 999, background: "var(--border-default)", margin: "0 auto var(--space-5)" }} />
+                    {children}
+                </div>
             </div>
-        </div>
+        </Overlay>
     );
 }
 
@@ -1028,6 +1031,7 @@ function MapInner() {
 
             {/* First-launch welcome sheet */}
             {showWelcome && !dismissed && (
+                <Overlay>
                 <div
                     style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "flex-end", justifyContent: "center", background: "var(--bg-overlay, rgba(17,32,26,0.55))" }}
                     onClick={closeWelcome}
@@ -1035,7 +1039,7 @@ function MapInner() {
                     <div
                         className="kw-rise"
                         onClick={(e) => e.stopPropagation()}
-                        style={{ width: "100%", maxWidth: 480, background: "var(--surface-page)", borderTopLeftRadius: "var(--radius-2xl)", borderTopRightRadius: "var(--radius-2xl)", padding: "var(--space-6) var(--gutter) var(--space-7)", boxShadow: "var(--shadow-xl)" }}
+                        style={{ width: "100%", maxWidth: 480, maxHeight: "88dvh", overflowY: "auto", background: "var(--surface-page)", borderTopLeftRadius: "var(--radius-2xl)", borderTopRightRadius: "var(--radius-2xl)", padding: "var(--space-6) var(--gutter) calc(var(--space-7) + env(safe-area-inset-bottom))", boxShadow: "var(--shadow-xl)" }}
                     >
                         <div style={{ width: 44, height: 5, borderRadius: 999, background: "var(--border-default)", margin: "0 auto var(--space-5)" }} />
                         <div style={{ textAlign: "center", marginBottom: "var(--space-5)" }}>
@@ -1070,10 +1074,12 @@ function MapInner() {
                         </div>
                     </div>
                 </div>
+                </Overlay>
             )}
 
             {/* Bakkie ride confirmation: the drive spends the day and a ride */}
             {truckDest && (
+                <Overlay>
                 <div
                     style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: "var(--gutter)", background: "var(--bg-overlay, rgba(17,32,26,0.55))" }}
                     onClick={() => setTruckDest(null)}
@@ -1081,7 +1087,7 @@ function MapInner() {
                     <div
                         className="kw-rise"
                         onClick={(e) => e.stopPropagation()}
-                        style={{ width: "100%", maxWidth: 420, background: "var(--surface-page)", borderRadius: "var(--radius-2xl)", padding: "var(--space-6) var(--gutter) var(--space-6)", boxShadow: "var(--shadow-xl)" }}
+                        style={{ width: "100%", maxWidth: 420, maxHeight: "88dvh", overflowY: "auto", background: "var(--surface-page)", borderRadius: "var(--radius-2xl)", padding: "var(--space-6) var(--gutter) var(--space-6)", boxShadow: "var(--shadow-xl)" }}
                     >
                         <div style={{ display: "flex", justifyContent: "center", marginBottom: "var(--space-4)" }}>
                             <span style={{ width: 52, height: 52, borderRadius: "50%", background: "var(--accent-soft)", color: "var(--ochre-700)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26 }}>
@@ -1108,10 +1114,12 @@ function MapInner() {
                         </div>
                     </div>
                 </div>
+                </Overlay>
             )}
 
             {/* the spotting card: dealt onto the table as the ranger arrives */}
             {spot && (
+                <Overlay>
                 <div
                     style={{ position: "fixed", inset: 0, zIndex: 70, display: "flex", alignItems: "center", justifyContent: "center", padding: "var(--gutter)", background: "var(--bg-overlay, rgba(17,32,26,0.6))" }}
                     onClick={() => setSpot(null)}
@@ -1122,9 +1130,11 @@ function MapInner() {
                         style={{
                             width: "100%",
                             maxWidth: 400,
+                            maxHeight: "88dvh",
+                            overflowX: "hidden",
+                            overflowY: "auto",
                             background: "var(--surface-page)",
                             borderRadius: "var(--radius-2xl)",
-                            overflow: "hidden",
                             boxShadow: "var(--shadow-xl)",
                             border: spot.species.rarity === "oialt" ? "2px solid var(--clay-500)" : "1px solid var(--border-subtle)",
                         }}
@@ -1163,10 +1173,12 @@ function MapInner() {
                         </div>
                     </div>
                 </div>
+                </Overlay>
             )}
 
             {/* Lock-in confirmation: this is the one decision that ranks the player */}
             {lockModal && pin && (
+                <Overlay>
                 <div
                     style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: "var(--gutter)", background: "var(--bg-overlay, rgba(17,32,26,0.55))" }}
                     onClick={() => setLockModal(false)}
@@ -1174,7 +1186,7 @@ function MapInner() {
                     <div
                         className="kw-rise"
                         onClick={(e) => e.stopPropagation()}
-                        style={{ width: "100%", maxWidth: 420, background: "var(--surface-page)", borderRadius: "var(--radius-2xl)", padding: "var(--space-6) var(--gutter) var(--space-6)", boxShadow: "var(--shadow-xl)" }}
+                        style={{ width: "100%", maxWidth: 420, maxHeight: "88dvh", overflowY: "auto", background: "var(--surface-page)", borderRadius: "var(--radius-2xl)", padding: "var(--space-6) var(--gutter) var(--space-6)", boxShadow: "var(--shadow-xl)" }}
                     >
                         <div style={{ display: "flex", justifyContent: "center", marginBottom: "var(--space-4)" }}>
                             <span style={{ width: 52, height: 52, borderRadius: "50%", background: "var(--clay-100)", color: "var(--clay-600)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26 }}>
@@ -1203,6 +1215,7 @@ function MapInner() {
                         </div>
                     </div>
                 </div>
+                </Overlay>
             )}
         </div>
     );
