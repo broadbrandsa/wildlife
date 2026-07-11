@@ -3,12 +3,14 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import Image from "next/image";
+
 import { Button, Tag } from "@/components/ds";
 import { CarouselArrow, CarouselDots } from "@/components/game/Carousel";
 import { ClueCard } from "@/components/game/ClueCard";
 import { Logo } from "@/components/game/Logo";
 import { PhoneStage } from "@/components/game/PhoneStage";
-import { CLUE_BY_ID, PRIZE_TIERS } from "@/data";
+import { CLUE_BY_ID, FIVES, PRIZE_TIERS, SPECIES_BY_ID } from "@/data";
 
 /** Framed in-game preview, so new rangers see the real thing before they start. */
 function GameFrame({ children }: { children: React.ReactNode }) {
@@ -39,6 +41,67 @@ function ScentPreview() {
             <p style={{ margin: "var(--space-3) 0 0", fontFamily: "var(--font-serif)", fontSize: "0.98rem", lineHeight: 1.5, color: "var(--sand-900)" }}>
                 Your dog works the ground in tightening loops, tail up. The trail has been through here. The nose swings toward the sunrise.
             </p>
+        </div>
+    );
+}
+
+/** A marker token as it appears on the map, with a caption. */
+function MarkerToken({ gold, icon, label }: { gold: boolean; icon: string; label: string }) {
+    return (
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span
+                style={{
+                    flex: "none",
+                    width: 30,
+                    height: 30,
+                    borderRadius: "50%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: gold ? "var(--ochre-100)" : "var(--sand-50)",
+                    border: `2px solid ${gold ? "var(--ochre-400)" : "#fff"}`,
+                    boxShadow: gold ? "var(--shadow-sm), 0 0 0 3px var(--ochre-100)" : "var(--shadow-sm)",
+                }}
+            >
+                <i className={`ph-fill ph-${icon}`} style={{ fontSize: 15, color: gold ? "var(--ochre-600)" : "var(--green-800)" }} />
+            </span>
+            <span style={{ fontSize: "0.76rem", color: "var(--text-secondary)", lineHeight: 1.3 }}>{label}</span>
+        </div>
+    );
+}
+
+/** A replica of the spotting markers and a Big Five bingo row. */
+function SpotPreview() {
+    const big = FIVES.find((f) => f.id === "big") ?? FIVES[0];
+    return (
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
+                <MarkerToken gold={false} icon="paw-print" label="A common sighting shows its family icon" />
+                <MarkerToken gold={true} icon="star" label="A rare one shows a gold star" />
+            </div>
+            <div style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-md)", padding: "var(--space-3) var(--space-4)" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "var(--space-2)" }}>
+                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--text-primary)", fontWeight: 700 }}>
+                        {big.label}
+                    </span>
+                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.58rem", letterSpacing: "0.12em", color: "var(--ochre-700)", fontWeight: 700 }}>
+                        <i className="ph-fill ph-trophy" /> Instant prize
+                    </span>
+                </div>
+                <div style={{ display: "flex", gap: "var(--space-2)" }}>
+                    {big.members.map((m) => {
+                        const sp = SPECIES_BY_ID[m];
+                        return (
+                            <span key={m} style={{ position: "relative", flex: 1, aspectRatio: "1", borderRadius: "50%", overflow: "hidden", border: "1.5px solid var(--ochre-500)" }}>
+                                <Image src={sp.photo} alt="" fill sizes="48px" style={{ objectFit: "cover" }} />
+                            </span>
+                        );
+                    })}
+                </div>
+                <p style={{ margin: "var(--space-2) 0 0", fontSize: "0.76rem", color: "var(--green-700)", lineHeight: 1.4 }}>
+                    Spot all five and an instant prize is yours.
+                </p>
+            </div>
         </div>
     );
 }
@@ -97,6 +160,11 @@ const CARDS = [
         title: "Track the scent",
         body: "Stand somewhere and your dog reads the ground. Cold, faint, warm, fresh. Move each day and walk the trail warmer.",
         visual: <ScentPreview />,
+    },
+    {
+        title: "Spot the wildlife",
+        body: "As you work the bush, wild species appear on the map for a short while. Tap one to add it to your log. Spot all five of the Big, Ugly or Small Five and an instant prize is yours, bingo style.",
+        visual: <SpotPreview />,
     },
     {
         title: "Win real prizes",
