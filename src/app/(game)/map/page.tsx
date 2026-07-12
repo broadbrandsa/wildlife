@@ -729,9 +729,11 @@ function MapInner() {
             </div>
 
             {/* patrol banner: while the ranger walks to the new pin, a small note
-                above the live countdown of when they will get there */}
+                above the live countdown of when they will get there. Sits below
+                the team column, clear of the dog's rest bar, and is the ranger's
+                only walk countdown (the corner pill hides while walking). */}
             {rangerWalking && (
-                <div style={{ position: "absolute", top: 56, left: "50%", transform: "translateX(-50%)", zIndex: 4, width: "max-content", maxWidth: "min(84vw, 250px)", pointerEvents: "none" }}>
+                <div style={{ position: "absolute", top: 200, left: "50%", transform: "translateX(-50%)", zIndex: 4, width: "max-content", maxWidth: "min(64vw, 210px)", pointerEvents: "none" }}>
                     <div
                         style={{
                             textAlign: "center",
@@ -760,7 +762,9 @@ function MapInner() {
                 <div style={{ position: "absolute", left: "var(--gutter)", top: 12, display: "flex", flexDirection: "column", gap: 8 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <AvatarButton src={ranger.photo} alt={`${rangerName}, your ranger`} ready={rangerReady} onClick={() => setSheet("ranger")} />
-                        {pin && <RestBar progress={rangerWalkPct} ready={rangerReady} label={rangerBarLabel} />}
+                        {/* while walking, the patrol banner is the countdown, so the pill
+                            only shows the ready or camp state here to avoid a duplicate */}
+                        {pin && !rangerWalking && <RestBar progress={rangerWalkPct} ready={rangerReady} label={rangerBarLabel} />}
                     </div>
                     {dog && (
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
