@@ -980,7 +980,10 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                                 position: "absolute",
                                 left: `${drag.x * 100}%`,
                                 top: `${drag.y * 100}%`,
-                                transform: "translate(-50%, calc(-100% - 46px))",
+                                // counter-scale like the pin, so the chip keeps a
+                                // steady on-screen size however far you zoom in
+                                transform: "translate(-50%, calc(-100% - 46px)) scale(var(--kw-pin-scale, 1))",
+                                transformOrigin: "50% 100%",
                                 pointerEvents: "none",
                                 display: "inline-flex",
                                 alignItems: "center",
