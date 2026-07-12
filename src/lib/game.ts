@@ -157,14 +157,17 @@ export const EXTRA_MOVE_DOGS = new Set(["storm"]);
 export const BUSH_WISE_DOGS = new Set(["dotty"]);
 
 /**
- * A ranger and dog cannot work without rest. After a move the ranger recovers
- * before moving again; after a track the dog rests before it can track again.
- * A dog ration from the kit refuels the dog right away, and the ranger's boots
- * and a driven dog speed the ranger's recovery. Real time, so the bars fill
- * while you play.
+ * After a move the ranger is walking to the new location, and cannot move
+ * again until they arrive: the walk time is set by the distance (a full 8 km
+ * leg takes 4 hours, so half the distance is half the time). After a track the
+ * dog rests for a fixed spell. A dog ration refuels the dog right away, and the
+ * ranger's boots and a driven dog make the ranger walk faster. Real time, so
+ * the bars fill while you play.
  */
-export const MOVE_COOLDOWN_MS = 6 * 60 * 60 * 1000; // ranger: 6 hours
+export const WALK_SPEED_KMH = 2; // 8 km leg takes 4 hours
 export const TRACK_COOLDOWN_MS = 12 * 60 * 60 * 1000; // dog: 12 hours
+/** A bakkie ride takes a fixed chunk of the day before the ranger sets off again. */
+export const RIDE_TRAVEL_MS = 4 * 60 * 60 * 1000;
 
 /** Whether enough of the cooldown has passed to be rested and ready. */
 export function isRested(lastAt: number | null, now: number, cooldownMs: number): boolean {
@@ -191,14 +194,15 @@ export function restRemainingLabel(lastAt: number | null, now: number, cooldownM
 }
 
 /**
- * The ranger's effective move cooldown. Field boots and a driven dog (Storm)
- * each halve the recovery, so a well-kitted ranger is ready sooner.
+ * How long the ranger walks to cover a leg, from its distance. Boots and a
+ * driven dog (Storm) each double the walking pace, so a well-kitted ranger
+ * arrives sooner.
  */
-export function moveCooldownMs(dogId?: string | null, hasBoots?: boolean): number {
-    let ms = MOVE_COOLDOWN_MS;
-    if (hasBoots) ms *= 0.5;
-    if (dogId && EXTRA_MOVE_DOGS.has(dogId)) ms *= 0.5;
-    return ms;
+export function walkTravelMs(distanceKm: number, dogId?: string | null, hasBoots?: boolean): number {
+    let speed = WALK_SPEED_KMH;
+    if (hasBoots) speed *= 2;
+    if (dogId && EXTRA_MOVE_DOGS.has(dogId)) speed *= 2;
+    return Math.round((Math.max(0, distanceKm) / speed) * 3_600_000);
 }
 
 /**

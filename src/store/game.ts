@@ -5,7 +5,7 @@ import { persist } from "zustand/middleware";
 
 import { CODE_BY_VALUE, EQUIPMENT_BY_ID } from "@/data";
 import type { ZoneId } from "@/data";
-import { BUSH_WISE_DOGS, clampWalk, currentDay, dailyWalkKm } from "@/lib/game";
+import { BUSH_WISE_DOGS, RIDE_TRAVEL_MS, clampWalk, currentDay, dailyWalkKm, distanceKm, walkTravelMs } from "@/lib/game";
 import type { ScentTier } from "@/lib/game";
 import { receiptNumber } from "@/lib/format";
 
@@ -72,11 +72,13 @@ interface GameState {
      */
     truckRidesLeft: number;
     /**
-     * Epoch ms the ranger last moved. The ranger then recovers for a cooldown
-     * before moving again (boots and a driven dog shorten it). Null means
-     * fully rested and ready.
+     * Epoch ms the ranger set off on their last move. They are then walking to
+     * the new location and cannot move again until they arrive; the walk takes
+     * `moveTravelMs`. Null means arrived and ready.
      */
     lastMoveAt: number | null;
+    /** How long the current walk takes, in ms (set by the distance of the move). */
+    moveTravelMs: number;
     /**
      * Epoch ms the dog last tracked. The dog then rests for a cooldown before
      * it can track again; a consumable dog ration refuels it early. Null means
@@ -166,6 +168,7 @@ const initial = {
     cluesSeenDay: null as number | null,
     truckRidesLeft: 2,
     lastMoveAt: null as number | null,
+    moveTravelMs: 0,
     lastTrackAt: null as number | null,
     lastRevealKey: null as string | null,
     prevRead: null as { day: number; tier: ScentTier } | null,
@@ -196,10 +199,14 @@ export const useGameStore = create<GameState>()(
                     const target = s.pin ? clampWalk(s.pin, { x, y }, dailyWalkKm(s.player?.dogId)) : { x, y };
                     const prior = s.pinMovesToday;
                     const count = prior && prior.day === day ? prior.count + 1 : 1;
+                    // The ranger then walks to the new location; the time depends
+                    // on how far they went. The first deployment does not walk.
+                    const dist = s.pin ? distanceKm(s.pin, target) : 0;
                     return {
                         pin: { x: target.x, y: target.y, updatedAt: new Date().toISOString(), locked: false },
                         pinMovesToday: { day, count },
                         lastMoveAt: Date.now(),
+                        moveTravelMs: walkTravelMs(dist, s.player?.dogId, s.inventory.includes("ranger-boots")),
                         trail: [...s.trail, { x: target.x, y: target.y, day, via: "walk" as const }],
                     };
                 }),
@@ -211,10 +218,11 @@ export const useGameStore = create<GameState>()(
                         // The bakkie goes anywhere: no clampWalk on a ride.
                         pin: { x, y, updatedAt: new Date().toISOString(), locked: false },
                         truckRidesLeft: s.truckRidesLeft - 1,
-                        // The drive tires the ranger like a move, so the recovery
-                        // starts here too; pinMovesToday is kept for the day tally.
+                        // The drive takes a fixed chunk of the day before the
+                        // ranger sets off again; pinMovesToday is kept for the tally.
                         pinMovesToday: { day, count: 99 },
                         lastMoveAt: Date.now(),
+                        moveTravelMs: RIDE_TRAVEL_MS,
                         trail: [...s.trail, { x, y, day, via: "truck" as const }],
                     };
                 }),

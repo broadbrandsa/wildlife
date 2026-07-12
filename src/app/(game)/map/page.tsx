@@ -25,7 +25,6 @@ import {
     daysRemaining,
     isRested,
     isRoundOver,
-    moveCooldownMs,
     nextClueCountdown,
     nextClueLabel,
     poacherThird,
@@ -249,6 +248,7 @@ function MapInner() {
     const truckRidesLeft = useGameStore((s) => s.truckRidesLeft);
     const rideTruck = useGameStore((s) => s.rideTruck);
     const lastMoveAt = useGameStore((s) => s.lastMoveAt);
+    const moveTravelMs = useGameStore((s) => s.moveTravelMs);
     const lastTrackAt = useGameStore((s) => s.lastTrackAt);
     const recordTrack = useGameStore((s) => s.recordTrack);
     const lastRevealKey = useGameStore((s) => s.lastRevealKey);
@@ -329,24 +329,23 @@ function MapInner() {
     const pinZone = pin ? ZONE_BY_ID[zoneAtPoint(pin)] : null;
     const clueCountdown = nextClueLabel(day);
 
-    // Movement is paced by a real-time recovery: after a move the ranger rests
-    // before moving again. Boots and a driven dog shorten the recovery. The dog
-    // rests longer after a track. At night both make camp, so neither can work.
-    const moveCd = moveCooldownMs(player?.dogId, inventory.includes("ranger-boots"));
-    const rangerRested = isRested(lastMoveAt, nowMs, moveCd);
+    // After a move the ranger is walking to the new location and cannot move
+    // again until they arrive; the walk time (moveTravelMs) scales with distance.
+    // The dog rests a fixed spell after a track. At night both make camp.
+    const rangerArrived = isRested(lastMoveAt, nowMs, moveTravelMs);
     const dogRested = isRested(lastTrackAt, nowMs, TRACK_COOLDOWN_MS);
-    const rangerReady = Boolean(pin && !pin.locked && !night && !roundOver && rangerRested);
+    const rangerReady = Boolean(pin && !pin.locked && !night && !roundOver && rangerArrived);
     const dogTrackReady = Boolean(pin && !night && !roundOver && dogRested);
-    // The ranger can move when rested; the very first pin drops with no pin yet.
+    // The ranger can move when arrived; the very first pin drops with no pin yet.
     const canMove = !pin ? true : rangerReady;
     const walkKm = dailyWalkKm(player?.dogId);
-    // Rest bars for the team icons and their profiles.
-    const rangerRestPct = restProgress(lastMoveAt, nowMs, moveCd);
-    const rangerRestLabel = restRemainingLabel(lastMoveAt, nowMs, moveCd);
+    // Progress bars for the team icons and their profiles.
+    const rangerWalkPct = restProgress(lastMoveAt, nowMs, moveTravelMs);
+    const rangerWalkLabel = restRemainingLabel(lastMoveAt, nowMs, moveTravelMs);
     const dogRestPct = restProgress(lastTrackAt, nowMs, TRACK_COOLDOWN_MS);
     const dogRestLabel = restRemainingLabel(lastTrackAt, nowMs, TRACK_COOLDOWN_MS);
     // Bar label under each icon: the time left, or the reason it is not ready.
-    const rangerBarLabel = !rangerRested ? rangerRestLabel : night ? "Camp" : "Ready";
+    const rangerBarLabel = !rangerArrived ? rangerWalkLabel : night ? "Camp" : "Ready";
     const dogBarLabel = !dogRested ? dogRestLabel : night ? "Camp" : "Ready";
     // Dusk nudge: light is going and the ranger is rested and could still move.
     const showDuskPrompt = Boolean(pin && !pin.locked && !roundOver && isDusk(hour) && rangerReady);
@@ -724,7 +723,7 @@ function MapInner() {
                 <div style={{ position: "absolute", left: "var(--gutter)", top: 12, display: "flex", flexDirection: "column", gap: 8 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <AvatarButton src={ranger.photo} alt={`${rangerName}, your ranger`} ready={rangerReady} onClick={() => setSheet("ranger")} />
-                        {pin && <RestBar progress={rangerRestPct} ready={rangerReady} label={rangerBarLabel} />}
+                        {pin && <RestBar progress={rangerWalkPct} ready={rangerReady} label={rangerBarLabel} />}
                     </div>
                     {dog && (
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -989,7 +988,7 @@ function MapInner() {
                             {rangerReady ? (
                                 <div style={{ margin: "var(--space-4) 0 0" }}>
                                     <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", margin: "0 0 var(--space-3)", lineHeight: 1.55 }}>
-                                        {rangerName} is rested and ready. Move up to {walkKm} km. Tap Move to zoom in on your pin, then drag it along the ring.
+                                        {rangerName} has arrived and is ready. Move up to {walkKm} km. Tap Move to zoom in on your pin, then drag it along the ring. The further you walk, the longer it takes to get there.
                                     </p>
                                     <Button size="lg" fullWidth onClick={startMove} iconLeft={<i className="ph-fill ph-boot" />}>
                                         Move your ranger
@@ -1012,15 +1011,15 @@ function MapInner() {
                                 <div style={{ margin: "var(--space-4) 0 0" }}>
                                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-3)" }}>
                                         <span style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: "0.86rem", fontWeight: 600, color: "var(--text-primary)" }}>
-                                            <i className="ph-fill ph-boot" style={{ color: "var(--ochre-600)" }} /> {rangerName} is recovering
+                                            <i className="ph-fill ph-boot" style={{ color: "var(--ochre-600)" }} /> {rangerName} is walking there
                                         </span>
-                                        <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.66rem", letterSpacing: "0.1em", color: "var(--text-muted)" }}>{rangerRestLabel}</span>
+                                        <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.66rem", letterSpacing: "0.1em", color: "var(--text-muted)" }}>{rangerWalkLabel}</span>
                                     </div>
                                     <div style={{ marginTop: "var(--space-3)", height: 8, borderRadius: 999, background: "var(--surface-sunken)", overflow: "hidden" }}>
-                                        <div style={{ height: "100%", width: `${Math.round(rangerRestPct * 100)}%`, borderRadius: 999, background: "var(--ochre-500)", transition: "width 2s linear" }} />
+                                        <div style={{ height: "100%", width: `${Math.round(rangerWalkPct * 100)}%`, borderRadius: 999, background: "var(--ochre-500)", transition: "width 2s linear" }} />
                                     </div>
                                     <p style={{ margin: "var(--space-3) 0 0", fontSize: "0.8rem", color: "var(--text-muted)", lineHeight: 1.5 }}>
-                                        A ranger covers hard ground on foot and needs rest between moves. {rangerName} will be ready to move again in {rangerRestLabel}.
+                                        {rangerName} is on foot to the new ground. The further the leg, the longer the walk. Arrives in {rangerWalkLabel}, then you can move again.
                                     </p>
                                 </div>
                             )}

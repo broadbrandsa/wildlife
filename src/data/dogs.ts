@@ -7,7 +7,7 @@ export const DOGS: Dog[] = [
         name: "Storm",
         breed: "Belgian Malinois",
         role: "Apprehension & detection all-rounder",
-        effect: "Superpower: relentless drive. Malinois stamina keeps your ranger moving, halving the rest your ranger needs between moves",
+        effect: "Superpower: relentless drive. Malinois stamina sets a hard pace, so your ranger walks each leg in half the time",
         personality: "Brave, fast, will protect you.",
         didYouKnow:
             "Malinois are the SAWC unit's apprehension specialists, fearless under pressure and quick to follow a handler's command.",

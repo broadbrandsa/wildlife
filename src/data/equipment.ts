@@ -86,7 +86,7 @@ export const EQUIPMENT: Equipment[] = [
         tier: "hunt",
         priceZar: 350,
         description: "Tough boots for a handler covering ground on foot all day.",
-        effect: "Fresh legs. Your ranger recovers in half the time between moves, so you are ready to move again sooner.",
+        effect: "Fresh legs. Your ranger walks at twice the pace, so every leg takes half the time and you can move again sooner.",
         fundedEquivalent: "A pair of field boots for a ranger",
         icon: "boot",
         realWorldNote: "Field rangers patrol on foot for days at a time. Sound boots are basic, vital kit for the people behind the dogs.",
