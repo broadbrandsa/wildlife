@@ -101,6 +101,10 @@ interface GameState {
     sightings: { speciesId: string; day: number }[];
     /** Completed fives (big, ugly, small) whose instant prize has been won. */
     fivesWon: string[];
+    /** Ranger power-up counts (the bakkie ride is tracked by truckRidesLeft). */
+    powerups: Record<string, number>;
+    /** Rest-camp ids the ranger has reached, so each free power-up is granted once. */
+    campsVisited: string[];
 
     setHasHydrated: (v: boolean) => void;
     setPlayer: (player: Player) => void;
@@ -127,6 +131,14 @@ interface GameState {
     recordTrack: () => void;
     /** Refuel the dog with a ration so it can track again right away. */
     refuelDog: () => void;
+    /** The ranger reaches their location now: clears the walk. */
+    arriveNow: () => void;
+    /** Spend one of a power-up (scan, ration, snack). No-op if none left. */
+    usePowerup: (id: string) => void;
+    /** Add one of a power-up. */
+    grantPowerup: (id: string) => void;
+    /** Reaching a rest camp: grant its free power-up once, then remember it. */
+    visitCamp: (campId: string, reward: string) => void;
     /** Clear the dog badge: the current pin's scent read has been opened. */
     markScentSeen: () => void;
     /** Clear the clue badge for this round day. */
@@ -178,6 +190,8 @@ const initial = {
     trail: [] as { x: number; y: number; day: number; via: "walk" | "truck" }[],
     sightings: [] as { speciesId: string; day: number }[],
     fivesWon: [] as string[],
+    powerups: { scan: 1, ration: 1, snack: 1 } as Record<string, number>,
+    campsVisited: [] as string[],
 };
 
 export const useGameStore = create<GameState>()(
@@ -263,10 +277,17 @@ export const useGameStore = create<GameState>()(
                         : s.fieldGuides;
                     // A second lock-in reopens the pin and hands back a move; it is not kept in inventory.
                     const reopen = equipmentId === "extra-lockin";
-                    // Bakkie fuel is consumable too: each purchase adds one ride.
+                    // Consumable kit stocks a ranger power-up: bakkie fuel a ride,
+                    // binoculars a scan, a ration a dog ration, snacks a trail push.
                     const fuel = equipmentId === "truck-fuel";
-                    // A dog ration is consumable: it rests the dog right away.
-                    const ration = equipmentId === "dog-ration";
+                    const puGrant =
+                        equipmentId === "pro-binoculars"
+                            ? "scan"
+                            : equipmentId === "dog-ration"
+                              ? "ration"
+                              : equipmentId === "trail-rations"
+                                ? "snack"
+                                : null;
                     return {
                         inventory: item?.consumable ? s.inventory : [...new Set([...s.inventory, equipmentId])],
                         cluesUnlocked: clues,
@@ -278,7 +299,7 @@ export const useGameStore = create<GameState>()(
                         // A second lock-in also rests the ranger, so the reopened pin can move at once.
                         lastMoveAt: reopen ? null : s.lastMoveAt,
                         truckRidesLeft: fuel ? s.truckRidesLeft + 1 : s.truckRidesLeft,
-                        lastTrackAt: ration ? null : s.lastTrackAt,
+                        powerups: puGrant ? { ...s.powerups, [puGrant]: (s.powerups[puGrant] ?? 0) + 1 } : s.powerups,
                     };
                 });
                 return donation;
@@ -330,6 +351,22 @@ export const useGameStore = create<GameState>()(
             recordTrack: () => set({ lastTrackAt: Date.now() }),
 
             refuelDog: () => set({ lastTrackAt: null }),
+
+            arriveNow: () => set({ lastMoveAt: null, moveTravelMs: 0 }),
+
+            usePowerup: (id) =>
+                set((s) => ((s.powerups[id] ?? 0) > 0 ? { powerups: { ...s.powerups, [id]: s.powerups[id] - 1 } } : {})),
+
+            grantPowerup: (id) => set((s) => ({ powerups: { ...s.powerups, [id]: (s.powerups[id] ?? 0) + 1 } })),
+
+            visitCamp: (campId, reward) =>
+                set((s) => {
+                    if (s.campsVisited.includes(campId)) return {};
+                    const campsVisited = [...s.campsVisited, campId];
+                    // The bakkie ride is counted separately; the rest are power-ups.
+                    if (reward === "ride") return { campsVisited, truckRidesLeft: s.truckRidesLeft + 1 };
+                    return { campsVisited, powerups: { ...s.powerups, [reward]: (s.powerups[reward] ?? 0) + 1 } };
+                }),
 
             markScentSeen: () => set((s) => ({ scentSeenAt: s.pin?.updatedAt ?? null })),
 

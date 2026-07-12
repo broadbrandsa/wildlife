@@ -1,6 +1,6 @@
 export * from "./types";
 export { ZONES, ZONE_BY_ID } from "./zones";
-export { REST_CAMPS, REST_CAMP_BY_ID } from "./camps";
+export { REST_CAMPS, REST_CAMP_BY_ID, CAMP_REWARD } from "./camps";
 export type { RestCamp } from "./camps";
 export { DOGS, DOG_BY_ID } from "./dogs";
 export { RANGERS, RANGER_BY_ID } from "./rangers";

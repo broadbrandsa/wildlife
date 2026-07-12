@@ -132,3 +132,23 @@ export const REST_CAMPS: RestCamp[] = [
 ];
 
 export const REST_CAMP_BY_ID: Record<string, RestCamp> = Object.fromEntries(REST_CAMPS.map((c) => [c.id, c]));
+
+/**
+ * Reach a rest camp with your ranger and it gives one free power-up. Different
+ * camps hand out different ones, spread evenly across the four: a bakkie ride,
+ * a binocular scan, a dog ration or trail rations.
+ */
+export const CAMP_REWARD: Record<string, string> = {
+    "punda-maria": "scan",
+    shingwedzi: "ration",
+    mopani: "snack",
+    letaba: "ride",
+    olifants: "scan",
+    satara: "ration",
+    orpen: "snack",
+    skukuza: "ride",
+    "lower-sabie": "scan",
+    pretoriuskop: "ration",
+    "berg-en-dal": "snack",
+    "crocodile-bridge": "ride",
+};

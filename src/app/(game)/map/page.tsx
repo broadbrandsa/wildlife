@@ -13,7 +13,7 @@ import { KrugerMap } from "@/components/game/KrugerMap";
 import { formatLatLng } from "@/components/game/map-geometry";
 import { Overlay } from "@/components/game/Overlay";
 import { ZoneSheet } from "@/components/game/ZoneSheet";
-import { CLUE_BY_ID, CLUES, DOG_BY_ID, FIVES, FIVE_OF, RANGER_BY_ID, REST_CAMP_BY_ID, ROUND, SPECIES, SPECIES_BY_ID, ZONES, ZONE_BY_ID, speciesActivity, speciesStats } from "@/data";
+import { CAMP_REWARD, CLUE_BY_ID, CLUES, DOG_BY_ID, FIVES, FIVE_OF, RANGER_BY_ID, REST_CAMPS, REST_CAMP_BY_ID, ROUND, SPECIES, SPECIES_BY_ID, ZONES, ZONE_BY_ID, speciesActivity, speciesStats } from "@/data";
 import type { Clue, Species, Zone } from "@/data";
 import {
     SCENT_TEXT,
@@ -32,10 +32,11 @@ import {
     restProgress,
     restRemainingLabel,
     scentRead,
+    thirdOf,
     tierRank,
     zoneAtPoint,
 } from "@/lib/game";
-import { RARITY_META, SPOTTER_DOGS } from "@/lib/spotting";
+import { RARITY_META, SPOTTER_DOGS, rollSpot } from "@/lib/spotting";
 import { FAMILY_ICON, FAMILY_LABEL, makeMarker, spawnDelayMs } from "@/lib/markers";
 import type { SpotMarker } from "@/lib/markers";
 import type { ScentTier } from "@/lib/game";
@@ -52,6 +53,21 @@ const TIER_META: Record<ScentTier, { label: string; tone: "neutral" | "teal" | "
 };
 
 type SheetId = "status" | "ranger" | "dog" | "clue" | "guides" | "bakkie" | "night" | "spots" | "radio";
+
+/**
+ * Ranger power-ups: consumable tools shown as count-badged icons on the map.
+ * The bakkie ride's count is the store's truckRidesLeft; the rest live in the
+ * powerups map. Reaching a rest camp grants one free (see CAMP_REWARD).
+ */
+const POWERUPS: { id: string; name: string; icon: string; blurb: string }[] = [
+    { id: "ride", name: "Bakkie ride", icon: "truck", blurb: "Drive the ranger to any point on the map, skipping the walk." },
+    { id: "scan", name: "Binocular scan", icon: "binoculars", blurb: "Glass the bush and turn up a species right where you stand." },
+    { id: "ration", name: "Dog ration", icon: "bone", blurb: "Feed the dog so it can track again with no wait to rest." },
+    { id: "snack", name: "Trail rations", icon: "cookie", blurb: "Push on and reach your destination now, ending the walk." },
+];
+const POWERUP_BY_ID = Object.fromEntries(POWERUPS.map((p) => [p.id, p]));
+/** Within this many km of a camp counts as reaching it. */
+const CAMP_REACH_KM = 5;
 
 // A card read from the log carries found: false when the species is still out
 // there; the card then shows its photo in black and white with a Not found pill.
@@ -101,6 +117,60 @@ function AvatarButton({ src, alt, ready, onClick }: { src: string; alt: string; 
             <span style={{ position: "absolute", inset: 0, borderRadius: "50%", overflow: "hidden" }}>
                 <Image src={src} alt={alt} fill sizes="52px" style={{ objectFit: "cover" }} />
             </span>
+        </button>
+    );
+}
+
+/** A ranger power-up icon: full colour with a count badge while you hold some,
+ *  black and white when the count is zero. Same look as the bakkie. */
+function PowerUpIcon({ icon, count, label, onClick }: { icon: string; count: number; label: string; onClick: () => void }) {
+    const has = count > 0;
+    return (
+        <button
+            onClick={onClick}
+            aria-label={`${label}, ${count} left`}
+            className="kw-press"
+            style={{
+                position: "relative",
+                width: 52,
+                height: 52,
+                borderRadius: "50%",
+                border: "2px solid var(--sand-50)",
+                background: "var(--accent-soft)",
+                boxShadow: "var(--shadow-md)",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                filter: has ? "none" : "grayscale(1)",
+                opacity: has ? 1 : 0.65,
+            }}
+        >
+            <i className={`ph-fill ph-${icon}`} style={{ fontSize: 24, color: "var(--ochre-700)" }} />
+            {has && (
+                <span
+                    style={{
+                        position: "absolute",
+                        top: -3,
+                        right: -3,
+                        minWidth: 17,
+                        height: 17,
+                        borderRadius: 999,
+                        background: "var(--ochre-500)",
+                        color: "var(--sand-900)",
+                        border: "2px solid var(--sand-50)",
+                        fontFamily: "var(--font-mono)",
+                        fontSize: "0.58rem",
+                        fontWeight: 700,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        boxShadow: "var(--shadow-sm)",
+                    }}
+                >
+                    {count}
+                </span>
+            )}
         </button>
     );
 }
@@ -263,6 +333,12 @@ function MapInner() {
     const recordSighting = useGameStore((s) => s.recordSighting);
     const fivesWon = useGameStore((s) => s.fivesWon);
     const recordFiveWin = useGameStore((s) => s.recordFiveWin);
+    const powerups = useGameStore((s) => s.powerups);
+    const campsVisited = useGameStore((s) => s.campsVisited);
+    const usePowerup = useGameStore((s) => s.usePowerup);
+    const visitCamp = useGameStore((s) => s.visitCamp);
+    const refuelDog = useGameStore((s) => s.refuelDog);
+    const arriveNow = useGameStore((s) => s.arriveNow);
     const campaignTotal = useCampaignTotal();
 
     const [dismissed, setDismissed] = useState(false);
@@ -293,6 +369,9 @@ function MapInner() {
     const [radioSeen, setRadioSeen] = useState(false);
     // The rest camp whose info card is open (tapped its map icon).
     const [campInfo, setCampInfo] = useState<string | null>(null);
+    // A short-lived toast (power-up used, camp reward earned).
+    const [toast, setToast] = useState<string | null>(null);
+    const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     // New clues deal onto the screen the same way, once per release day.
     const [clueCard, setClueCard] = useState<Clue | null>(null);
     const [clueFlipped, setClueFlipped] = useState(true);
@@ -560,6 +639,7 @@ function MapInner() {
             setGuideFlipped(prefersReducedMotion());
             setGuideCard(ZONE_BY_ID[zoneId]);
         }
+        checkCampArrival();
     };
 
     const closeGuide = () => setGuideZone(null);
@@ -616,6 +696,7 @@ function MapInner() {
     const confirmRide = () => {
         if (truckDest) {
             rideTruck(truckDest.x, truckDest.y, day);
+            checkCampArrival();
         }
         setTruckDest(null);
         setTruckMode(false);
@@ -624,6 +705,65 @@ function MapInner() {
     const cancelRide = () => {
         setTruckDest(null);
         setTruckMode(false);
+    };
+
+    // A short-lived toast for power-up use and camp rewards.
+    const showToast = (msg: string) => {
+        setToast(msg);
+        if (toastTimer.current) clearTimeout(toastTimer.current);
+        toastTimer.current = setTimeout(() => setToast(null), 4000);
+    };
+
+    // Reaching a rest camp grants its free power-up, once per camp.
+    const checkCampArrival = () => {
+        const p = useGameStore.getState().pin;
+        if (!p) return;
+        const visited = useGameStore.getState().campsVisited;
+        const camp = REST_CAMPS.find((c) => CAMP_REWARD[c.id] && !visited.includes(c.id) && distanceKm(p, { x: c.x, y: c.y }) <= CAMP_REACH_KM);
+        if (!camp) return;
+        const reward = CAMP_REWARD[camp.id];
+        visitCamp(camp.id, reward);
+        showToast(`You reached ${camp.name}. Free ${POWERUP_BY_ID[reward]?.name ?? "power-up"} added to your power-ups.`);
+    };
+
+    // Live count for a power-up (the bakkie ride uses truckRidesLeft).
+    const powerCount = (id: string) => (id === "ride" ? truckRidesLeft : powerups[id] ?? 0);
+
+    // Tapping a power-up icon: spend it if it applies, or say why it does not.
+    const tapPowerUp = (id: string) => {
+        const n = powerCount(id);
+        if (id === "ride") {
+            if (n <= 0) showToast("No bakkie fuel left. Reach a rest camp or the kit room for more.");
+            else if (canCallBakkie) callBakkie();
+            else showToast("The bakkie cannot go out right now.");
+            return;
+        }
+        const pu = POWERUP_BY_ID[id];
+        if (n <= 0) {
+            showToast(`No ${pu.name.toLowerCase()} left. Reach a rest camp or the kit room for more.`);
+            return;
+        }
+        if (id === "scan") {
+            if (!pin) return;
+            commitSpot(rollSpot(thirdOf(pin), night));
+            usePowerup("scan");
+        } else if (id === "ration") {
+            if (dogRested) {
+                showToast(`${dogName} is already rested and ready.`);
+                return;
+            }
+            refuelDog();
+            usePowerup("ration");
+            showToast(`${dogName} is fed and ready to track.`);
+        } else if (id === "snack") {
+            if (!rangerWalking) {
+                showToast(`${rangerName} is not on the move right now.`);
+                return;
+            }
+            arriveNow();
+            usePowerup("snack");
+            showToast(`${rangerName} pushes on and reaches the ground.`);
+        }
     };
 
     const openClueSheet = () => {
@@ -819,6 +959,34 @@ function MapInner() {
                             </span>
                         )}
                     </button>
+                    {/* the other ranger power-ups: tap to spend, grey when none left */}
+                    {POWERUPS.filter((p) => p.id !== "ride").map((p) => (
+                        <PowerUpIcon key={p.id} icon={p.icon} count={powerups[p.id] ?? 0} label={p.name} onClick={() => tapPowerUp(p.id)} />
+                    ))}
+                </div>
+            )}
+
+            {/* short-lived toast: power-up used, or a camp reward earned */}
+            {toast && (
+                <div style={{ position: "absolute", left: "50%", bottom: 78, transform: "translateX(-50%)", zIndex: 8, width: "max-content", maxWidth: "min(84vw, 320px)", pointerEvents: "none" }}>
+                    <div
+                        className="kw-rise"
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                            padding: "0.55rem 0.85rem",
+                            background: "var(--bg-primary-solid, #21332a)",
+                            color: "var(--sand-50)",
+                            borderRadius: "var(--radius-pill)",
+                            boxShadow: "var(--shadow-lg)",
+                            fontSize: "0.82rem",
+                            lineHeight: 1.4,
+                            textAlign: "center",
+                        }}
+                    >
+                        <i className="ph-fill ph-sparkle" style={{ color: "var(--ochre-400)", flex: "none" }} /> {toast}
+                    </div>
                 </div>
             )}
 
@@ -1603,6 +1771,26 @@ function MapInner() {
                                     </Tag>
                                 </div>
                                 <p style={{ fontSize: "0.9rem", color: "var(--text-secondary)", lineHeight: 1.6, margin: "var(--space-3) 0 0" }}>{camp.blurb}</p>
+                                {CAMP_REWARD[camp.id] && (
+                                    <div
+                                        style={{
+                                            display: "flex",
+                                            gap: "0.7rem",
+                                            alignItems: "center",
+                                            marginTop: "var(--space-4)",
+                                            background: "var(--accent-soft)",
+                                            border: "1px solid var(--ochre-200)",
+                                            borderRadius: "var(--radius-lg)",
+                                            padding: "0.7rem 0.85rem",
+                                        }}
+                                    >
+                                        <i className={`ph-fill ph-${POWERUP_BY_ID[CAMP_REWARD[camp.id]]?.icon ?? "sparkle"}`} style={{ fontSize: 20, color: "var(--ochre-700)" }} />
+                                        <div style={{ fontSize: "0.84rem", color: "var(--text-secondary)", lineHeight: 1.45 }}>
+                                            <strong style={{ color: "var(--text-primary)" }}>Free power-up.</strong> Reach {camp.name} with your ranger for one {POWERUP_BY_ID[CAMP_REWARD[camp.id]]?.name.toLowerCase()}.
+                                            {campsVisited.includes(camp.id) ? " Already claimed." : ""}
+                                        </div>
+                                    </div>
+                                )}
                                 <div style={{ marginTop: "var(--space-4)", fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-muted)" }}>
                                     <i className="ph ph-crosshair" style={{ marginRight: 5 }} />
                                     {formatLatLng(camp.x, camp.y)}

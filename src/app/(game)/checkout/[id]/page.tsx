@@ -243,7 +243,7 @@ export default function CheckoutPage() {
                             >
                                 <i className="ph-fill ph-truck" style={{ fontSize: 20, color: "var(--ochre-700)", marginTop: 2 }} />
                                 <span style={{ fontSize: "0.86rem", color: "var(--text-secondary)", lineHeight: 1.55 }}>
-                                    The tank is full: one more bakkie ride is ready. Call the bakkie from the map when you need fresh ground.
+                                    One more bakkie ride added to your power-ups. Tap the bakkie on the map when you need to reach fresh ground.
                                 </span>
                             </div>
                         )}
@@ -281,7 +281,45 @@ export default function CheckoutPage() {
                             >
                                 <i className="ph-fill ph-bone" style={{ fontSize: 20, color: "var(--ochre-700)", marginTop: 2 }} />
                                 <span style={{ fontSize: "0.86rem", color: "var(--text-secondary)", lineHeight: 1.55 }}>
-                                    Your dog is fed and rested: it can track again right away. Open the dog on the map to send it back on the scent.
+                                    A dog ration added to your power-ups. Tap it on the map to feed your dog and send it straight back on the scent.
+                                </span>
+                            </div>
+                        )}
+
+                        {item.id === "pro-binoculars" && (
+                            <div
+                                style={{
+                                    display: "flex",
+                                    gap: "var(--space-3)",
+                                    alignItems: "flex-start",
+                                    background: "var(--ochre-100)",
+                                    border: "1px solid var(--ochre-200)",
+                                    borderRadius: "var(--radius-lg)",
+                                    padding: "var(--space-4)",
+                                }}
+                            >
+                                <i className="ph-fill ph-binoculars" style={{ fontSize: 20, color: "var(--ochre-700)", marginTop: 2 }} />
+                                <span style={{ fontSize: "0.86rem", color: "var(--text-secondary)", lineHeight: 1.55 }}>
+                                    A binocular scan added to your power-ups. Tap it on the map to glass the bush and turn up a species where you stand.
+                                </span>
+                            </div>
+                        )}
+
+                        {item.id === "trail-rations" && (
+                            <div
+                                style={{
+                                    display: "flex",
+                                    gap: "var(--space-3)",
+                                    alignItems: "flex-start",
+                                    background: "var(--ochre-100)",
+                                    border: "1px solid var(--ochre-200)",
+                                    borderRadius: "var(--radius-lg)",
+                                    padding: "var(--space-4)",
+                                }}
+                            >
+                                <i className="ph-fill ph-cookie" style={{ fontSize: 20, color: "var(--ochre-700)", marginTop: 2 }} />
+                                <span style={{ fontSize: "0.86rem", color: "var(--text-secondary)", lineHeight: 1.55 }}>
+                                    Trail rations added to your power-ups. Tap them while your ranger is walking to reach the destination now.
                                 </span>
                             </div>
                         )}
