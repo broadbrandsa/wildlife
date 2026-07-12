@@ -445,6 +445,9 @@ function MapInner() {
         { id: "snack", icon: "cookie", label: "Trail rations", count: powerups.snack ?? 0, onClick: () => setPowerupSheet("snack") },
         { id: "spots", icon: "paw-print", label: "Spots", count: spottedCount, onClick: () => setSheet("spots") },
     ];
+    // The rucksack's badge: every power-up you are carrying, added together
+    // (the spots are a log, not a power-up, so they are left out of the count).
+    const powerupTotal = rucksackItems.filter((it) => it.id !== "spots").reduce((sum, it) => sum + it.count, 0);
 
     // After a move the ranger is walking to the new location and cannot move
     // again until they arrive; the walk time (moveTravelMs) scales with distance.
@@ -946,7 +949,7 @@ function MapInner() {
                     <div style={{ position: "relative" }}>
                         <button
                             onClick={() => setRucksackOpen((v) => !v)}
-                            aria-label={rucksackOpen ? "Close your rucksack" : "Open your rucksack"}
+                            aria-label={rucksackOpen ? "Close your rucksack" : `Open your rucksack, ${powerupTotal} power-up${powerupTotal === 1 ? "" : "s"}`}
                             aria-expanded={rucksackOpen}
                             className="kw-press"
                             style={{
@@ -966,6 +969,30 @@ function MapInner() {
                             }}
                         >
                             <i className={`ph-fill ph-${rucksackOpen ? "x" : "backpack"}`} style={{ fontSize: rucksackOpen ? 22 : 26, color: "var(--ochre-700)" }} />
+                            {!rucksackOpen && powerupTotal > 0 && (
+                                <span
+                                    style={{
+                                        position: "absolute",
+                                        top: -3,
+                                        right: -3,
+                                        minWidth: 17,
+                                        height: 17,
+                                        borderRadius: 999,
+                                        background: "var(--ochre-500)",
+                                        color: "var(--sand-900)",
+                                        border: "2px solid var(--sand-50)",
+                                        fontFamily: "var(--font-mono)",
+                                        fontSize: "0.58rem",
+                                        fontWeight: 700,
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        boxShadow: "var(--shadow-sm)",
+                                    }}
+                                >
+                                    {powerupTotal}
+                                </span>
+                            )}
                         </button>
                         {rucksackOpen &&
                             rucksackItems.map((it, i) => (
