@@ -860,33 +860,6 @@ function MapInner() {
                 </button>
             </div>
 
-            {/* patrol banner: while the ranger walks to the new pin, a small note
-                above the live countdown of when they will get there. Sits below
-                the team column, clear of the dog's rest bar, and is the ranger's
-                only walk countdown (the corner pill hides while walking). */}
-            {rangerWalking && (
-                <div style={{ position: "absolute", top: 200, left: "50%", transform: "translateX(-50%)", zIndex: 4, width: "max-content", maxWidth: "min(64vw, 210px)", pointerEvents: "none" }}>
-                    <div
-                        style={{
-                            textAlign: "center",
-                            padding: "0.4rem 0.75rem",
-                            background: "rgba(250,246,236,0.92)",
-                            backdropFilter: "blur(8px)",
-                            WebkitBackdropFilter: "blur(8px)",
-                            border: "1px solid var(--border-subtle)",
-                            borderRadius: "var(--radius-lg)",
-                            boxShadow: "var(--shadow-sm)",
-                        }}
-                    >
-                        <div style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: "0.68rem", color: "var(--text-secondary)", lineHeight: 1.3 }}>
-                            <i className="ph-fill ph-boot" style={{ color: "var(--ochre-600)", fontSize: 12 }} /> {rangerName} is out on patrol to the new location
-                        </div>
-                        <div style={{ marginTop: 2, fontFamily: "var(--font-mono)", fontSize: "0.66rem", letterSpacing: "0.08em", fontWeight: 700, color: "var(--text-primary)" }}>
-                            Arrives in {rangerWalkLabelSec}
-                        </div>
-                    </div>
-                </div>
-            )}
 
             {/* the team, split: you, your dog and the bakkie. The ranger and dog
                 each carry a rest bar and turn green-ringed when ready to use. */}
@@ -894,9 +867,34 @@ function MapInner() {
                 <div style={{ position: "absolute", left: "var(--gutter)", top: 12, display: "flex", flexDirection: "column", gap: 8 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <AvatarButton src={ranger.photo} alt={`${rangerName}, your ranger`} ready={rangerReady} onClick={() => setSheet("ranger")} />
-                        {/* while walking, the patrol banner is the countdown, so the pill
-                            only shows the ready or camp state here to avoid a duplicate */}
-                        {pin && !rangerWalking && <RestBar progress={rangerWalkPct} ready={rangerReady} label={rangerBarLabel} />}
+                        {/* to the right of the ranger: the patrol pill and live
+                            countdown while walking, otherwise the ready or camp bar */}
+                        {pin &&
+                            (rangerWalking ? (
+                                <div
+                                    aria-label={`${rangerName} out on patrol, arrives in ${rangerWalkLabelSec}`}
+                                    style={{
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        alignItems: "center",
+                                        gap: 1,
+                                        padding: "4px 6px",
+                                        borderRadius: 10,
+                                        background: "rgba(250,246,236,0.9)",
+                                        backdropFilter: "blur(8px)",
+                                        WebkitBackdropFilter: "blur(8px)",
+                                        border: "1px solid var(--border-subtle)",
+                                        boxShadow: "var(--shadow-sm)",
+                                    }}
+                                >
+                                    <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontFamily: "var(--font-mono)", fontSize: "0.44rem", letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 700, color: "var(--ochre-700)" }}>
+                                        <i className="ph-fill ph-boot" style={{ fontSize: 9 }} /> On patrol
+                                    </span>
+                                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.48rem", letterSpacing: "0.01em", fontWeight: 700, color: "var(--text-primary)", whiteSpace: "nowrap" }}>{rangerWalkLabelSec}</span>
+                                </div>
+                            ) : (
+                                <RestBar progress={rangerWalkPct} ready={rangerReady} label={rangerBarLabel} />
+                            ))}
                     </div>
                     {dog && (
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
