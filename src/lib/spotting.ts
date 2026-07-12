@@ -2,12 +2,11 @@ import { FIVES, SPECIES, SPECIES_BY_ID, spottableAt } from "@/data";
 import type { Species, SpotRegion } from "@/data";
 
 /**
- * The spotting roll. Every ranger move turns up exactly one species from the
- * region the ranger is standing in: usually common, sometimes rare, and on
- * the rarest of rolls a once-in-a-lifetime sighting, which only ever occurs
- * inside its own region and is linked to round prizes.
+ * The spotting roll. Picks one species from the region the ranger is standing
+ * in: usually common, sometimes rare. It drives the tappable species markers
+ * that fade in near the ranger (and the binocular-scan power-up).
  *
- * Odds per move: common 85%, rare 15%. Randomness happens at action time
+ * Odds per roll: common 85%, rare 15%. Randomness happens at action time
  * (never during render).
  *
  * Spotting follows the clock: `night` restricts the pool to the species out at

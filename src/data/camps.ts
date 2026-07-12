@@ -139,7 +139,7 @@ export const CAMP_REACH_KM = 5;
 /**
  * Reach a rest camp with your ranger and it gives one free power-up. Different
  * camps hand out different ones, spread evenly across the four: a bakkie ride,
- * a binocular scan, a dog ration or trail rations.
+ * a binocular scan, field rations or trail rations.
  */
 export const CAMP_REWARD: Record<string, string> = {
     "punda-maria": "scan",

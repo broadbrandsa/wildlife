@@ -106,6 +106,28 @@ function SpotPreview() {
     );
 }
 
+/** A replica of the food supply gauge and a rest-camp resupply note. */
+function SupplyPreview() {
+    return (
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+            <div style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-md)", padding: "var(--space-3) var(--space-4)" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "var(--space-2)" }}>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-primary)", fontWeight: 700 }}>
+                        <i className="ph-fill ph-fork-knife" style={{ color: "var(--success)" }} /> Food supply
+                    </span>
+                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.58rem", letterSpacing: "0.1em", color: "var(--success)", fontWeight: 700 }}>3 of 4 days</span>
+                </div>
+                <div style={{ display: "flex", gap: 4 }}>
+                    {[0, 1, 2, 3].map((i) => (
+                        <span key={i} style={{ flex: 1, height: 7, borderRadius: 999, background: i < 3 ? "var(--success)" : "var(--surface-sunken)" }} />
+                    ))}
+                </div>
+            </div>
+            <MarkerToken gold={false} icon="house-line" label="Reach a rest camp to resupply and claim a free power-up" />
+        </div>
+    );
+}
+
 /** A compact replica of the prize tiers. */
 function PrizePreview() {
     return (
@@ -158,13 +180,18 @@ const CARDS = [
     },
     {
         title: "Track the scent",
-        body: "Stand somewhere and your dog reads the ground. Cold, faint, warm, fresh. Move each day and walk the trail warmer.",
+        body: "Move your ranger and they walk there on foot. When they arrive, send the dog to read the ground: cold, faint, warm or fresh. Follow it warmer, one leg at a time.",
         visual: <ScentPreview />,
     },
     {
         title: "Spot the wildlife",
         body: "As you work the bush, wild species appear on the map for a short while. Tap one to add it to your log. Spot all five of the Big, Ugly or Small Five and an instant prize is yours, bingo style.",
         visual: <SpotPreview />,
+    },
+    {
+        title: "Stay supplied",
+        body: "Your ranger carries four days of food. Reach a rest camp to resupply and claim a free power-up, or the bakkie fetches you when it runs out. Power-ups and your spotting log live in your rucksack on the map.",
+        visual: <SupplyPreview />,
     },
     {
         title: "Win real prizes",

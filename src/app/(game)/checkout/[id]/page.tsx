@@ -279,9 +279,9 @@ export default function CheckoutPage() {
                                     padding: "var(--space-4)",
                                 }}
                             >
-                                <i className="ph-fill ph-bone" style={{ fontSize: 20, color: "var(--ochre-700)", marginTop: 2 }} />
+                                <i className="ph-fill ph-fork-knife" style={{ fontSize: 20, color: "var(--ochre-700)", marginTop: 2 }} />
                                 <span style={{ fontSize: "0.86rem", color: "var(--text-secondary)", lineHeight: 1.55 }}>
-                                    A dog ration added to your power-ups. Tap it on the map to feed your dog and send it straight back on the scent.
+                                    A field rations power-up added to your rucksack. Tap it on the map to top up your food supply out in the bush.
                                 </span>
                             </div>
                         )}

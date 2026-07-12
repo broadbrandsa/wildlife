@@ -22,7 +22,8 @@ import {
     dailyWalkKm,
     distanceKm,
     scentDirectionText,
-    TRACK_COOLDOWN_MS,
+    FOOD_DAYS,
+    foodDaysLeft,
     daysRemaining,
     isRested,
     isRoundOver,
@@ -62,7 +63,7 @@ type SheetId = "status" | "ranger" | "dog" | "clue" | "guides" | "bakkie" | "nig
 const POWERUPS: { id: string; name: string; icon: string; blurb: string }[] = [
     { id: "ride", name: "Bakkie ride", icon: "truck", blurb: "Drive the ranger to any point on the map, skipping the walk." },
     { id: "scan", name: "Binocular scan", icon: "binoculars", blurb: "Glass the bush and turn up a species right where you stand." },
-    { id: "ration", name: "Dog ration", icon: "bone", blurb: "Feed the dog so it can track again with no wait to rest." },
+    { id: "ration", name: "Field rations", icon: "fork-knife", blurb: "Top up your food supply in the field, with no trip to a rest camp." },
     { id: "snack", name: "Trail rations", icon: "cookie", blurb: "Push on and reach your destination now, ending the walk." },
 ];
 const POWERUP_BY_ID = Object.fromEntries(POWERUPS.map((p) => [p.id, p]));
@@ -91,7 +92,7 @@ function NDot() {
 }
 
 /** Round avatar button for the split ranger / dog team icons. A green border
- *  and ring mark the ranger or dog as rested and ready to use. */
+ *  and ring mark the ranger or dog as ready to use. */
 function AvatarButton({ src, alt, ready, onClick }: { src: string; alt: string; ready: boolean; onClick: () => void }) {
     return (
         <button
@@ -189,18 +190,15 @@ function ArcItem({ icon, count, label, left, top, delay, onClick }: { icon: stri
     );
 }
 
-/** A compact recovery chip sitting to the right of a team icon: a fill bar over
- *  a small countdown of the rest time left (or "Ready"). Kept narrow so it
- *  clears the centred time chip on small screens. */
-function RestBar({ progress, ready, label }: { progress: number; ready: boolean; label: string }) {
+/** A compact status chip beside a team icon: a small icon and a tinted label. */
+function MiniChip({ icon, label, tone }: { icon: string; label: string; tone: string }) {
     return (
         <div
             style={{
-                display: "flex",
-                flexDirection: "column",
+                display: "inline-flex",
                 alignItems: "center",
-                gap: 2,
-                padding: "4px 6px",
+                gap: 4,
+                padding: "5px 8px",
                 borderRadius: 10,
                 background: "rgba(250,246,236,0.9)",
                 backdropFilter: "blur(8px)",
@@ -209,29 +207,8 @@ function RestBar({ progress, ready, label }: { progress: number; ready: boolean;
                 boxShadow: "var(--shadow-sm)",
             }}
         >
-            <span style={{ display: "block", width: 40, height: 5, borderRadius: 999, background: "var(--surface-sunken)", overflow: "hidden" }}>
-                <span
-                    style={{
-                        display: "block",
-                        height: "100%",
-                        width: `${Math.round(progress * 100)}%`,
-                        borderRadius: 999,
-                        background: ready ? "var(--success)" : "var(--ochre-500)",
-                        transition: "width 2s linear, background 200ms var(--ease-out)",
-                    }}
-                />
-            </span>
-            <span
-                style={{
-                    fontFamily: "var(--font-mono)",
-                    fontSize: "0.5rem",
-                    letterSpacing: "0.04em",
-                    fontWeight: 700,
-                    textTransform: "uppercase",
-                    color: ready ? "var(--success)" : "var(--text-primary)",
-                    lineHeight: 1,
-                }}
-            >
+            <i className={`ph-fill ph-${icon}`} style={{ fontSize: 11, color: tone }} />
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.5rem", letterSpacing: "0.06em", fontWeight: 700, textTransform: "uppercase", color: tone, lineHeight: 1, whiteSpace: "nowrap" }}>
                 {label}
             </span>
         </div>
@@ -334,8 +311,10 @@ function MapInner() {
     const rideTruck = useGameStore((s) => s.rideTruck);
     const lastMoveAt = useGameStore((s) => s.lastMoveAt);
     const moveTravelMs = useGameStore((s) => s.moveTravelMs);
-    const lastTrackAt = useGameStore((s) => s.lastTrackAt);
-    const recordTrack = useGameStore((s) => s.recordTrack);
+    const resupplyDay = useGameStore((s) => s.resupplyDay);
+    const pickupHoldDay = useGameStore((s) => s.pickupHoldDay);
+    const resupply = useGameStore((s) => s.resupply);
+    const autoPickup = useGameStore((s) => s.autoPickup);
     const lastRevealKey = useGameStore((s) => s.lastRevealKey);
     const prevRead = useGameStore((s) => s.prevRead);
     const hotStreak = useGameStore((s) => s.hotStreak);
@@ -351,7 +330,6 @@ function MapInner() {
     const campsVisited = useGameStore((s) => s.campsVisited);
     const usePowerup = useGameStore((s) => s.usePowerup);
     const visitCamp = useGameStore((s) => s.visitCamp);
-    const refuelDog = useGameStore((s) => s.refuelDog);
     const arriveNow = useGameStore((s) => s.arriveNow);
     const campaignTotal = useCampaignTotal();
 
@@ -375,7 +353,7 @@ function MapInner() {
     const markerSeq = useRef(0);
     const shownSinceMove = useRef(0);
     const nextSpawnAt = useRef<number | null>(null);
-    // Wall-clock tick that drives the ranger and dog rest bars.
+    // Wall-clock tick that drives the ranger's walk bar and live countdowns.
     const [nowMs, setNowMs] = useState(() => Date.now());
     // Bumped by the ranger's Move action to zoom the map in on the pin.
     const [focusSignal, setFocusSignal] = useState(0);
@@ -390,6 +368,11 @@ function MapInner() {
     const [powerupSheet, setPowerupSheet] = useState<string | null>(null);
     // The rucksack: tap to fan the power-ups and spots out in a half-moon.
     const [rucksackOpen, setRucksackOpen] = useState(false);
+    // Food resupply popup at a rest camp, and the once-per-arrival guard for it.
+    const [foodPrompt, setFoodPrompt] = useState(false);
+    const foodPromptRef = useRef<string | null>(null);
+    // Camp name shown in the auto-pickup notice after food runs out.
+    const [pickupNotice, setPickupNotice] = useState<string | null>(null);
     // New clues deal onto the screen the same way, once per release day.
     const [clueCard, setClueCard] = useState<Clue | null>(null);
     const [clueFlipped, setClueFlipped] = useState(true);
@@ -441,7 +424,7 @@ function MapInner() {
     const rucksackItems = [
         { id: "ride", icon: "truck", label: "Bakkie ride", count: truckRidesLeft, onClick: () => setSheet("bakkie") },
         { id: "scan", icon: "binoculars", label: "Binocular scan", count: powerups.scan ?? 0, onClick: () => setPowerupSheet("scan") },
-        { id: "ration", icon: "bone", label: "Dog ration", count: powerups.ration ?? 0, onClick: () => setPowerupSheet("ration") },
+        { id: "ration", icon: "fork-knife", label: "Field rations", count: powerups.ration ?? 0, onClick: () => setPowerupSheet("ration") },
         { id: "snack", icon: "cookie", label: "Trail rations", count: powerups.snack ?? 0, onClick: () => setPowerupSheet("snack") },
         { id: "spots", icon: "paw-print", label: "Spots", count: spottedCount, onClick: () => setSheet("spots") },
     ];
@@ -451,28 +434,28 @@ function MapInner() {
 
     // After a move the ranger is walking to the new location and cannot move
     // again until they arrive; the walk time (moveTravelMs) scales with distance.
-    // The dog rests a fixed spell after a track. At night both make camp.
+    // At night the ranger and dog make camp.
     const rangerArrived = isRested(lastMoveAt, nowMs, moveTravelMs);
-    const dogRested = isRested(lastTrackAt, nowMs, TRACK_COOLDOWN_MS);
-    const rangerReady = Boolean(pin && !pin.locked && !night && !roundOver && rangerArrived);
-    const dogTrackReady = Boolean(pin && !night && !roundOver && dogRested);
+    // Food supply: days left before the ranger must resupply at a rest camp.
+    const foodLeft = foodDaysLeft(resupplyDay, day);
+    const foodOut = Boolean(pin && foodLeft <= 0);
+    // The day of an auto-pickup: the ranger holds at the camp and moves out again the next day.
+    const heldForResupply = pickupHoldDay != null && pickupHoldDay === day;
+    const rangerReady = Boolean(pin && !pin.locked && !night && !roundOver && rangerArrived && !heldForResupply);
+    // The dog tracks the ground wherever the ranger stands, once they arrive.
+    const dogTrackReady = Boolean(pin && !night && !roundOver && rangerArrived);
     // The ranger can move when arrived; the very first pin drops with no pin yet.
     const canMove = !pin ? true : rangerReady;
     const walkKm = dailyWalkKm(player?.dogId);
-    // Progress bars for the team icons and their profiles. The compact label
-    // suits the small icon pills; the seconds label suits the profiles and the
-    // patrol banner, which tick live.
+    // The ranger's walk bar and live countdown to arrival (seconds for the profile/pill).
     const rangerWalkPct = restProgress(lastMoveAt, nowMs, moveTravelMs);
-    const rangerWalkLabel = restRemainingLabel(lastMoveAt, nowMs, moveTravelMs);
     const rangerWalkLabelSec = restRemainingLabel(lastMoveAt, nowMs, moveTravelMs, true);
-    const dogRestPct = restProgress(lastTrackAt, nowMs, TRACK_COOLDOWN_MS);
-    const dogRestLabel = restRemainingLabel(lastTrackAt, nowMs, TRACK_COOLDOWN_MS);
-    const dogRestLabelSec = restRemainingLabel(lastTrackAt, nowMs, TRACK_COOLDOWN_MS, true);
     // The ranger is out on patrol whenever they have not yet reached the new pin.
     const rangerWalking = Boolean(pin && lastMoveAt != null && !rangerArrived && !roundOver);
-    // Bar label under each icon: the time left, or the reason it is not ready.
-    const rangerBarLabel = !rangerArrived ? rangerWalkLabel : night ? "Camp" : "Ready";
-    const dogBarLabel = !dogRested ? dogRestLabel : night ? "Camp" : "Ready";
+    // Food chip colour and label: green with room to spare, ochre at two days,
+    // clay on the last day or while held at camp after a pickup.
+    const foodTone = heldForResupply || foodLeft <= 1 ? "var(--clay-500)" : foodLeft === 2 ? "var(--ochre-600)" : "var(--success)";
+    const foodChipLabel = heldForResupply ? "Resupplied" : `${foodLeft}d food`;
     // Dusk nudge: light is going and the ranger is rested and could still move.
     const showDuskPrompt = Boolean(pin && !pin.locked && !roundOver && isDusk(hour) && rangerReady);
 
@@ -499,6 +482,10 @@ function MapInner() {
     // new day. Once the key is recorded, reopening renders instantly.
     const revealKey = pin ? `${day}:${pin.updatedAt}` : null;
     const [revealing, setRevealing] = useState(false);
+    // Whether the dog has already read the ground the ranger is standing on.
+    const scentReadHere = Boolean(pin && revealKey && revealKey === lastRevealKey);
+    // A fresh spot of ground to read once the ranger arrives: drives the deploy prompt.
+    const freshGroundToRead = Boolean(dogTrackReady && !scentReadHere && !revealing);
 
     const startReveal = () => {
         if (!revealKey || !read) return;
@@ -665,6 +652,31 @@ function MapInner() {
         return () => clearInterval(iv);
     }, []);
 
+    // Food ran out: the bakkie collects the ranger to the nearest camp and
+    // resupplies. Fires once; the pickup sets pickupHoldDay so it cannot repeat.
+    useEffect(() => {
+        if (!pin || roundOver || !foodOut || heldForResupply) return;
+        const p = pin;
+        const nearest = REST_CAMPS.reduce(
+            (best, c) => (distanceKm(p, { x: c.x, y: c.y }) < distanceKm(p, { x: best.x, y: best.y }) ? c : best),
+            REST_CAMPS[0],
+        );
+        autoPickup(day);
+        setPickupNotice(nearest.name);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pin, roundOver, foodOut, heldForResupply, day]);
+
+    // Reaching a rest camp with less than a full supply pops the resupply offer,
+    // once per arrival at that pin.
+    useEffect(() => {
+        if (!pin || roundOver || night || !rangerArrived || heldForResupply) return;
+        if (campAtPin && foodLeft < FOOD_DAYS && foodPromptRef.current !== pin.updatedAt) {
+            foodPromptRef.current = pin.updatedAt;
+            setFoodPrompt(true);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pin, roundOver, night, rangerArrived, heldForResupply, campAtPin, foodLeft]);
+
     const onPlace = (x: number, y: number) => {
         if (!canMove && pin) return; // out of moves today; existing pin stays put
         const firstPin = fieldGuides.length === 0;
@@ -706,10 +718,9 @@ function MapInner() {
         setSheet("radio");
     };
 
-    // Send the dog to track: it reads the ground, then rests before it can
-    // track again. The reveal only plays on this tap, never on opening the sheet.
+    // Send the dog to track: it reads the ground where the ranger stands. The
+    // reveal only plays on this tap, never on opening the sheet.
     const track = () => {
-        recordTrack();
         startReveal();
     };
 
@@ -765,7 +776,10 @@ function MapInner() {
     const powerupUsable = (id: string): { ok: boolean; reason?: string } => {
         if (powerCount(id) <= 0) return { ok: false, reason: "none" };
         if (id === "scan") return pin ? { ok: true } : { ok: false, reason: "Drop your pin first." };
-        if (id === "ration") return dogRested ? { ok: false, reason: `${dogName} is already rested and ready to track.` } : { ok: true };
+        if (id === "ration") {
+            if (!pin) return { ok: false, reason: "Drop your pin first." };
+            return foodLeft < FOOD_DAYS ? { ok: true } : { ok: false, reason: `${rangerName} already has a full food supply.` };
+        }
         if (id === "snack") return rangerWalking ? { ok: true } : { ok: false, reason: `${rangerName} is not on the move right now.` };
         return { ok: true };
     };
@@ -777,9 +791,9 @@ function MapInner() {
             commitSpot(rollSpot(thirdOf(pin), night));
             usePowerup("scan");
         } else if (id === "ration") {
-            refuelDog();
+            resupply(day);
             usePowerup("ration");
-            showToast(`${dogName} is fed and ready to track.`);
+            showToast(`Food topped up. ${rangerName} has ${FOOD_DAYS} days of supplies.`);
         } else if (id === "snack") {
             arriveNow();
             usePowerup("snack");
@@ -935,14 +949,25 @@ function MapInner() {
                                     </span>
                                     <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.48rem", letterSpacing: "0.01em", fontWeight: 700, color: "var(--text-primary)", whiteSpace: "nowrap" }}>{rangerWalkLabelSec}</span>
                                 </div>
+                            ) : night ? (
+                                <MiniChip icon="campfire" label="Camped" tone="var(--ochre-600)" />
                             ) : (
-                                <RestBar progress={rangerWalkPct} ready={rangerReady} label={rangerBarLabel} />
+                                <MiniChip icon="fork-knife" label={foodChipLabel} tone={foodTone} />
                             ))}
                     </div>
                     {dog && (
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                             <AvatarButton src={dog.photo} alt={`${dogName}, your dog`} ready={dogTrackReady} onClick={openDogSheet} />
-                            {pin && <RestBar progress={dogRestPct} ready={dogTrackReady} label={dogBarLabel} />}
+                            {pin &&
+                                (night ? (
+                                    <MiniChip icon="campfire" label="Camped" tone="var(--ochre-600)" />
+                                ) : !rangerArrived ? (
+                                    <MiniChip icon="paw-print" label="En route" tone="var(--text-muted)" />
+                                ) : scentReadHere ? (
+                                    <MiniChip icon="check-circle" label="Scent read" tone="var(--success)" />
+                                ) : (
+                                    <MiniChip icon="paw-print" label="Track scent" tone="var(--ochre-700)" />
+                                ))}
                         </div>
                     )}
                     {/* the rucksack: tap to open, and your power-ups and spots fan
@@ -1097,6 +1122,40 @@ function MapInner() {
                 </div>
             )}
 
+            {/* deploy-the-dog prompt: the ranger has reached fresh ground, so send
+                the dog to track the scent. Tapping opens the scent-read panel. */}
+            {pin && freshGroundToRead && !truckMode && (
+                <button
+                    onClick={openDogSheet}
+                    className="kw-rise kw-press"
+                    aria-label={`Deploy ${dogName} to track the scent`}
+                    style={{
+                        position: "absolute",
+                        left: "50%",
+                        bottom: 110,
+                        transform: "translateX(-50%)",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 8,
+                        maxWidth: "88%",
+                        padding: "0.6rem 1rem",
+                        background: "var(--green-800)",
+                        color: "var(--sand-50)",
+                        border: "none",
+                        borderRadius: "var(--radius-pill)",
+                        boxShadow: "var(--shadow-lg)",
+                        fontSize: "0.84rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        textAlign: "center",
+                        lineHeight: 1.3,
+                    }}
+                >
+                    <i className="ph-fill ph-paw-print" style={{ fontSize: 17, flex: "none" }} />
+                    Deploy {dogName} to track the scent
+                </button>
+            )}
+
             {/* dusk nudge: move before the ranger makes camp for the night */}
             {showDuskPrompt && !truckMode && (
                 <div
@@ -1104,7 +1163,7 @@ function MapInner() {
                     style={{
                         position: "absolute",
                         left: "50%",
-                        bottom: 110,
+                        bottom: freshGroundToRead ? 168 : 110,
                         transform: "translateX(-50%)",
                         display: "inline-flex",
                         alignItems: "center",
@@ -1252,6 +1311,48 @@ function MapInner() {
                             </div>
                         </div>
                     )}
+                    {pin && (
+                        <div style={{ marginTop: "var(--space-4)", padding: "0.7rem 0.8rem", borderRadius: "var(--radius-lg)", border: "1px solid var(--border-subtle)", background: "var(--surface-card)" }}>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-3)" }}>
+                                <span style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: "0.86rem", fontWeight: 600, color: "var(--text-primary)" }}>
+                                    <i className="ph-fill ph-fork-knife" style={{ color: foodTone }} /> Food supply
+                                </span>
+                                <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.64rem", letterSpacing: "0.08em", textTransform: "uppercase", color: foodTone, fontWeight: 700 }}>
+                                    {heldForResupply ? "Resupplied" : `${foodLeft} of ${FOOD_DAYS} days`}
+                                </span>
+                            </div>
+                            <div style={{ display: "flex", gap: 4, marginTop: "var(--space-3)" }}>
+                                {Array.from({ length: FOOD_DAYS }).map((_, i) => (
+                                    <span key={i} style={{ flex: 1, height: 6, borderRadius: 999, background: i < foodLeft ? foodTone : "var(--surface-sunken)" }} />
+                                ))}
+                            </div>
+                            <p style={{ margin: "var(--space-3) 0 0", fontSize: "0.8rem", color: "var(--text-muted)", lineHeight: 1.5 }}>
+                                {heldForResupply
+                                    ? `The bakkie brought ${rangerName} in to ${campAtPin?.name ?? "a rest camp"} to resupply. You move out again tomorrow.`
+                                    : campAtPin && foodLeft < FOOD_DAYS
+                                      ? `You are at ${campAtPin.name}. Resupply to top back up to ${FOOD_DAYS} days of food.`
+                                      : foodLeft <= 1
+                                        ? `Almost out. Reach a rest camp to resupply, or the bakkie collects ${rangerName} and takes them to the nearest one.`
+                                        : `${rangerName} can stay out ${foodLeft} more day${foodLeft === 1 ? "" : "s"} before resupplying at a rest camp.`}
+                            </p>
+                            {campAtPin && foodLeft < FOOD_DAYS && !heldForResupply && (
+                                <div style={{ marginTop: "var(--space-3)" }}>
+                                    <Button
+                                        size="sm"
+                                        variant="secondary"
+                                        onClick={() => {
+                                            resupply(day);
+                                            setFoodPrompt(false);
+                                            showToast(`Food resupplied at ${campAtPin.name}. ${FOOD_DAYS} days of supplies.`);
+                                        }}
+                                        iconLeft={<i className="ph-fill ph-fork-knife" />}
+                                    >
+                                        Resupply at {campAtPin.name}
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+                    )}
                     {pin && !pin.locked && (
                         <>
                             {rangerReady ? (
@@ -1343,10 +1444,7 @@ function MapInner() {
                 <Sheet onClose={() => setSheet(null)}>
                     {(() => {
                         // Tracking here already played its reveal, so its read is safe to show.
-                        const trackedHere = Boolean(pin && revealKey && revealKey === lastRevealKey);
-                        const resting = Boolean(pin && !dogRested);
-                        const progress = dogRestPct;
-                        const remaining = dogRestLabelSec;
+                        const trackedHere = scentReadHere;
                         const showRead = Boolean(pin && read && trackedHere && !revealing);
                         const hot = Boolean(showRead && read && read.tier === "hot");
                         return (
@@ -1425,18 +1523,26 @@ function MapInner() {
                                         )}
 
                                         {/* At night the dog is camped and cannot track. */}
-                                        {!resting && night && (
+                                        {night && (
                                             <p style={{ margin: "var(--space-4) 0 0", fontSize: "0.82rem", color: "var(--text-muted)", lineHeight: 1.5, display: "flex", gap: 8, alignItems: "flex-start" }}>
                                                 <i className="ph-fill ph-campfire" style={{ color: "var(--ochre-600)", marginTop: 2 }} />
                                                 {dogName} is camped for the night. It tracks again at dawn.
                                             </p>
                                         )}
 
-                                        {/* Track CTA: the dog is rested and there is fresh ground to read. */}
-                                        {!resting && !night && !trackedHere && (
+                                        {/* The ranger is still walking in: the dog tracks once you arrive. */}
+                                        {!night && !rangerArrived && (
+                                            <p style={{ margin: "var(--space-4) 0 0", fontSize: "0.82rem", color: "var(--text-muted)", lineHeight: 1.5, display: "flex", gap: 8, alignItems: "flex-start" }}>
+                                                <i className="ph-fill ph-boot" style={{ color: "var(--ochre-600)", marginTop: 2 }} />
+                                                {dogName} tracks the ground once {rangerName} reaches the new location.
+                                            </p>
+                                        )}
+
+                                        {/* Track CTA: the ranger has arrived on fresh ground. */}
+                                        {!night && rangerArrived && !trackedHere && (
                                             <div style={{ marginTop: "var(--space-4)" }}>
                                                 <p style={{ margin: "0 0 var(--space-3)", fontSize: "0.86rem", color: "var(--text-secondary)", lineHeight: 1.55 }}>
-                                                    {dogName} is rested and ready. Send it to read the ground where your ranger stands.
+                                                    {rangerName} has reached the new location. Send {dogName} to read the ground and pick up the scent.
                                                 </p>
                                                 <Button size="lg" fullWidth onClick={track} iconLeft={<i className="ph-fill ph-paw-print" />}>
                                                     Track this ground
@@ -1444,49 +1550,12 @@ function MapInner() {
                                             </div>
                                         )}
 
-                                        {/* Rested, but this ground is already read: move for a new one. */}
-                                        {!resting && !night && trackedHere && (
+                                        {/* Already read here: move for fresh ground. */}
+                                        {!night && rangerArrived && trackedHere && (
                                             <p style={{ margin: "var(--space-4) 0 0", fontSize: "0.82rem", color: "var(--text-muted)", lineHeight: 1.5, display: "flex", gap: 8, alignItems: "flex-start" }}>
                                                 <i className="ph ph-check-circle" style={{ color: "var(--success)", marginTop: 2 }} />
-                                                {dogName} is rested. Move to fresh ground for a new read.
+                                                {dogName} has read this ground. Move to fresh ground for a new read.
                                             </p>
-                                        )}
-
-                                        {/* Resting: the dog tires after a track. A ration refuels it early. */}
-                                        {resting && (
-                                            <div
-                                                style={{
-                                                    marginTop: showRead ? "var(--space-4)" : "var(--space-3)",
-                                                    paddingTop: showRead ? "var(--space-4)" : 0,
-                                                    borderTop: showRead ? "1px dashed var(--border-default)" : "none",
-                                                }}
-                                            >
-                                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-3)" }}>
-                                                    <span style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: "0.86rem", fontWeight: 600, color: "var(--text-primary)" }}>
-                                                        <i className="ph-fill ph-moon-stars" style={{ color: "var(--ochre-600)" }} /> {dogName} is resting
-                                                    </span>
-                                                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.66rem", letterSpacing: "0.1em", color: "var(--text-muted)" }}>{remaining}</span>
-                                                </div>
-                                                <div style={{ marginTop: "var(--space-3)", height: 8, borderRadius: 999, background: "var(--surface-sunken)", overflow: "hidden" }}>
-                                                    <div
-                                                        style={{
-                                                            height: "100%",
-                                                            width: `${Math.round(progress * 100)}%`,
-                                                            borderRadius: 999,
-                                                            background: "var(--ochre-500)",
-                                                            transition: "width 1s linear",
-                                                        }}
-                                                    />
-                                                </div>
-                                                <p style={{ margin: "var(--space-3) 0 0", fontSize: "0.8rem", color: "var(--text-muted)", lineHeight: 1.5 }}>
-                                                    A working dog tires after a track. {dogName} will be ready to track again in {remaining}, or a ration from the kit refuels it now.
-                                                </p>
-                                                <div style={{ marginTop: "var(--space-3)" }}>
-                                                    <Button size="sm" variant="secondary" onClick={() => router.push("/checkout/dog-ration")} iconLeft={<i className="ph-fill ph-bone" />}>
-                                                        Refuel {dogName} with a ration
-                                                    </Button>
-                                                </div>
-                                            </div>
                                         )}
                                     </>
                                 )}
@@ -1861,6 +1930,58 @@ function MapInner() {
                 </Sheet>
             )}
 
+            {/* food resupply popup: reaching a camp with less than a full supply */}
+            {foodPrompt && campAtPin && (
+                <Sheet onClose={() => setFoodPrompt(false)}>
+                    <Eyebrow rule>Resupply</Eyebrow>
+                    <h2 style={{ fontSize: "var(--text-h4)", margin: "var(--space-3) 0 0" }}>Resupply at {campAtPin.name}</h2>
+                    <p style={{ fontSize: "0.88rem", color: "var(--text-secondary)", lineHeight: 1.55, margin: "var(--space-3) 0 0" }}>
+                        {rangerName} has {foodLeft} day{foodLeft === 1 ? "" : "s"} of food left. Top up to {FOOD_DAYS} days here at the rest camp so you can push deeper into the bush.
+                    </p>
+                    <div style={{ display: "flex", gap: 4, margin: "var(--space-4) 0 var(--space-5)" }}>
+                        {Array.from({ length: FOOD_DAYS }).map((_, i) => (
+                            <span key={i} style={{ flex: 1, height: 8, borderRadius: 999, background: i < foodLeft ? foodTone : "var(--surface-sunken)" }} />
+                        ))}
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
+                        <Button
+                            size="lg"
+                            fullWidth
+                            onClick={() => {
+                                resupply(day);
+                                setFoodPrompt(false);
+                                showToast(`Food resupplied at ${campAtPin.name}. ${FOOD_DAYS} days of supplies.`);
+                            }}
+                            iconLeft={<i className="ph-fill ph-fork-knife" />}
+                        >
+                            Resupply food
+                        </Button>
+                        <Button size="lg" fullWidth variant="secondary" onClick={() => setFoodPrompt(false)}>
+                            Not now
+                        </Button>
+                    </div>
+                </Sheet>
+            )}
+
+            {/* auto-pickup notice: the bakkie collected a ranger who ran out of food */}
+            {pickupNotice && (
+                <Sheet onClose={() => setPickupNotice(null)}>
+                    <Eyebrow rule>Out of food</Eyebrow>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "var(--space-3) 0 0" }}>
+                        <i className="ph-fill ph-truck" style={{ fontSize: 26, color: "var(--ochre-600)", flex: "none" }} />
+                        <h2 style={{ fontSize: "var(--text-h4)", margin: 0 }}>The bakkie brought you in</h2>
+                    </div>
+                    <p style={{ fontSize: "0.88rem", color: "var(--text-secondary)", lineHeight: 1.55, margin: "var(--space-3) 0 0" }}>
+                        {rangerName} ran out of food in the bush. The patrol bakkie collected the team and dropped them at {pickupNotice} to resupply. You move out again tomorrow.
+                    </p>
+                    <div style={{ marginTop: "var(--space-5)" }}>
+                        <Button size="lg" fullWidth onClick={() => setPickupNotice(null)} iconRight={<i className="ph ph-check" />}>
+                            Understood
+                        </Button>
+                    </div>
+                </Sheet>
+            )}
+
             {/* power-up info card: what it does, then the option to use it */}
             {powerupSheet && POWERUP_BY_ID[powerupSheet] && (
                 <Sheet onClose={() => setPowerupSheet(null)}>
@@ -1868,7 +1989,7 @@ function MapInner() {
                         const pu = POWERUP_BY_ID[powerupSheet];
                         const count = powerCount(pu.id);
                         const u = powerupUsable(pu.id);
-                        const btnLabel = pu.id === "scan" ? "Glass the bush" : pu.id === "ration" ? `Feed ${dogName}` : "Push on";
+                        const btnLabel = pu.id === "scan" ? "Glass the bush" : pu.id === "ration" ? "Top up food" : "Push on";
                         return (
                             <>
                                 <div style={{ display: "flex", alignItems: "center", gap: "var(--space-4)" }}>
@@ -1949,7 +2070,7 @@ function MapInner() {
                             </Tag>
                             <h2 style={{ fontSize: "var(--text-h3)", margin: "var(--space-3) 0 0" }}>Drop your first pin</h2>
                             <p style={{ fontSize: "0.86rem", color: "var(--text-secondary)", lineHeight: 1.55, margin: "var(--space-2) 0 0" }}>
-                                Tap the map where you think the suspect is hiding. Your ranger deploys there, and that ground&apos;s field guide unlocks free. From then on you move on foot, about {walkKm} km a day. Your first clue is waiting, so read it before you choose.
+                                Tap the map where you think the suspect is hiding. Your ranger deploys there, and that ground&apos;s field guide unlocks free. From then on you move on foot, about {walkKm} km a day, carrying four days of food. When you reach new ground, send your dog to read the scent. Your first clue is waiting, so read it before you choose.
                             </p>
                         </div>
                         <div style={{ marginTop: "var(--space-2)" }}>

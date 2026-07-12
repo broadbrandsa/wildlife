@@ -159,22 +159,38 @@ export const BUSH_WISE_DOGS = new Set(["dotty"]);
 /**
  * After a move the ranger is walking to the new location, and cannot move
  * again until they arrive: the walk time is set by the distance (a full 8 km
- * leg takes 4 hours, so half the distance is half the time). After a track the
- * dog rests for a fixed spell. A dog ration refuels the dog right away, and the
- * ranger's boots and a driven dog make the ranger walk faster. Real time, so
- * the bars fill while you play.
+ * leg takes 4 hours, so half the distance is half the time). The ranger's boots
+ * and a driven dog make the ranger walk faster. Real time, so the walk bar fills
+ * while you play.
  */
 export const WALK_SPEED_KMH = 2; // 8 km leg takes 4 hours
-export const TRACK_COOLDOWN_MS = 12 * 60 * 60 * 1000; // dog: 12 hours
 /** A bakkie ride takes a fixed chunk of the day before the ranger sets off again. */
 export const RIDE_TRAVEL_MS = 4 * 60 * 60 * 1000;
 
-/** Whether enough of the cooldown has passed to be rested and ready. */
+/**
+ * Food supply. The ranger carries enough to stay out in the bush for this many
+ * days; after that they must resupply at a rest camp, or the bakkie collects
+ * them and takes them to the nearest one. Counted in round days, not real time.
+ */
+export const FOOD_DAYS = 4;
+
+/** Days of food left, given the day the supply was last topped up. */
+export function foodDaysLeft(resupplyDay: number | null, day: number): number {
+    if (resupplyDay == null) return FOOD_DAYS;
+    return Math.max(0, FOOD_DAYS - (day - resupplyDay));
+}
+
+/**
+ * Timing helpers for the ranger's walk to a new location: `lastAt` is when they
+ * set off and `cooldownMs` is the walk time. Named generically as they could
+ * time any elapsed span.
+ */
+/** Whether the full span has elapsed (the ranger has arrived). */
 export function isRested(lastAt: number | null, now: number, cooldownMs: number): boolean {
     return lastAt == null || now - lastAt >= cooldownMs;
 }
 
-/** 0..1 recovery progress since the last action (1 when fully rested). */
+/** 0..1 progress through the span (1 when complete / arrived). */
 export function restProgress(lastAt: number | null, now: number, cooldownMs: number): number {
     if (lastAt == null) return 1;
     return Math.min(1, Math.max(0, (now - lastAt) / cooldownMs));
@@ -182,8 +198,8 @@ export function restProgress(lastAt: number | null, now: number, cooldownMs: num
 
 /**
  * The time remaining, "5h 12m" by default and "5h 12m 30s" with seconds. The
- * compact form suits the small icon pills; the seconds form suits the profiles
- * and the patrol banner where there is room and a live tick reads well.
+ * seconds form suits the ranger profile and the on-patrol pill, where there is
+ * room and a live tick reads well.
  */
 export function restRemainingLabel(lastAt: number | null, now: number, cooldownMs: number, withSeconds = false): string {
     if (lastAt == null) return "ready";

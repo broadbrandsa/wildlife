@@ -90,11 +90,16 @@ interface GameState {
     /** How long the current walk takes, in ms (set by the distance of the move). */
     moveTravelMs: number;
     /**
-     * Epoch ms the dog last tracked. The dog then rests for a cooldown before
-     * it can track again; a consumable dog ration refuels it early. Null means
-     * fully rested and ready.
+     * The round day the ranger last topped up their food supply (reaching a
+     * rest camp, using a field ration, or an auto-pickup). Null until first
+     * deploy; then set to the day they set off.
      */
-    lastTrackAt: number | null;
+    resupplyDay: number | null;
+    /**
+     * A round day on which the bakkie collected a ranger who ran out of food:
+     * they hold at the camp that day and move out again the next day.
+     */
+    pickupHoldDay: number | null;
     /** `${day}:${pin.updatedAt}` of the last scent reveal that played. */
     lastRevealKey: string | null;
     /** The read before the current one, for the warmer / colder delta line. */
@@ -107,7 +112,7 @@ interface GameState {
     zoneMarks: Partial<Record<ZoneId, "suspect" | "ruled-out">>;
     /** Every position the ranger has held, for the breadcrumb trail. */
     trail: { x: number; y: number; day: number; via: "walk" | "truck" }[];
-    /** The spotting log: one species sighted on every ranger move. */
+    /** The spotting log: every species the player has tapped and revealed. */
     sightings: { speciesId: string; day: number }[];
     /** Completed fives (big, ugly, small) whose instant prize has been won. */
     fivesWon: string[];
@@ -137,10 +142,10 @@ interface GameState {
     setNotifyAsked: () => void;
     setDemoDay: (day: number | null) => void;
     setDemoHour: (hour: number | null) => void;
-    /** The dog just tracked: start its rest cooldown. */
-    recordTrack: () => void;
-    /** Refuel the dog with a ration so it can track again right away. */
-    refuelDog: () => void;
+    /** Top up the ranger's food supply to full, as of the given round day. */
+    resupply: (day: number) => void;
+    /** Food ran out: the bakkie carries the ranger to the nearest camp and resupplies. */
+    autoPickup: (day: number) => void;
     /** The ranger reaches their location now: clears the walk. */
     arriveNow: () => void;
     /** Spend one of a power-up (scan, ration, snack). No-op if none left. */
@@ -191,7 +196,8 @@ const initial = {
     truckRidesLeft: 2,
     lastMoveAt: null as number | null,
     moveTravelMs: 0,
-    lastTrackAt: null as number | null,
+    resupplyDay: null as number | null,
+    pickupHoldDay: null as number | null,
     lastRevealKey: null as string | null,
     prevRead: null as { day: number; tier: ScentTier } | null,
     lastRead: null as { day: number; tier: ScentTier } | null,
@@ -231,6 +237,8 @@ export const useGameStore = create<GameState>()(
                         pinMovesToday: { day, count },
                         lastMoveAt: Date.now(),
                         moveTravelMs: walkTravelMs(dist, s.player?.dogId, s.inventory.includes("ranger-boots")),
+                        // The first deploy starts the food clock; later moves keep it running.
+                        resupplyDay: s.pin ? s.resupplyDay : day,
                         trail: [...s.trail, { x: target.x, y: target.y, day, via: "walk" as const }],
                     };
                 }),
@@ -290,7 +298,7 @@ export const useGameStore = create<GameState>()(
                     // A second lock-in reopens the pin and hands back a move; it is not kept in inventory.
                     const reopen = equipmentId === "extra-lockin";
                     // Consumable kit stocks a ranger power-up: bakkie fuel a ride,
-                    // binoculars a scan, a ration a dog ration, snacks a trail push.
+                    // binoculars a scan, field rations a food top-up, snacks a trail push.
                     const fuel = equipmentId === "truck-fuel";
                     const puGrant =
                         equipmentId === "pro-binoculars"
@@ -354,15 +362,36 @@ export const useGameStore = create<GameState>()(
 
             setNotifyAsked: () => set({ notifyAsked: true }),
 
-            // Moving the demo clock jumps game time, so the real-time rest
-            // cooldowns reset with it: the ranger and dog are rested again.
-            setDemoDay: (day) => set({ demoDay: day, lastMoveAt: null, lastTrackAt: null }),
+            // Moving the demo clock jumps game time, so the ranger's walk clears
+            // with it: they count as arrived at the new location.
+            setDemoDay: (day) => set({ demoDay: day, lastMoveAt: null }),
 
-            setDemoHour: (hour) => set({ demoHour: hour, lastMoveAt: null, lastTrackAt: null }),
+            setDemoHour: (hour) => set({ demoHour: hour, lastMoveAt: null }),
 
-            recordTrack: () => set({ lastTrackAt: Date.now() }),
+            resupply: (day) => set({ resupplyDay: day }),
 
-            refuelDog: () => set({ lastTrackAt: null }),
+            autoPickup: (day) =>
+                set((s) => {
+                    if (!s.pin) return {};
+                    const p = s.pin;
+                    let camp = REST_CAMPS[0];
+                    let bestKm = distanceKm(p, { x: camp.x, y: camp.y });
+                    for (const c of REST_CAMPS) {
+                        const d = distanceKm(p, { x: c.x, y: c.y });
+                        if (d < bestKm) {
+                            bestKm = d;
+                            camp = c;
+                        }
+                    }
+                    return {
+                        pin: { x: camp.x, y: camp.y, updatedAt: new Date().toISOString(), locked: false },
+                        resupplyDay: day,
+                        pickupHoldDay: day,
+                        lastMoveAt: null,
+                        moveTravelMs: 0,
+                        trail: [...s.trail, { x: camp.x, y: camp.y, day, via: "truck" as const }],
+                    };
+                }),
 
             arriveNow: () => set({ lastMoveAt: null, moveTravelMs: 0 }),
 
