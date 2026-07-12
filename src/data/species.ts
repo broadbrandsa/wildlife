@@ -1,9 +1,8 @@
 /**
  * The spotting log: 66 real Kruger species across the three regions (north, central,
- * south of the park), matched to where they actually occur. Rarity tiers:
- * common (most moves), rare (a good day) and once-in-a-lifetime (oialt),
- * which appears only in its own region on the rarest of rolls and is linked
- * to round prizes.
+ * south of the park), matched to where they actually occur. Two rarity tiers:
+ * common (most moves) and rare (a good day). The round prize comes from the
+ * bingo lists below: spot all five of a Big, Ugly or Small Five.
  *
  * Photography: Wikimedia Commons images stored locally in public/species/.
  * Each carries its own Creative Commons licence; attribution must be surfaced
@@ -13,7 +12,7 @@
 export type SpotRegion = "north" | "central" | "south";
 
 export type SpeciesType = "mammal" | "bird" | "tree" | "insect" | "fish" | "reptile";
-export type SpeciesRarity = "common" | "rare" | "oialt";
+export type SpeciesRarity = "common" | "rare";
 
 export interface Species {
     id: string;
@@ -31,7 +30,7 @@ export const SPECIES: Species[] = [
         id: "racket-tailed-roller",
         name: "Racket-tailed roller",
         type: "bird",
-        rarity: "oialt",
+        rarity: "rare",
         region: "north",
         info: "A roller of tall mopane woodland, told by the bare shafts and spoons on its tail. In South Africa it is found only in the far north of the Kruger, and even there a sighting is the stuff of legend.",
         photo: "/species/racket-tailed-roller.jpg",
@@ -40,7 +39,7 @@ export const SPECIES: Species[] = [
         id: "pels-fishing-owl",
         name: "Pel's fishing owl",
         type: "bird",
-        rarity: "oialt",
+        rarity: "rare",
         region: "north",
         info: "A giant rufous owl that fishes by night from branches over the Luvuvhu. Birders travel across the world for one glimpse at Pafuri.",
         photo: "/species/pels-fishing-owl.jpg",
@@ -211,7 +210,7 @@ export const SPECIES: Species[] = [
         id: "roan-antelope",
         name: "Roan antelope",
         type: "mammal",
-        rarity: "oialt",
+        rarity: "rare",
         region: "central",
         info: "A horse-sized antelope with a clown-painted face, one of the rarest large mammals in the park. A handful survive on the northern basalt plains.",
         photo: "/species/roan-antelope.jpg",
@@ -220,7 +219,7 @@ export const SPECIES: Species[] = [
         id: "pangolin",
         name: "Ground pangolin",
         type: "mammal",
-        rarity: "oialt",
+        rarity: "rare",
         region: "central",
         info: "An armoured anteater that walks on its hind legs and rolls into a ball of scales. Rangers can work a lifetime in the bush and never see one.",
         photo: "/species/pangolin.jpg",
@@ -391,7 +390,7 @@ export const SPECIES: Species[] = [
         id: "black-rhino",
         name: "Black rhinoceros",
         type: "mammal",
-        rarity: "oialt",
+        rarity: "rare",
         region: "south",
         info: "The rarer, shyer cousin of the white rhino, a browser with a hooked lip that holds to the thickets. Seeing one is the privilege of a lifetime, and protecting them is why the K9 unit exists.",
         photo: "/species/black-rhino.jpg",
@@ -400,7 +399,7 @@ export const SPECIES: Species[] = [
         id: "narina-trogon",
         name: "Narina trogon",
         type: "bird",
-        rarity: "oialt",
+        rarity: "rare",
         region: "south",
         info: "A crimson and emerald ghost of the tall riverine forest. It sits dead still and faces away, green back to the world, which is why almost nobody ever sees one.",
         photo: "/species/narina-trogon.jpg",

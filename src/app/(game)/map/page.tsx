@@ -1345,7 +1345,7 @@ function MapInner() {
                                     {spotted.size} of {SPECIES.length} species spotted
                                 </div>
                                 <p style={{ fontSize: "0.82rem", color: "var(--text-muted)", margin: "0.3rem 0 0", lineHeight: 1.5 }}>
-                                    Watch the map: species appear near your ranger for a short while, then move on. Tap one to add it to your log. The rarer it is, the less time you have. Spotting follows the clock too, so nocturnal animals only show after dark. A once in a lifetime sighting is linked to prizes at round end. Tap any card below to read it, found or not.
+                                    Watch the map: species appear near your ranger for a short while, then move on. Tap one to add it to your log. Sightings are common or rare, and the rarer it is, the less time you have to catch it. Spotting follows the clock too, so nocturnal animals only show after dark. Spot all five of the Big, Ugly or Small Five and an instant prize is yours. Tap any card below to read it, found or not.
                                 </p>
 
                                 {/* the fives: spot all five of each to complete the row */}
@@ -1424,13 +1424,11 @@ function MapInner() {
                                                             aspectRatio: "1",
                                                             borderRadius: "var(--radius-md)",
                                                             overflow: "hidden",
-                                                            // gold ring for rare sightings and the fives, clay for once in a lifetime
+                                                            // gold ring for rare sightings and the fives
                                                             border: seen
-                                                                ? s.rarity === "oialt"
-                                                                    ? "2px solid var(--clay-500)"
-                                                                    : s.rarity === "rare" || FIVE_OF[s.id]
-                                                                      ? "2px solid var(--ochre-400)"
-                                                                      : "1px solid var(--border-subtle)"
+                                                                ? s.rarity === "rare" || FIVE_OF[s.id]
+                                                                    ? "2px solid var(--ochre-400)"
+                                                                    : "1px solid var(--border-subtle)"
                                                                 : "1px solid var(--border-subtle)",
                                                             background: "var(--surface-sunken)",
                                                             cursor: "pointer",
@@ -1648,19 +1646,15 @@ function MapInner() {
                             overflowY: "auto",
                             background: "var(--surface-page)",
                             borderRadius: "var(--radius-2xl)",
-                            // Gold marks a rare sighting or a Big, Ugly or Small Five card;
-                            // clay marks once in a lifetime. Unfound cards stay neutral.
+                            // Gold marks a rare sighting or a Big, Ugly or Small Five card.
+                            // Unfound cards stay neutral.
                             boxShadow: spot.found !== false && (spot.species.rarity === "rare" || FIVE_OF[spot.species.id])
                                 ? "var(--shadow-xl), 0 0 0 3px var(--ochre-100)"
                                 : "var(--shadow-xl)",
                             border:
-                                spot.found === false
-                                    ? "1px solid var(--border-subtle)"
-                                    : spot.species.rarity === "oialt"
-                                      ? "2px solid var(--clay-500)"
-                                      : spot.species.rarity === "rare" || FIVE_OF[spot.species.id]
-                                        ? "2px solid var(--ochre-400)"
-                                        : "1px solid var(--border-subtle)",
+                                spot.found !== false && (spot.species.rarity === "rare" || FIVE_OF[spot.species.id])
+                                    ? "2px solid var(--ochre-400)"
+                                    : "1px solid var(--border-subtle)",
                         }}
                     >
                         {(() => {
@@ -1668,10 +1662,9 @@ function MapInner() {
                             const five = FIVE_OF[spot.species.id];
                             const rMeta = RARITY_META[spot.species.rarity];
                             const gold = found && (spot.species.rarity === "rare" || Boolean(five));
-                            const clay = found && spot.species.rarity === "oialt";
-                            const accent = clay ? "var(--clay-500)" : gold ? "var(--ochre-400)" : "var(--border-subtle)";
-                            // A rare or once in a lifetime chip glows in its own colour.
-                            const rarityBg = spot.species.rarity === "oialt" ? "var(--clay-500)" : spot.species.rarity === "rare" ? "var(--ochre-500)" : "rgba(24,45,35,0.55)";
+                            const accent = gold ? "var(--ochre-400)" : "var(--border-subtle)";
+                            // A rare chip glows gold; common stays dark glass.
+                            const rarityBg = spot.species.rarity === "rare" ? "var(--ochre-500)" : "rgba(24,45,35,0.55)";
                             const act = speciesActivity(spot.species.id);
                             return (
                                 <>
@@ -1747,11 +1740,11 @@ function MapInner() {
                                                 </div>
                                             </div>
                                         )}
-                                        {spot.species.rarity === "oialt" && (
-                                            <p style={{ fontSize: "0.82rem", color: "var(--clay-600)", fontWeight: 600, lineHeight: 1.5, margin: "var(--space-3) 0 0" }}>
+                                        {five && (
+                                            <p style={{ fontSize: "0.82rem", color: "var(--ochre-700)", fontWeight: 600, lineHeight: 1.5, margin: "var(--space-3) 0 0" }}>
                                                 {found
-                                                    ? "A once in a lifetime sighting. Hold onto this card: sightings like this one are linked to prizes when the round closes."
-                                                    : "A once in a lifetime card. Sightings like this one are linked to prizes when the round closes."}
+                                                    ? `Part of ${five}. Spot all five and an instant prize is yours.`
+                                                    : `Part of ${five}. Spot all five to win an instant prize.`}
                                             </p>
                                         )}
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-3)", marginTop: "var(--space-4)", paddingTop: "var(--space-3)", borderTop: "1px dashed var(--border-default)" }}>

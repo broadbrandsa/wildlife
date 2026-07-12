@@ -39,10 +39,9 @@ export const MARKER_CAP = 1;
 /**
  * How long a marker shows for, by rarity: the rarer the sighting, the smaller
  * the window to catch it. A common lingers about a minute, a rare is a quick
- * twenty seconds, and a once in a lifetime is a blink.
+ * twenty seconds.
  */
 export function markerTtlMs(rarity: SpeciesRarity): number {
-    if (rarity === "oialt") return 12_000;
     if (rarity === "rare") return 20_000;
     return 60_000;
 }
@@ -87,9 +86,9 @@ export function makeMarker(
 
 /**
  * Marker glyphs by family, shown before the reveal so the icon hints at the
- * family without giving the species away. A rare or once in a lifetime marker
- * ignores this and shows a gold star instead (see the map), because spotting
- * one is special whatever family it belongs to.
+ * family without giving the species away. A rare marker ignores this and
+ * shows a gold star instead (see the map), because spotting one is special
+ * whatever family it belongs to.
  */
 export const FAMILY_ICON: Record<SpeciesType, string> = {
     mammal: "paw-print",

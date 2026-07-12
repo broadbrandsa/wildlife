@@ -7,20 +7,18 @@ import type { Species, SpotRegion } from "@/data";
  * the rarest of rolls a once-in-a-lifetime sighting, which only ever occurs
  * inside its own region and is linked to round prizes.
  *
- * Odds per move: common 85%, rare 14.6%, once in a lifetime 0.4%. Randomness
- * happens at action time (never during render). Production note: for prize
- * integrity the OIALT roll must move server-side with the poacher position.
+ * Odds per move: common 85%, rare 15%. Randomness happens at action time
+ * (never during render).
  *
  * Spotting follows the clock: `night` restricts the pool to the species out at
  * that hour (nocturnal after dark, diurnal by day, cathemeral either way).
  */
-const OIALT_CHANCE = 0.004;
-const RARE_CHANCE = 0.146;
+const RARE_CHANCE = 0.15;
 
 export function rollSpot(region: SpotRegion, night: boolean, rng: () => number = Math.random): Species {
     const pool = SPECIES.filter((s) => s.region === region && spottableAt(s.id, night));
     const roll = rng();
-    const tier = roll < OIALT_CHANCE ? "oialt" : roll < OIALT_CHANCE + RARE_CHANCE ? "rare" : "common";
+    const tier = roll < RARE_CHANCE ? "rare" : "common";
     const tierPool = pool.filter((s) => s.rarity === tier);
     return tierPool[Math.floor(rng() * tierPool.length)] ?? pool[Math.floor(rng() * pool.length)] ?? pool[0];
 }
@@ -49,5 +47,4 @@ export function rollFirstSpot(region: SpotRegion, night: boolean, rng: () => num
 export const RARITY_META = {
     common: { label: "Common", tone: "neutral" as const, icon: "binoculars" },
     rare: { label: "Rare", tone: "ochre" as const, icon: "star" },
-    oialt: { label: "Once in a lifetime", tone: "clay" as const, icon: "sparkle" },
 };
