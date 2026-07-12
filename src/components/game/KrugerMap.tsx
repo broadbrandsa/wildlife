@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
 import type { ReactZoomPanPinchRef } from "react-zoom-pan-pinch";
 
-import { REST_CAMPS, ZONES } from "@/data";
+import { CAMP_REACH_KM, REST_CAMPS, ZONES } from "@/data";
 import type { ZoneId } from "@/data";
 import { clampWalk, distanceKm } from "@/lib/game";
 import { CAMPS, formatLatLng, K9_BASE, LANDMARKS, MAP_H, MAP_W, PARK_PATH, PROJ, RIVER_PATHS } from "./map-geometry";
@@ -242,7 +242,7 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
     // day's range along the same bearing, a tether line runs back to the start
     // and a chip reads out the distance being walked.
     const draggable = Boolean(onPlace && pin && !pin.locked && (walkRangeKm != null || freeDrag));
-    const [drag, setDrag] = useState<{ x: number; y: number; km: number } | null>(null);
+    const [drag, setDrag] = useState<{ x: number; y: number; km: number; camp: string | null } | null>(null);
 
     // react-zoom-pan-pinch listens to NATIVE touch events on its wrapper, which
     // fire before React's root-delegated handlers, so stopping propagation in
@@ -280,7 +280,7 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
         } catch {
             // capture is best-effort; the move handler still tracks the pointer
         }
-        setDrag({ x: pin.x, y: pin.y, km: 0 });
+        setDrag({ x: pin.x, y: pin.y, km: 0, camp: null });
     };
 
     const onPinPointerMove = (e: React.PointerEvent<HTMLSpanElement>) => {
@@ -289,13 +289,17 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
         if (!f) return;
         // On a bakkie ride the drag goes anywhere; on foot it clamps to range.
         const t = freeDrag || walkRangeKm == null ? f : clampWalk(pin, f, walkRangeKm);
-        setDrag({ x: t.x, y: t.y, km: distanceKm(pin, t) });
+        // Drag near a rest camp and the pin snaps onto it, the same pull the
+        // store applies on placement, so you see where you are headed.
+        const camp = REST_CAMPS.find((c) => distanceKm(t, { x: c.x, y: c.y }) <= CAMP_REACH_KM);
+        const snapped = camp ? { x: camp.x, y: camp.y } : t;
+        setDrag({ x: snapped.x, y: snapped.y, km: distanceKm(pin, snapped), camp: camp?.name ?? null });
     };
 
     const onPinPointerUp = (e: React.PointerEvent<HTMLSpanElement>) => {
         if (!drag) return;
         e.stopPropagation();
-        if (onPlace && drag.km > 0.3) onPlace(drag.x, drag.y);
+        if (onPlace && (drag.km > 0.3 || drag.camp)) onPlace(drag.x, drag.y);
         setDrag(null);
     };
 
@@ -946,8 +950,9 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                         </span>
                     )}
 
-                    {/* distance chip: how far the pin is being walked */}
-                    {drag && drag.km > 0.1 && (
+                    {/* drag chip: how far the pin is being walked, or a note that it
+                        has snapped onto a rest camp and where it is headed */}
+                    {drag && (drag.km > 0.1 || drag.camp) && (
                         <span
                             style={{
                                 position: "absolute",
@@ -955,20 +960,30 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                                 top: `${drag.y * 100}%`,
                                 transform: "translate(-50%, calc(-100% - 46px))",
                                 pointerEvents: "none",
-                                fontFamily: "var(--font-mono)",
-                                fontSize: "0.68rem",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 5,
+                                fontFamily: drag.camp ? "var(--font-sans)" : "var(--font-mono)",
+                                fontSize: drag.camp ? "0.72rem" : "0.68rem",
                                 fontWeight: 700,
-                                letterSpacing: "0.06em",
+                                letterSpacing: drag.camp ? "0" : "0.06em",
                                 whiteSpace: "nowrap",
-                                padding: "0.2rem 0.5rem",
+                                padding: "0.24rem 0.6rem",
                                 borderRadius: "var(--radius-pill)",
-                                background: "var(--sand-50)",
-                                color: "var(--clay-600)",
-                                border: "1px solid var(--clay-500)",
+                                background: drag.camp ? "var(--ochre-500)" : "var(--sand-50)",
+                                color: drag.camp ? "var(--sand-900)" : "var(--clay-600)",
+                                border: `1px solid ${drag.camp ? "var(--ochre-500)" : "var(--clay-500)"}`,
                                 boxShadow: "var(--shadow-sm)",
                             }}
                         >
-                            {drag.km.toFixed(1)} KM
+                            {drag.camp ? (
+                                <>
+                                    <i className="ph-fill ph-house-line" style={{ fontSize: 13 }} />
+                                    Go to {drag.camp} rest camp
+                                </>
+                            ) : (
+                                `${drag.km.toFixed(1)} KM`
+                            )}
                         </span>
                     )}
                 </div>
