@@ -66,8 +66,6 @@ const POWERUPS: { id: string; name: string; icon: string; blurb: string }[] = [
     { id: "snack", name: "Trail rations", icon: "cookie", blurb: "Push on and reach your destination now, ending the walk." },
 ];
 const POWERUP_BY_ID = Object.fromEntries(POWERUPS.map((p) => [p.id, p]));
-/** Within this many km of a camp counts as reaching it. */
-const CAMP_REACH_KM = 5;
 
 // A card read from the log carries found: false when the species is still out
 // there; the card then shows its photo in black and white with a Not found pill.
@@ -121,46 +119,62 @@ function AvatarButton({ src, alt, ready, onClick }: { src: string; alt: string; 
     );
 }
 
-/** A ranger power-up icon: full colour with a count badge while you hold some,
- *  black and white when the count is zero. Same look as the bakkie. */
-function PowerUpIcon({ icon, count, label, onClick }: { icon: string; count: number; label: string; onClick: () => void }) {
+
+/**
+ * The rucksack fans its contents out in a right-facing half-moon. Five slots,
+ * spaced across a 144-degree arc, positioned inside the 52px rucksack box.
+ */
+const RUCKSACK_ARC = [-72, -36, 0, 36, 72].map((deg) => {
+    const r = 74;
+    const rad = (deg * Math.PI) / 180;
+    const size = 46;
+    return { left: 26 + r * Math.cos(rad) - size / 2, top: 26 + r * Math.sin(rad) - size / 2 };
+});
+
+/** One tool inside the opened rucksack: an icon token with a count badge, greyed
+ *  out when empty. Positioned absolutely along the fan. */
+function ArcItem({ icon, count, label, left, top, delay, onClick }: { icon: string; count: number; label: string; left: number; top: number; delay: number; onClick: () => void }) {
     const has = count > 0;
     return (
         <button
             onClick={onClick}
-            aria-label={`${label}, ${count} left`}
-            className="kw-press"
+            aria-label={`${label}, ${count}`}
+            className="kw-press kw-rise"
             style={{
-                position: "relative",
-                width: 52,
-                height: 52,
+                position: "absolute",
+                left,
+                top,
+                width: 46,
+                height: 46,
                 borderRadius: "50%",
                 border: "2px solid var(--sand-50)",
                 background: "var(--accent-soft)",
                 boxShadow: "var(--shadow-md)",
-                cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
+                cursor: "pointer",
+                zIndex: 7,
+                animationDelay: `${delay}ms`,
                 filter: has ? "none" : "grayscale(1)",
-                opacity: has ? 1 : 0.65,
+                opacity: has ? 1 : 0.7,
             }}
         >
-            <i className={`ph-fill ph-${icon}`} style={{ fontSize: 24, color: "var(--ochre-700)" }} />
+            <i className={`ph-fill ph-${icon}`} style={{ fontSize: 22, color: "var(--ochre-700)" }} />
             {has && (
                 <span
                     style={{
                         position: "absolute",
                         top: -3,
                         right: -3,
-                        minWidth: 17,
-                        height: 17,
+                        minWidth: 16,
+                        height: 16,
                         borderRadius: 999,
                         background: "var(--ochre-500)",
                         color: "var(--sand-900)",
                         border: "2px solid var(--sand-50)",
                         fontFamily: "var(--font-mono)",
-                        fontSize: "0.58rem",
+                        fontSize: "0.54rem",
                         fontWeight: 700,
                         display: "flex",
                         alignItems: "center",
@@ -374,6 +388,8 @@ function MapInner() {
     const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     // The power-up whose info card is open (tapped its icon).
     const [powerupSheet, setPowerupSheet] = useState<string | null>(null);
+    // The rucksack: tap to fan the power-ups and spots out in a half-moon.
+    const [rucksackOpen, setRucksackOpen] = useState(false);
     // New clues deal onto the screen the same way, once per release day.
     const [clueCard, setClueCard] = useState<Clue | null>(null);
     const [clueFlipped, setClueFlipped] = useState(true);
@@ -412,6 +428,23 @@ function MapInner() {
 
     const pinZone = pin ? ZONE_BY_ID[zoneAtPoint(pin)] : null;
     const clueCountdown = nextClueLabel(day);
+
+    // When a move snaps the pin onto a rest camp, name it above the pin and
+    // offer its free power-up to claim by hand (once per camp).
+    const campAtPin = pin ? REST_CAMPS.find((c) => distanceKm(pin, { x: c.x, y: c.y }) < 0.6) ?? null : null;
+    const campReward = campAtPin ? CAMP_REWARD[campAtPin.id] : null;
+    const campRewardUnclaimed = Boolean(campAtPin && campReward && !campsVisited.includes(campAtPin.id));
+
+    // How many distinct species are in the spotting log (the rucksack's Spots badge).
+    const spottedCount = useMemo(() => new Set(sightings.map((s) => s.speciesId)).size, [sightings]);
+    // The rucksack's contents, fanned out in order: the four power-ups then your spots.
+    const rucksackItems = [
+        { id: "ride", icon: "truck", label: "Bakkie ride", count: truckRidesLeft, onClick: () => setSheet("bakkie") },
+        { id: "scan", icon: "binoculars", label: "Binocular scan", count: powerups.scan ?? 0, onClick: () => setPowerupSheet("scan") },
+        { id: "ration", icon: "bone", label: "Dog ration", count: powerups.ration ?? 0, onClick: () => setPowerupSheet("ration") },
+        { id: "snack", icon: "cookie", label: "Trail rations", count: powerups.snack ?? 0, onClick: () => setPowerupSheet("snack") },
+        { id: "spots", icon: "paw-print", label: "Spots", count: spottedCount, onClick: () => setSheet("spots") },
+    ];
 
     // After a move the ranger is walking to the new location and cannot move
     // again until they arrive; the walk time (moveTravelMs) scales with distance.
@@ -641,7 +674,6 @@ function MapInner() {
             setGuideFlipped(prefersReducedMotion());
             setGuideCard(ZONE_BY_ID[zoneId]);
         }
-        checkCampArrival();
     };
 
     const closeGuide = () => setGuideZone(null);
@@ -698,7 +730,6 @@ function MapInner() {
     const confirmRide = () => {
         if (truckDest) {
             rideTruck(truckDest.x, truckDest.y, day);
-            checkCampArrival();
         }
         setTruckDest(null);
         setTruckMode(false);
@@ -716,16 +747,12 @@ function MapInner() {
         toastTimer.current = setTimeout(() => setToast(null), 4000);
     };
 
-    // Reaching a rest camp grants its free power-up, once per camp.
-    const checkCampArrival = () => {
-        const p = useGameStore.getState().pin;
-        if (!p) return;
-        const visited = useGameStore.getState().campsVisited;
-        const camp = REST_CAMPS.find((c) => CAMP_REWARD[c.id] && !visited.includes(c.id) && distanceKm(p, { x: c.x, y: c.y }) <= CAMP_REACH_KM);
-        if (!camp) return;
-        const reward = CAMP_REWARD[camp.id];
-        visitCamp(camp.id, reward);
-        showToast(`You reached ${camp.name}. Free ${POWERUP_BY_ID[reward]?.name ?? "power-up"} added to your power-ups.`);
+    // Claim the free power-up for the camp the ranger is standing on. Manual, so
+    // the player sees the reward before it lands in their power-ups.
+    const claimCampReward = () => {
+        if (!campAtPin || !campReward) return;
+        visitCamp(campAtPin.id, campReward);
+        showToast(`Free ${POWERUP_BY_ID[campReward]?.name ?? "power-up"} added to your power-ups.`);
     };
 
     // Live count for a power-up (the bakkie ride uses truckRidesLeft).
@@ -816,6 +843,8 @@ function MapInner() {
                 focusSignal={focusSignal}
                 camped={night}
                 onCampInfo={setCampInfo}
+                campLabel={campAtPin?.name ?? null}
+                campClaim={campRewardUnclaimed && campReward ? { label: POWERUP_BY_ID[campReward]?.name ?? "power-up", onClaim: claimCampReward } : null}
             />
 
             {/* time-of-day scrim: tints the whole map toward dawn, dusk or night */}
@@ -861,7 +890,17 @@ function MapInner() {
             </div>
 
 
-            {/* the team, split: you, your dog and the bakkie. The ranger and dog
+            {/* dim the map while the rucksack is open, so its contents stand out;
+                a tap anywhere off the fanned tools closes it */}
+            {rucksackOpen && (
+                <button
+                    aria-label="Close your rucksack"
+                    onClick={() => setRucksackOpen(false)}
+                    style={{ position: "absolute", inset: 0, zIndex: 5, border: "none", background: "rgba(17,32,26,0.28)", cursor: "pointer" }}
+                />
+            )}
+
+            {/* the team, split: you, your dog and the rucksack. The ranger and dog
                 each carry a rest bar and turn green-ringed when ready to use. */}
             {ranger && (
                 <div style={{ position: "absolute", left: "var(--gutter)", top: 12, display: "flex", flexDirection: "column", gap: 8 }}>
@@ -902,57 +941,49 @@ function MapInner() {
                             {pin && <RestBar progress={dogRestPct} ready={dogTrackReady} label={dogBarLabel} />}
                         </div>
                     )}
-                    {/* the bakkie: full colour while it has fuel, grey when the tank is dry */}
-                    <button
-                        onClick={() => setSheet("bakkie")}
-                        aria-label={`Patrol bakkie, ${truckRidesLeft} ride${truckRidesLeft === 1 ? "" : "s"} left`}
-                        className="kw-press"
-                        style={{
-                            position: "relative",
-                            width: 52,
-                            height: 52,
-                            borderRadius: "50%",
-                            border: "2px solid var(--sand-50)",
-                            background: "var(--accent-soft)",
-                            boxShadow: "var(--shadow-md)",
-                            cursor: "pointer",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            filter: truckRidesLeft > 0 ? "none" : "grayscale(1)",
-                            opacity: truckRidesLeft > 0 ? 1 : 0.65,
-                        }}
-                    >
-                        <i className="ph-fill ph-truck" style={{ fontSize: 24, color: "var(--ochre-700)" }} />
-                        {truckRidesLeft > 0 && (
-                            <span
-                                style={{
-                                    position: "absolute",
-                                    top: -3,
-                                    right: -3,
-                                    minWidth: 17,
-                                    height: 17,
-                                    borderRadius: 999,
-                                    background: "var(--ochre-500)",
-                                    color: "var(--sand-900)",
-                                    border: "2px solid var(--sand-50)",
-                                    fontFamily: "var(--font-mono)",
-                                    fontSize: "0.58rem",
-                                    fontWeight: 700,
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    boxShadow: "var(--shadow-sm)",
-                                }}
-                            >
-                                {truckRidesLeft}
-                            </span>
-                        )}
-                    </button>
-                    {/* the other ranger power-ups: tap opens its info card, grey when none left */}
-                    {POWERUPS.filter((p) => p.id !== "ride").map((p) => (
-                        <PowerUpIcon key={p.id} icon={p.icon} count={powerups[p.id] ?? 0} label={p.name} onClick={() => setPowerupSheet(p.id)} />
-                    ))}
+                    {/* the rucksack: tap to open, and your power-ups and spots fan
+                        out in a half-moon like tipping the bag open to look inside */}
+                    <div style={{ position: "relative" }}>
+                        <button
+                            onClick={() => setRucksackOpen((v) => !v)}
+                            aria-label={rucksackOpen ? "Close your rucksack" : "Open your rucksack"}
+                            aria-expanded={rucksackOpen}
+                            className="kw-press"
+                            style={{
+                                position: "relative",
+                                width: 52,
+                                height: 52,
+                                borderRadius: "50%",
+                                border: `2px solid ${rucksackOpen ? "var(--ochre-500)" : "var(--sand-50)"}`,
+                                background: "var(--accent-soft)",
+                                boxShadow: rucksackOpen ? "var(--shadow-md), 0 0 0 3px var(--ochre-100)" : "var(--shadow-md)",
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                zIndex: 7,
+                                transition: "box-shadow 200ms var(--ease-out), border-color 200ms var(--ease-out)",
+                            }}
+                        >
+                            <i className={`ph-fill ph-${rucksackOpen ? "x" : "backpack"}`} style={{ fontSize: rucksackOpen ? 22 : 26, color: "var(--ochre-700)" }} />
+                        </button>
+                        {rucksackOpen &&
+                            rucksackItems.map((it, i) => (
+                                <ArcItem
+                                    key={it.id}
+                                    icon={it.icon}
+                                    count={it.count}
+                                    label={it.label}
+                                    left={RUCKSACK_ARC[i].left}
+                                    top={RUCKSACK_ARC[i].top}
+                                    delay={i * 40}
+                                    onClick={() => {
+                                        setRucksackOpen(false);
+                                        it.onClick();
+                                    }}
+                                />
+                            ))}
+                    </div>
                 </div>
             )}
 
@@ -1005,7 +1036,6 @@ function MapInner() {
             <div style={{ position: "absolute", right: "var(--gutter)", top: 168, display: "flex", flexDirection: "column", gap: 10 }}>
                 <DockTab icon="notebook" label="Clue" dot={newClueToday} sub={clueDockSub} onClick={openClueSheet} />
                 <DockTab icon="book-open-text" label="Guides" onClick={() => setSheet("guides")} />
-                <DockTab icon="binoculars" label="Spots" onClick={() => setSheet("spots")} />
                 <DockTab icon="radio" label="Radio" dot={hasRadio && !radioSeen} onClick={openRadioSheet} />
             </div>
 
@@ -1182,6 +1212,18 @@ function MapInner() {
                               ? `Zone ${pinZone.number}, ${pinZone.name}${pin.locked ? " · locked for the round" : ""}`
                               : "Locked for the round."}
                     </p>
+                    {campAtPin && (
+                        <div style={{ marginTop: "var(--space-3)", display: "flex", alignItems: "center", gap: 10, padding: "0.6rem 0.75rem", borderRadius: "var(--radius-lg)", background: "var(--surface-sunken)", border: "1px solid var(--border-subtle)" }}>
+                            <i className="ph-fill ph-house-line" style={{ color: "var(--green-700)", fontSize: 20, flex: "none" }} />
+                            <div>
+                                <div style={{ fontWeight: 700, fontSize: "0.9rem", color: "var(--text-primary)" }}>At {campAtPin.name}</div>
+                                <div style={{ fontSize: "0.78rem", color: "var(--text-muted)", lineHeight: 1.45 }}>
+                                    {rangerName} has reached the rest camp.
+                                    {campRewardUnclaimed ? " Claim your free power-up above the pin on the map." : campReward ? " Free power-up claimed." : ""}
+                                </div>
+                            </div>
+                        </div>
+                    )}
                     {pin && !pin.locked && (
                         <>
                             {rangerReady ? (

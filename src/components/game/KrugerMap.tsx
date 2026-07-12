@@ -134,9 +134,13 @@ interface KrugerMapProps {
     camped?: boolean;
     /** Called with a rest-camp id when its info icon is tapped. */
     onCampInfo?: (id: string) => void;
+    /** Camp name shown in a small bubble above the pin when the ranger is at one. */
+    campLabel?: string | null;
+    /** An unclaimed camp reward: shows a claim box above the pin. */
+    campClaim?: { label: string; onClaim: () => void } | null;
 }
 
-export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, target = null, maxScale = 4, showThirds = false, walkRangeKm = null, freeDrag = false, trail = [], markers = [], onSpotMarker, focusSignal = 0, camped = false, onCampInfo }: KrugerMapProps) {
+export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, target = null, maxScale = 4, showThirds = false, walkRangeKm = null, freeDrag = false, trail = [], markers = [], onSpotMarker, focusSignal = 0, camped = false, onCampInfo, campLabel = null, campClaim = null }: KrugerMapProps) {
     const transformRef = useRef<ReactZoomPanPinchRef | null>(null);
 
     // The ranger's Move action zooms the map in on the pin so the walk radius
@@ -873,6 +877,72 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                                     style={{ transform: "rotate(45deg)", color: "#fff", fontSize: 14 }}
                                 />
                             </span>
+                        </span>
+                    )}
+
+                    {/* camp bubble: when the pin has snapped onto a rest camp, name
+                        it above the pin, with a claim box for its free power-up */}
+                    {pin && !drag && campLabel && (
+                        <span
+                            style={{
+                                position: "absolute",
+                                left: `${pin.x * 100}%`,
+                                top: `${pin.y * 100}%`,
+                                transform: "translate(-50%, calc(-100% - 44px)) scale(var(--kw-pin-scale, 1))",
+                                transformOrigin: "50% 100%",
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                gap: 4,
+                                pointerEvents: "none",
+                            }}
+                        >
+                            <span
+                                style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: 5,
+                                    padding: "0.2rem 0.55rem",
+                                    borderRadius: "var(--radius-pill)",
+                                    background: "var(--sand-50)",
+                                    border: "1px solid var(--border-subtle)",
+                                    boxShadow: "var(--shadow-sm)",
+                                    whiteSpace: "nowrap",
+                                }}
+                            >
+                                <i className="ph-fill ph-house-line" style={{ fontSize: 12, color: "var(--green-700)" }} />
+                                <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--text-primary)" }}>{campLabel}</span>
+                            </span>
+                            {campClaim && (
+                                <button
+                                    ref={markerGuardRef}
+                                    onPointerDown={(e) => e.stopPropagation()}
+                                    onPointerUp={(e) => {
+                                        e.stopPropagation();
+                                        campClaim.onClaim();
+                                    }}
+                                    className="kw-press"
+                                    aria-label={`Claim your free ${campClaim.label}`}
+                                    style={{
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        gap: 5,
+                                        padding: "0.28rem 0.6rem",
+                                        borderRadius: "var(--radius-pill)",
+                                        background: "var(--ochre-500)",
+                                        color: "var(--sand-900)",
+                                        border: "2px solid var(--sand-50)",
+                                        boxShadow: "var(--shadow-md)",
+                                        cursor: "pointer",
+                                        pointerEvents: "auto",
+                                        touchAction: "none",
+                                        whiteSpace: "nowrap",
+                                    }}
+                                >
+                                    <i className="ph-fill ph-gift" style={{ fontSize: 13 }} />
+                                    <span style={{ fontFamily: "var(--font-sans)", fontSize: "0.72rem", fontWeight: 700 }}>Claim {campClaim.label}</span>
+                                </button>
+                            )}
                         </span>
                     )}
 

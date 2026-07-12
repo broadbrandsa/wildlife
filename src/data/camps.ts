@@ -133,6 +133,9 @@ export const REST_CAMPS: RestCamp[] = [
 
 export const REST_CAMP_BY_ID: Record<string, RestCamp> = Object.fromEntries(REST_CAMPS.map((c) => [c.id, c]));
 
+/** Within this many km of a camp, the ranger snaps to it and counts as there. */
+export const CAMP_REACH_KM = 5;
+
 /**
  * Reach a rest camp with your ranger and it gives one free power-up. Different
  * camps hand out different ones, spread evenly across the four: a bakkie ride,

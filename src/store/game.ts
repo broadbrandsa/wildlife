@@ -3,11 +3,21 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-import { CODE_BY_VALUE, EQUIPMENT_BY_ID } from "@/data";
+import { CAMP_REACH_KM, CODE_BY_VALUE, EQUIPMENT_BY_ID, REST_CAMPS } from "@/data";
 import type { ZoneId } from "@/data";
 import { BUSH_WISE_DOGS, RIDE_TRAVEL_MS, clampWalk, currentDay, dailyWalkKm, distanceKm, walkTravelMs } from "@/lib/game";
 import type { ScentTier } from "@/lib/game";
 import { receiptNumber } from "@/lib/format";
+
+/**
+ * Land close enough to a rest camp and the ranger walks the last stretch in, so
+ * the pin snaps exactly onto the camp. Returns the camp point, or the original
+ * target if no camp is within reach.
+ */
+function snapToCamp(target: { x: number; y: number }): { x: number; y: number } {
+    const camp = REST_CAMPS.find((c) => distanceKm(target, { x: c.x, y: c.y }) <= CAMP_REACH_KM);
+    return camp ? { x: camp.x, y: camp.y } : target;
+}
 
 export interface Player {
     id: string;
@@ -210,7 +220,7 @@ export const useGameStore = create<GameState>()(
                     if (s.pin?.locked) return {};
                     // The first pin drops anywhere; after that the ranger is on
                     // foot, so each move is clamped to the day's walking range.
-                    const target = s.pin ? clampWalk(s.pin, { x, y }, dailyWalkKm(s.player?.dogId)) : { x, y };
+                    const target = snapToCamp(s.pin ? clampWalk(s.pin, { x, y }, dailyWalkKm(s.player?.dogId)) : { x, y });
                     const prior = s.pinMovesToday;
                     const count = prior && prior.day === day ? prior.count + 1 : 1;
                     // The ranger then walks to the new location; the time depends
@@ -228,16 +238,18 @@ export const useGameStore = create<GameState>()(
             rideTruck: (x, y, day) =>
                 set((s) => {
                     if (!s.pin || s.pin.locked || s.truckRidesLeft <= 0) return {};
+                    // The bakkie goes anywhere: no clampWalk on a ride, but it
+                    // still pulls in to a camp if it drops you close to one.
+                    const target = snapToCamp({ x, y });
                     return {
-                        // The bakkie goes anywhere: no clampWalk on a ride.
-                        pin: { x, y, updatedAt: new Date().toISOString(), locked: false },
+                        pin: { x: target.x, y: target.y, updatedAt: new Date().toISOString(), locked: false },
                         truckRidesLeft: s.truckRidesLeft - 1,
                         // The drive takes a fixed chunk of the day before the
                         // ranger sets off again; pinMovesToday is kept for the tally.
                         pinMovesToday: { day, count: 99 },
                         lastMoveAt: Date.now(),
                         moveTravelMs: RIDE_TRAVEL_MS,
-                        trail: [...s.trail, { x, y, day, via: "truck" as const }],
+                        trail: [...s.trail, { x: target.x, y: target.y, day, via: "truck" as const }],
                     };
                 }),
 
