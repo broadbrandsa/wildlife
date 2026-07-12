@@ -180,14 +180,23 @@ export function restProgress(lastAt: number | null, now: number, cooldownMs: num
     return Math.min(1, Math.max(0, (now - lastAt) / cooldownMs));
 }
 
-/** A short "5h 12m" read of the rest time remaining. */
-export function restRemainingLabel(lastAt: number | null, now: number, cooldownMs: number): string {
+/**
+ * The time remaining, "5h 12m" by default and "5h 12m 30s" with seconds. The
+ * compact form suits the small icon pills; the seconds form suits the profiles
+ * and the patrol banner where there is room and a live tick reads well.
+ */
+export function restRemainingLabel(lastAt: number | null, now: number, cooldownMs: number, withSeconds = false): string {
     if (lastAt == null) return "ready";
     const ms = Math.max(0, lastAt + cooldownMs - now);
     const total = Math.ceil(ms / 1000);
     const h = Math.floor(total / 3600);
     const m = Math.floor((total % 3600) / 60);
     const s = total % 60;
+    if (withSeconds) {
+        if (h > 0) return `${h}h ${m}m ${s}s`;
+        if (m > 0) return `${m}m ${s}s`;
+        return `${s}s`;
+    }
     if (h > 0) return `${h}h ${m}m`;
     if (m > 0) return `${m}m`;
     return `${s}s`;

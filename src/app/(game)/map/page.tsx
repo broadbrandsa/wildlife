@@ -339,11 +339,17 @@ function MapInner() {
     // The ranger can move when arrived; the very first pin drops with no pin yet.
     const canMove = !pin ? true : rangerReady;
     const walkKm = dailyWalkKm(player?.dogId);
-    // Progress bars for the team icons and their profiles.
+    // Progress bars for the team icons and their profiles. The compact label
+    // suits the small icon pills; the seconds label suits the profiles and the
+    // patrol banner, which tick live.
     const rangerWalkPct = restProgress(lastMoveAt, nowMs, moveTravelMs);
     const rangerWalkLabel = restRemainingLabel(lastMoveAt, nowMs, moveTravelMs);
+    const rangerWalkLabelSec = restRemainingLabel(lastMoveAt, nowMs, moveTravelMs, true);
     const dogRestPct = restProgress(lastTrackAt, nowMs, TRACK_COOLDOWN_MS);
     const dogRestLabel = restRemainingLabel(lastTrackAt, nowMs, TRACK_COOLDOWN_MS);
+    const dogRestLabelSec = restRemainingLabel(lastTrackAt, nowMs, TRACK_COOLDOWN_MS, true);
+    // The ranger is out on patrol whenever they have not yet reached the new pin.
+    const rangerWalking = Boolean(pin && lastMoveAt != null && !rangerArrived && !roundOver);
     // Bar label under each icon: the time left, or the reason it is not ready.
     const rangerBarLabel = !rangerArrived ? rangerWalkLabel : night ? "Camp" : "Ready";
     const dogBarLabel = !dogRested ? dogRestLabel : night ? "Camp" : "Ready";
@@ -533,9 +539,9 @@ function MapInner() {
         return () => clearInterval(iv);
     }, []);
 
-    // Tick the wall clock so the ranger and dog rest bars fill live.
+    // Tick the wall clock every second so the countdowns (with seconds) run live.
     useEffect(() => {
-        const iv = setInterval(() => setNowMs(Date.now()), 2000);
+        const iv = setInterval(() => setNowMs(Date.now()), 1000);
         return () => clearInterval(iv);
     }, []);
 
@@ -716,6 +722,32 @@ function MapInner() {
                     <i className="ph ph-info" style={{ fontSize: 13, color: "var(--text-muted)" }} />
                 </button>
             </div>
+
+            {/* patrol banner: while the ranger walks to the new pin, a small note
+                above the live countdown of when they will get there */}
+            {rangerWalking && (
+                <div style={{ position: "absolute", top: 56, left: "50%", transform: "translateX(-50%)", zIndex: 4, width: "max-content", maxWidth: "min(84vw, 250px)", pointerEvents: "none" }}>
+                    <div
+                        style={{
+                            textAlign: "center",
+                            padding: "0.4rem 0.75rem",
+                            background: "rgba(250,246,236,0.92)",
+                            backdropFilter: "blur(8px)",
+                            WebkitBackdropFilter: "blur(8px)",
+                            border: "1px solid var(--border-subtle)",
+                            borderRadius: "var(--radius-lg)",
+                            boxShadow: "var(--shadow-sm)",
+                        }}
+                    >
+                        <div style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: "0.68rem", color: "var(--text-secondary)", lineHeight: 1.3 }}>
+                            <i className="ph-fill ph-boot" style={{ color: "var(--ochre-600)", fontSize: 12 }} /> {rangerName} is out on patrol to the new location
+                        </div>
+                        <div style={{ marginTop: 2, fontFamily: "var(--font-mono)", fontSize: "0.66rem", letterSpacing: "0.08em", fontWeight: 700, color: "var(--text-primary)" }}>
+                            Arrives in {rangerWalkLabelSec}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* the team, split: you, your dog and the bakkie. The ranger and dog
                 each carry a rest bar and turn green-ringed when ready to use. */}
@@ -1013,13 +1045,13 @@ function MapInner() {
                                         <span style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: "0.86rem", fontWeight: 600, color: "var(--text-primary)" }}>
                                             <i className="ph-fill ph-boot" style={{ color: "var(--ochre-600)" }} /> {rangerName} is walking there
                                         </span>
-                                        <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.66rem", letterSpacing: "0.1em", color: "var(--text-muted)" }}>{rangerWalkLabel}</span>
+                                        <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.66rem", letterSpacing: "0.1em", color: "var(--text-muted)" }}>{rangerWalkLabelSec}</span>
                                     </div>
                                     <div style={{ marginTop: "var(--space-3)", height: 8, borderRadius: 999, background: "var(--surface-sunken)", overflow: "hidden" }}>
-                                        <div style={{ height: "100%", width: `${Math.round(rangerWalkPct * 100)}%`, borderRadius: 999, background: "var(--ochre-500)", transition: "width 2s linear" }} />
+                                        <div style={{ height: "100%", width: `${Math.round(rangerWalkPct * 100)}%`, borderRadius: 999, background: "var(--ochre-500)", transition: "width 1s linear" }} />
                                     </div>
                                     <p style={{ margin: "var(--space-3) 0 0", fontSize: "0.8rem", color: "var(--text-muted)", lineHeight: 1.5 }}>
-                                        {rangerName} is on foot to the new ground. The further the leg, the longer the walk. Arrives in {rangerWalkLabel}, then you can move again.
+                                        {rangerName} is on foot to the new ground. The further the leg, the longer the walk. Arrives in {rangerWalkLabelSec}, then you can move again.
                                     </p>
                                 </div>
                             )}
@@ -1077,7 +1109,7 @@ function MapInner() {
                         const trackedHere = Boolean(pin && revealKey && revealKey === lastRevealKey);
                         const resting = Boolean(pin && !dogRested);
                         const progress = dogRestPct;
-                        const remaining = dogRestLabel;
+                        const remaining = dogRestLabelSec;
                         const showRead = Boolean(pin && read && trackedHere && !revealing);
                         const hot = Boolean(showRead && read && read.tier === "hot");
                         return (
