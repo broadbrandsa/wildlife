@@ -1675,7 +1675,7 @@ function MapInner() {
                             const act = speciesActivity(spot.species.id);
                             return (
                                 <>
-                                    <div style={{ position: "relative", aspectRatio: "16 / 11", background: "var(--sand-100)" }}>
+                                    <div style={{ position: "relative", aspectRatio: "16 / 9", background: "var(--sand-100)" }}>
                                         <Image
                                             src={spot.species.photo}
                                             alt={spot.species.name}
@@ -1709,7 +1709,7 @@ function MapInner() {
                                     </div>
                                     {/* rarity accent stripe */}
                                     <div style={{ height: 4, background: accent }} />
-                                    <div style={{ padding: "var(--space-5) var(--space-5) var(--space-6)" }}>
+                                    <div style={{ padding: "var(--space-4) var(--space-5) var(--space-5)" }}>
                                         {(!found || act !== "any") && (
                                             <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: "var(--space-3)" }}>
                                                 {!found && (
@@ -1729,17 +1729,17 @@ function MapInner() {
                                             {spot.species.info}
                                         </p>
                                         {speciesStats(spot.species.id).length > 0 && (
-                                            <div style={{ marginTop: "var(--space-4)" }}>
-                                                <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.58rem", letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--text-accent)", marginBottom: "var(--space-2)" }}>
+                                            <div style={{ marginTop: "var(--space-3)" }}>
+                                                <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.56rem", letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--text-accent)", marginBottom: 6 }}>
                                                     <i className="ph ph-ruler" style={{ marginRight: 5 }} /> Field stats
                                                 </div>
-                                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-2)" }}>
+                                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
                                                     {speciesStats(spot.species.id).map((st) => (
-                                                        <div key={st.label} style={{ background: "var(--surface-sunken)", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-sm)", padding: "0.45rem 0.6rem" }}>
-                                                            <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.54rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-muted)" }}>
+                                                        <div key={st.label} style={{ background: "var(--surface-sunken)", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-sm)", padding: "0.35rem 0.55rem" }}>
+                                                            <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.5rem", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-muted)" }}>
                                                                 {st.label}
                                                             </div>
-                                                            <div style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--text-primary)", lineHeight: 1.3, marginTop: 1 }}>
+                                                            <div style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--text-primary)", lineHeight: 1.25, marginTop: 1 }}>
                                                                 {st.value}
                                                             </div>
                                                         </div>
