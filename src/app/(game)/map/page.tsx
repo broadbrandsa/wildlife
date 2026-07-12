@@ -372,6 +372,8 @@ function MapInner() {
     // A short-lived toast (power-up used, camp reward earned).
     const [toast, setToast] = useState<string | null>(null);
     const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    // The power-up whose info card is open (tapped its icon).
+    const [powerupSheet, setPowerupSheet] = useState<string | null>(null);
     // New clues deal onto the screen the same way, once per release day.
     const [clueCard, setClueCard] = useState<Clue | null>(null);
     const [clueFlipped, setClueFlipped] = useState(true);
@@ -729,41 +731,31 @@ function MapInner() {
     // Live count for a power-up (the bakkie ride uses truckRidesLeft).
     const powerCount = (id: string) => (id === "ride" ? truckRidesLeft : powerups[id] ?? 0);
 
-    // Tapping a power-up icon: spend it if it applies, or say why it does not.
-    const tapPowerUp = (id: string) => {
-        const n = powerCount(id);
-        if (id === "ride") {
-            if (n <= 0) showToast("No bakkie fuel left. Reach a rest camp or the kit room for more.");
-            else if (canCallBakkie) callBakkie();
-            else showToast("The bakkie cannot go out right now.");
-            return;
-        }
-        const pu = POWERUP_BY_ID[id];
-        if (n <= 0) {
-            showToast(`No ${pu.name.toLowerCase()} left. Reach a rest camp or the kit room for more.`);
-            return;
-        }
-        if (id === "scan") {
-            if (!pin) return;
+    // Whether a power-up can be spent right now, and why not if it cannot.
+    const powerupUsable = (id: string): { ok: boolean; reason?: string } => {
+        if (powerCount(id) <= 0) return { ok: false, reason: "none" };
+        if (id === "scan") return pin ? { ok: true } : { ok: false, reason: "Drop your pin first." };
+        if (id === "ration") return dogRested ? { ok: false, reason: `${dogName} is already rested and ready to track.` } : { ok: true };
+        if (id === "snack") return rangerWalking ? { ok: true } : { ok: false, reason: `${rangerName} is not on the move right now.` };
+        return { ok: true };
+    };
+
+    // Spend a power-up from its info card (assumes it is usable), then close.
+    const usePowerUpNow = (id: string) => {
+        if (!powerupUsable(id).ok) return;
+        if (id === "scan" && pin) {
             commitSpot(rollSpot(thirdOf(pin), night));
             usePowerup("scan");
         } else if (id === "ration") {
-            if (dogRested) {
-                showToast(`${dogName} is already rested and ready.`);
-                return;
-            }
             refuelDog();
             usePowerup("ration");
             showToast(`${dogName} is fed and ready to track.`);
         } else if (id === "snack") {
-            if (!rangerWalking) {
-                showToast(`${rangerName} is not on the move right now.`);
-                return;
-            }
             arriveNow();
             usePowerup("snack");
             showToast(`${rangerName} pushes on and reaches the ground.`);
         }
+        setPowerupSheet(null);
     };
 
     const openClueSheet = () => {
@@ -959,9 +951,9 @@ function MapInner() {
                             </span>
                         )}
                     </button>
-                    {/* the other ranger power-ups: tap to spend, grey when none left */}
+                    {/* the other ranger power-ups: tap opens its info card, grey when none left */}
                     {POWERUPS.filter((p) => p.id !== "ride").map((p) => (
-                        <PowerUpIcon key={p.id} icon={p.icon} count={powerups[p.id] ?? 0} label={p.name} onClick={() => tapPowerUp(p.id)} />
+                        <PowerUpIcon key={p.id} icon={p.icon} count={powerups[p.id] ?? 0} label={p.name} onClick={() => setPowerupSheet(p.id)} />
                     ))}
                 </div>
             )}
@@ -1795,6 +1787,60 @@ function MapInner() {
                                     <i className="ph ph-crosshair" style={{ marginRight: 5 }} />
                                     {formatLatLng(camp.x, camp.y)}
                                 </div>
+                            </>
+                        );
+                    })()}
+                </Sheet>
+            )}
+
+            {/* power-up info card: what it does, then the option to use it */}
+            {powerupSheet && POWERUP_BY_ID[powerupSheet] && (
+                <Sheet onClose={() => setPowerupSheet(null)}>
+                    {(() => {
+                        const pu = POWERUP_BY_ID[powerupSheet];
+                        const count = powerCount(pu.id);
+                        const u = powerupUsable(pu.id);
+                        const btnLabel = pu.id === "scan" ? "Glass the bush" : pu.id === "ration" ? `Feed ${dogName}` : "Push on";
+                        return (
+                            <>
+                                <div style={{ display: "flex", alignItems: "center", gap: "var(--space-4)" }}>
+                                    <span style={{ flex: "none", width: 52, height: 52, borderRadius: "50%", background: "var(--accent-soft)", color: "var(--ochre-700)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26 }}>
+                                        <i className={`ph-fill ph-${pu.icon}`} />
+                                    </span>
+                                    <div>
+                                        <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.6rem", letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--text-accent)" }}>
+                                            Ranger power-up
+                                        </div>
+                                        <h2 style={{ fontSize: "var(--text-h4)", margin: "0.15rem 0 0" }}>{pu.name}</h2>
+                                        <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.66rem", letterSpacing: "0.1em", color: count > 0 ? "var(--text-secondary)" : "var(--text-muted)", marginTop: 2 }}>
+                                            {count} left
+                                        </div>
+                                    </div>
+                                </div>
+                                <p style={{ fontSize: "0.9rem", color: "var(--text-secondary)", lineHeight: 1.6, margin: "var(--space-4) 0 0" }}>{pu.blurb}</p>
+
+                                {count <= 0 ? (
+                                    <div style={{ marginTop: "var(--space-5)", background: "var(--surface-sunken)", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-lg)", padding: "var(--space-4)" }}>
+                                        <div style={{ fontSize: "0.86rem", color: "var(--text-secondary)", lineHeight: 1.5 }}>
+                                            None left. Reach a rest camp with your ranger for a free one, or stock up in the kit room.
+                                        </div>
+                                        <div style={{ marginTop: "var(--space-3)" }}>
+                                            <Button size="sm" variant="secondary" onClick={() => router.push("/shop")} iconRight={<i className="ph ph-arrow-right" />}>
+                                                Kit room
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ) : u.ok ? (
+                                    <div style={{ marginTop: "var(--space-5)" }}>
+                                        <Button size="lg" fullWidth onClick={() => usePowerUpNow(pu.id)} iconLeft={<i className={`ph-fill ph-${pu.icon}`} />}>
+                                            {btnLabel}
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <p style={{ marginTop: "var(--space-4)", paddingTop: "var(--space-3)", borderTop: "1px dashed var(--border-default)", fontSize: "0.84rem", color: "var(--text-muted)", lineHeight: 1.5 }}>
+                                        {u.reason} Come back when you can use it.
+                                    </p>
+                                )}
                             </>
                         );
                     })()}
