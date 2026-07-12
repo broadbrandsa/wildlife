@@ -132,6 +132,8 @@ interface KrugerMapProps {
     focusSignal?: number;
     /** Night: the ranger has made camp, so the pin shows a campfire. */
     camped?: boolean;
+    /** The pin has snapped onto a rest camp, so it shows the rest-camp marker. */
+    atCamp?: boolean;
     /** Called with a rest-camp id when its info icon is tapped. */
     onCampInfo?: (id: string) => void;
     /** Camp name shown in a small bubble above the pin when the ranger is at one. */
@@ -140,7 +142,7 @@ interface KrugerMapProps {
     campClaim?: { label: string; onClaim: () => void } | null;
 }
 
-export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, target = null, maxScale = 4, showThirds = false, walkRangeKm = null, freeDrag = false, trail = [], markers = [], onSpotMarker, focusSignal = 0, camped = false, onCampInfo, campLabel = null, campClaim = null }: KrugerMapProps) {
+export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, target = null, maxScale = 4, showThirds = false, walkRangeKm = null, freeDrag = false, trail = [], markers = [], onSpotMarker, focusSignal = 0, camped = false, atCamp = false, onCampInfo, campLabel = null, campClaim = null }: KrugerMapProps) {
     const transformRef = useRef<ReactZoomPanPinchRef | null>(null);
 
     // The ranger's Move action zooms the map in on the pin so the walk radius
@@ -870,14 +872,14 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                                     width: 30,
                                     height: 30,
                                     borderRadius: "50% 50% 50% 2px",
-                                    background: pin.locked ? "var(--green-700)" : camped ? "var(--ochre-600)" : "var(--clay-500)",
+                                    background: pin.locked ? "var(--green-700)" : camped ? "var(--ochre-600)" : atCamp ? "var(--green-700)" : "var(--clay-500)",
                                     transform: "rotate(-45deg)",
                                     boxShadow: "var(--shadow-md)",
                                     border: "2px solid #fff",
                                 }}
                             >
                                 <i
-                                    className={`ph-fill ph-${pin.locked ? "lock-simple" : camped ? "campfire" : "paw-print"}`}
+                                    className={`ph-fill ph-${pin.locked ? "lock-simple" : camped ? "campfire" : atCamp ? "house-line" : "paw-print"}`}
                                     style={{ transform: "rotate(45deg)", color: "#fff", fontSize: 14 }}
                                 />
                             </span>
@@ -901,51 +903,71 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                                 pointerEvents: "none",
                             }}
                         >
-                            <span
-                                style={{
-                                    display: "inline-flex",
-                                    alignItems: "center",
-                                    gap: 5,
-                                    padding: "0.2rem 0.55rem",
-                                    borderRadius: "var(--radius-pill)",
-                                    background: "var(--sand-50)",
-                                    border: "1px solid var(--border-subtle)",
-                                    boxShadow: "var(--shadow-sm)",
-                                    whiteSpace: "nowrap",
-                                }}
-                            >
-                                <i className="ph-fill ph-house-line" style={{ fontSize: 12, color: "var(--green-700)" }} />
-                                <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--text-primary)" }}>{campLabel}</span>
-                            </span>
-                            {campClaim && (
-                                <button
-                                    ref={markerGuardRef}
-                                    onPointerDown={(e) => e.stopPropagation()}
-                                    onPointerUp={(e) => {
-                                        e.stopPropagation();
-                                        campClaim.onClaim();
+                            {campClaim ? (
+                                <div
+                                    style={{
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        alignItems: "center",
+                                        gap: 7,
+                                        width: 156,
+                                        padding: "0.5rem 0.6rem 0.55rem",
+                                        borderRadius: "var(--radius-lg)",
+                                        background: "var(--sand-50)",
+                                        border: "1px solid var(--border-subtle)",
+                                        boxShadow: "var(--shadow-md)",
+                                        textAlign: "center",
                                     }}
-                                    className="kw-press"
-                                    aria-label={`Claim your free ${campClaim.label}`}
+                                >
+                                    <span style={{ fontFamily: "var(--font-sans)", fontSize: "0.72rem", lineHeight: 1.35, color: "var(--text-secondary)" }}>
+                                        <strong style={{ color: "var(--text-primary)" }}>{campClaim.label}</strong> unlocked from {campLabel} rest camp
+                                    </span>
+                                    <button
+                                        ref={markerGuardRef}
+                                        onPointerDown={(e) => e.stopPropagation()}
+                                        onPointerUp={(e) => {
+                                            e.stopPropagation();
+                                            campClaim.onClaim();
+                                        }}
+                                        className="kw-press"
+                                        aria-label={`Claim the ${campClaim.label} superpower from ${campLabel}`}
+                                        style={{
+                                            display: "inline-flex",
+                                            alignItems: "center",
+                                            gap: 5,
+                                            padding: "0.32rem 0.7rem",
+                                            borderRadius: "var(--radius-pill)",
+                                            background: "var(--ochre-500)",
+                                            color: "var(--sand-900)",
+                                            border: "none",
+                                            boxShadow: "var(--shadow-sm)",
+                                            cursor: "pointer",
+                                            pointerEvents: "auto",
+                                            touchAction: "none",
+                                            whiteSpace: "nowrap",
+                                        }}
+                                    >
+                                        <i className="ph-fill ph-sparkle" style={{ fontSize: 13 }} />
+                                        <span style={{ fontFamily: "var(--font-sans)", fontSize: "0.74rem", fontWeight: 700 }}>Claim superpower</span>
+                                    </button>
+                                </div>
+                            ) : (
+                                <span
                                     style={{
                                         display: "inline-flex",
                                         alignItems: "center",
                                         gap: 5,
-                                        padding: "0.28rem 0.6rem",
+                                        padding: "0.2rem 0.55rem",
                                         borderRadius: "var(--radius-pill)",
-                                        background: "var(--ochre-500)",
-                                        color: "var(--sand-900)",
-                                        border: "2px solid var(--sand-50)",
-                                        boxShadow: "var(--shadow-md)",
-                                        cursor: "pointer",
-                                        pointerEvents: "auto",
-                                        touchAction: "none",
+                                        background: "var(--sand-50)",
+                                        border: "1px solid var(--border-subtle)",
+                                        boxShadow: "var(--shadow-sm)",
                                         whiteSpace: "nowrap",
                                     }}
                                 >
-                                    <i className="ph-fill ph-gift" style={{ fontSize: 13 }} />
-                                    <span style={{ fontFamily: "var(--font-sans)", fontSize: "0.72rem", fontWeight: 700 }}>Claim {campClaim.label}</span>
-                                </button>
+                                    <i className="ph-fill ph-house-line" style={{ fontSize: 12, color: "var(--green-700)" }} />
+                                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--text-primary)" }}>{campLabel}</span>
+                                </span>
                             )}
                         </span>
                     )}

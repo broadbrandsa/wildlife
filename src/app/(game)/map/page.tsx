@@ -124,8 +124,8 @@ function AvatarButton({ src, alt, ready, onClick }: { src: string; alt: string; 
  * The rucksack fans its contents out in a right-facing half-moon. Five slots,
  * spaced across a 144-degree arc, positioned inside the 52px rucksack box.
  */
-const RUCKSACK_ARC = [-72, -36, 0, 36, 72].map((deg) => {
-    const r = 74;
+const RUCKSACK_ARC = [-78, -39, 0, 39, 78].map((deg) => {
+    const r = 96;
     const rad = (deg * Math.PI) / 180;
     const size = 46;
     return { left: 26 + r * Math.cos(rad) - size / 2, top: 26 + r * Math.sin(rad) - size / 2 };
@@ -845,6 +845,7 @@ function MapInner() {
                 onSpotMarker={spotMarker}
                 focusSignal={focusSignal}
                 camped={night}
+                atCamp={Boolean(campAtPin)}
                 onCampInfo={setCampInfo}
                 campLabel={campAtPin?.name ?? null}
                 campClaim={campRewardUnclaimed && campReward ? { label: POWERUP_BY_ID[campReward]?.name ?? "power-up", onClaim: claimCampReward } : null}
