@@ -1,5 +1,7 @@
 export * from "./types";
 export { ZONES, ZONE_BY_ID } from "./zones";
+export { REST_CAMPS, REST_CAMP_BY_ID } from "./camps";
+export type { RestCamp } from "./camps";
 export { DOGS, DOG_BY_ID } from "./dogs";
 export { RANGERS, RANGER_BY_ID } from "./rangers";
 export { EQUIPMENT, GUIDES, PURCHASABLES, EQUIPMENT_BY_ID } from "./equipment";

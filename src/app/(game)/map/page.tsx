@@ -10,9 +10,10 @@ import { ClueCard } from "@/components/game/ClueCard";
 import { GuideCardFront } from "@/components/game/GuideCard";
 import { ImpactHighlight, useCampaignTotal } from "@/components/game/impact";
 import { KrugerMap } from "@/components/game/KrugerMap";
+import { formatLatLng } from "@/components/game/map-geometry";
 import { Overlay } from "@/components/game/Overlay";
 import { ZoneSheet } from "@/components/game/ZoneSheet";
-import { CLUE_BY_ID, CLUES, DOG_BY_ID, FIVES, FIVE_OF, RANGER_BY_ID, ROUND, SPECIES, SPECIES_BY_ID, ZONES, ZONE_BY_ID, speciesActivity, speciesStats } from "@/data";
+import { CLUE_BY_ID, CLUES, DOG_BY_ID, FIVES, FIVE_OF, RANGER_BY_ID, REST_CAMP_BY_ID, ROUND, SPECIES, SPECIES_BY_ID, ZONES, ZONE_BY_ID, speciesActivity, speciesStats } from "@/data";
 import type { Clue, Species, Zone } from "@/data";
 import {
     SCENT_TEXT,
@@ -290,6 +291,8 @@ function MapInner() {
     const [focusSignal, setFocusSignal] = useState(0);
     // Whether the field radio's HQ report has been opened this session (dock dot).
     const [radioSeen, setRadioSeen] = useState(false);
+    // The rest camp whose info card is open (tapped its map icon).
+    const [campInfo, setCampInfo] = useState<string | null>(null);
     // New clues deal onto the screen the same way, once per release day.
     const [clueCard, setClueCard] = useState<Clue | null>(null);
     const [clueFlipped, setClueFlipped] = useState(true);
@@ -679,6 +682,8 @@ function MapInner() {
                 }
                 onSpotMarker={spotMarker}
                 focusSignal={focusSignal}
+                camped={night}
+                onCampInfo={setCampInfo}
             />
 
             {/* time-of-day scrim: tints the whole map toward dawn, dusk or night */}
@@ -1570,6 +1575,39 @@ function MapInner() {
                     router.push("/shop");
                 }}
             />
+
+            {/* rest-camp info card, opened from a camp icon on the map */}
+            {campInfo && REST_CAMP_BY_ID[campInfo] && (
+                <Sheet onClose={() => setCampInfo(null)}>
+                    {(() => {
+                        const camp = REST_CAMP_BY_ID[campInfo];
+                        return (
+                            <>
+                                <div style={{ position: "relative", aspectRatio: "16 / 9", borderRadius: "var(--radius-lg)", overflow: "hidden", background: "var(--sand-100)" }}>
+                                    <Image src={camp.photo} alt={camp.name} fill sizes="480px" style={{ objectFit: "cover" }} />
+                                    <span style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(24,45,35,0) 55%, rgba(24,45,35,0.55) 100%)" }} />
+                                    <span style={{ position: "absolute", left: 14, bottom: 10, fontFamily: "var(--font-mono)", fontSize: "0.6rem", letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--sand-50)" }}>
+                                        <i className="ph-fill ph-house-line" style={{ marginRight: 5 }} />
+                                        Rest camp
+                                    </span>
+                                </div>
+                                <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: "var(--space-3)", marginTop: "var(--space-4)" }}>
+                                    <h2 style={{ fontSize: "var(--text-h3)", margin: 0 }}>{camp.name}</h2>
+                                    <Tag tone="green" size="sm">
+                                        <i className="ph ph-map-pin" style={{ marginRight: 4 }} />
+                                        {camp.region}
+                                    </Tag>
+                                </div>
+                                <p style={{ fontSize: "0.9rem", color: "var(--text-secondary)", lineHeight: 1.6, margin: "var(--space-3) 0 0" }}>{camp.blurb}</p>
+                                <div style={{ marginTop: "var(--space-4)", fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-muted)" }}>
+                                    <i className="ph ph-crosshair" style={{ marginRight: 5 }} />
+                                    {formatLatLng(camp.x, camp.y)}
+                                </div>
+                            </>
+                        );
+                    })()}
+                </Sheet>
+            )}
 
             {/* First-launch welcome sheet */}
             {showWelcome && !dismissed && (

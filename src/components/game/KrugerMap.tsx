@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
 import type { ReactZoomPanPinchRef } from "react-zoom-pan-pinch";
 
-import { ZONES } from "@/data";
+import { REST_CAMPS, ZONES } from "@/data";
 import type { ZoneId } from "@/data";
 import { clampWalk, distanceKm } from "@/lib/game";
 import { CAMPS, formatLatLng, K9_BASE, LANDMARKS, MAP_H, MAP_W, PARK_PATH, PROJ, RIVER_PATHS } from "./map-geometry";
@@ -130,9 +130,13 @@ interface KrugerMapProps {
     onSpotMarker?: (id: string) => void;
     /** Bumping this number zooms the map in on the pin (the ranger's Move action). */
     focusSignal?: number;
+    /** Night: the ranger has made camp, so the pin shows a campfire. */
+    camped?: boolean;
+    /** Called with a rest-camp id when its info icon is tapped. */
+    onCampInfo?: (id: string) => void;
 }
 
-export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, target = null, maxScale = 4, showThirds = false, walkRangeKm = null, freeDrag = false, trail = [], markers = [], onSpotMarker, focusSignal = 0 }: KrugerMapProps) {
+export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, target = null, maxScale = 4, showThirds = false, walkRangeKm = null, freeDrag = false, trail = [], markers = [], onSpotMarker, focusSignal = 0, camped = false, onCampInfo }: KrugerMapProps) {
     const transformRef = useRef<ReactZoomPanPinchRef | null>(null);
 
     // The ranger's Move action zooms the map in on the pin so the walk radius
@@ -692,6 +696,50 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                         )}
                     </svg>
 
+                    {/* rest-camp info icons: tap to read about each real KNP camp */}
+                    {onCampInfo &&
+                        REST_CAMPS.map((c) => (
+                            <button
+                                key={c.id}
+                                ref={markerGuardRef}
+                                onPointerDown={(e) => e.stopPropagation()}
+                                onPointerUp={(e) => {
+                                    e.stopPropagation();
+                                    onCampInfo(c.id);
+                                }}
+                                className="kw-press"
+                                aria-label={`${c.name} rest camp, read about it`}
+                                style={{
+                                    position: "absolute",
+                                    left: `${c.x * 100}%`,
+                                    top: `${c.y * 100}%`,
+                                    transform: "translate(-50%, -50%) scale(var(--kw-pin-scale, 1))",
+                                    transformOrigin: "50% 50%",
+                                    touchAction: "none",
+                                    cursor: "pointer",
+                                    padding: 6,
+                                    border: "none",
+                                    background: "transparent",
+                                }}
+                            >
+                                <span
+                                    style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        width: 18,
+                                        height: 18,
+                                        borderRadius: "50%",
+                                        background: "var(--sand-50)",
+                                        border: "1.5px solid var(--green-700)",
+                                        boxShadow: "var(--shadow-sm)",
+                                    }}
+                                >
+                                    <i className="ph-fill ph-house-line" style={{ fontSize: 10, color: "var(--green-700)" }} />
+                                </span>
+                            </button>
+                        ))}
+
                     {/* the revealed poacher camp (debrief only) */}
                     {target && (
                         <span
@@ -814,14 +862,14 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                                     width: 30,
                                     height: 30,
                                     borderRadius: "50% 50% 50% 2px",
-                                    background: pin.locked ? "var(--green-700)" : "var(--clay-500)",
+                                    background: pin.locked ? "var(--green-700)" : camped ? "var(--ochre-600)" : "var(--clay-500)",
                                     transform: "rotate(-45deg)",
                                     boxShadow: "var(--shadow-md)",
                                     border: "2px solid #fff",
                                 }}
                             >
                                 <i
-                                    className={`ph-fill ph-${pin.locked ? "lock-simple" : "paw-print"}`}
+                                    className={`ph-fill ph-${pin.locked ? "lock-simple" : camped ? "campfire" : "paw-print"}`}
                                     style={{ transform: "rotate(45deg)", color: "#fff", fontSize: 14 }}
                                 />
                             </span>
