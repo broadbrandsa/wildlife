@@ -945,18 +945,6 @@ function MapInner() {
                 each carry a rest bar and turn green-ringed when ready to use. */}
             {ranger && (
                 <div style={{ position: "absolute", left: "var(--gutter)", top: 12, display: "flex", flexDirection: "column", gap: 8 }}>
-                    {/* round day counter, plain text above the ranger and food bars */}
-                    <div style={{ display: "flex", flexDirection: "column", gap: 1 }} aria-label={`Day ${day} of ${ROUND.durationDays}, ${daysRemaining(day)} days left, ${rangersHunting(day).toLocaleString("en-ZA")} rangers tracking`}>
-                        <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.6rem", letterSpacing: "0.08em", fontWeight: 700, color: "var(--sand-50)", textShadow: "0 1px 3px rgba(17,32,26,0.7)" }}>
-                            DAY {day} / {ROUND.durationDays}
-                        </span>
-                        <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.5rem", letterSpacing: "0.08em", fontWeight: 700, color: "rgba(245,239,226,0.85)", textShadow: "0 1px 3px rgba(17,32,26,0.7)" }}>
-                            {daysRemaining(day)} DAYS LEFT
-                        </span>
-                        <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.5rem", letterSpacing: "0.08em", fontWeight: 700, color: "rgba(245,239,226,0.85)", textShadow: "0 1px 3px rgba(17,32,26,0.7)" }}>
-                            {rangersHunting(day).toLocaleString("en-ZA")} RANGERS TRACKING
-                        </span>
-                    </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <AvatarButton src={ranger.photo} alt={`${rangerName}, your ranger`} ready={rangerReady} onClick={() => setSheet("ranger")} />
                         {/* to the right of the ranger: the food supply gauge, with a
@@ -1121,6 +1109,23 @@ function MapInner() {
                 <DockTab icon="notebook" label="Clue" dot={newClueToday} sub={clueDockSub} onClick={openClueSheet} />
                 <DockTab icon="book-open-text" label="Guides" onClick={() => setSheet("guides")} />
                 <DockTab icon="radio" label="Radio" dot={hasRadio && !radioSeen} onClick={openRadioSheet} />
+            </div>
+
+            {/* round day counter, plain text on the background behind the map,
+                bottom-right above the coordinates */}
+            <div
+                style={{ position: "absolute", right: "var(--gutter)", bottom: 52, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 1, pointerEvents: "none" }}
+                aria-label={`Day ${day} of ${ROUND.durationDays}, ${daysRemaining(day)} days left, ${rangersHunting(day).toLocaleString("en-ZA")} rangers tracking`}
+            >
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.6rem", letterSpacing: "0.08em", fontWeight: 700, color: night ? "var(--sand-50)" : "var(--text-primary)", textShadow: night ? "0 1px 3px rgba(17,32,26,0.7)" : "0 1px 3px rgba(245,239,226,0.9)" }}>
+                    DAY {day} / {ROUND.durationDays}
+                </span>
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.5rem", letterSpacing: "0.08em", fontWeight: 700, color: night ? "rgba(245,239,226,0.85)" : "var(--text-secondary)", textShadow: night ? "0 1px 3px rgba(17,32,26,0.7)" : "0 1px 3px rgba(245,239,226,0.9)" }}>
+                    {daysRemaining(day)} DAYS LEFT
+                </span>
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.5rem", letterSpacing: "0.08em", fontWeight: 700, color: night ? "rgba(245,239,226,0.85)" : "var(--text-secondary)", textShadow: night ? "0 1px 3px rgba(17,32,26,0.7)" : "0 1px 3px rgba(245,239,226,0.9)" }}>
+                    {rangersHunting(day).toLocaleString("en-ZA")} RANGERS TRACKING
+                </span>
             </div>
 
             {/* first-pin hint */}
