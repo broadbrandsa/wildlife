@@ -928,6 +928,11 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                                 // size, so it sits smaller on the ground when zoomed.
                                 transform: "translate(-50%, calc(-100% + 2px)) scale(var(--kw-pin-scale, 1))",
                                 transformOrigin: "50% 100%",
+                                // Promote to its own layer so the browser rasterises the
+                                // ranger/dog photo at true screen resolution instead of
+                                // baking it small into the zoomed map layer and upscaling
+                                // it (which made the marker blur when zoomed in).
+                                willChange: "transform",
                                 pointerEvents: "auto",
                                 touchAction: "none",
                                 cursor: draggable ? (drag ? "grabbing" : "grab") : "pointer",

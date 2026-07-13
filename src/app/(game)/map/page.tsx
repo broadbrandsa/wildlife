@@ -2309,7 +2309,7 @@ function MapInner() {
                             const act = speciesActivity(spot.species.id);
                             return (
                                 <>
-                                    <div style={{ position: "relative", flexShrink: 0, aspectRatio: "16 / 9", background: "var(--sand-100)" }}>
+                                    <div style={{ position: "relative", flexShrink: 0, aspectRatio: "2 / 1", background: "var(--sand-100)" }}>
                                         <Image
                                             src={spot.species.photo}
                                             alt={spot.species.name}
@@ -2345,7 +2345,7 @@ function MapInner() {
                                     <div style={{ height: 4, flexShrink: 0, background: accent }} />
                                     {/* scrollable middle: description and stats scroll here so
                                         the footer button below is never cut off */}
-                                    <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "var(--space-4) var(--space-5) var(--space-4)" }}>
+                                    <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "var(--space-3) var(--space-5) var(--space-3)" }}>
                                         {(!found || act !== "any") && (
                                             <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: "var(--space-3)" }}>
                                                 {!found && (
@@ -2384,10 +2384,8 @@ function MapInner() {
                                             </div>
                                         )}
                                         {five && (
-                                            <p style={{ fontSize: "0.82rem", color: "var(--ochre-700)", fontWeight: 600, lineHeight: 1.5, margin: "var(--space-3) 0 0" }}>
-                                                {found
-                                                    ? `Part of ${five}. Spot all five and an instant prize is yours.`
-                                                    : `Part of ${five}. Spot all five to win an instant prize.`}
+                                            <p style={{ fontSize: "0.78rem", color: "var(--ochre-700)", fontWeight: 600, lineHeight: 1.45, margin: "var(--space-2) 0 0" }}>
+                                                Spot all five for an instant prize.
                                             </p>
                                         )}
                                     </div>

@@ -1,214 +1,24 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 
-import Image from "next/image";
-
-import { Button, Tag } from "@/components/ds";
-import { CarouselArrow, CarouselDots } from "@/components/game/Carousel";
-import { ClueCard } from "@/components/game/ClueCard";
+import { Button } from "@/components/ds";
 import { Logo } from "@/components/game/Logo";
 import { PhoneStage } from "@/components/game/PhoneStage";
-import { CLUE_BY_ID, FIVES, PRIZE_TIERS, SPECIES_BY_ID } from "@/data";
 
-/** Framed in-game preview, so new rangers see the real thing before they start. */
-function GameFrame({ children }: { children: React.ReactNode }) {
-    return (
-        <div>
-            <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.6rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 6 }}>
-                <i className="ph ph-device-mobile" /> From the game
-            </div>
-            <div style={{ border: "1px dashed var(--border-default)", borderRadius: "var(--radius-lg)", padding: "var(--space-3)", background: "var(--surface-sunken)" }}>
-                {children}
-            </div>
-        </div>
-    );
-}
-
-/** A static replica of the map page's scent-read card. */
-function ScentPreview() {
-    return (
-        <div style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-lg)", padding: "var(--space-4)", boxShadow: "var(--shadow-xs)" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-3)" }}>
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 8, fontFamily: "var(--font-mono)", fontSize: "0.64rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-accent)" }}>
-                    <i className="ph ph-paw-print" /> Scent read
-                </span>
-                <Tag tone="ochre" size="sm">
-                    <i className="ph ph-footprints" style={{ marginRight: 4 }} /> Warm trail
-                </Tag>
-            </div>
-            <p style={{ margin: "var(--space-3) 0 0", fontFamily: "var(--font-serif)", fontSize: "0.98rem", lineHeight: 1.5, color: "var(--sand-900)" }}>
-                Your dog works the ground in tightening loops, tail up. The trail has been through here. The nose swings toward the sunrise.
-            </p>
-        </div>
-    );
-}
-
-/** A marker token as it appears on the map, with a caption. */
-function MarkerToken({ gold, icon, label }: { gold: boolean; icon: string; label: string }) {
-    return (
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span
-                style={{
-                    flex: "none",
-                    width: 30,
-                    height: 30,
-                    borderRadius: "50%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    background: gold ? "var(--ochre-100)" : "var(--sand-50)",
-                    border: `2px solid ${gold ? "var(--ochre-400)" : "#fff"}`,
-                    boxShadow: gold ? "var(--shadow-sm), 0 0 0 3px var(--ochre-100)" : "var(--shadow-sm)",
-                }}
-            >
-                <i className={`ph-fill ph-${icon}`} style={{ fontSize: 15, color: gold ? "var(--ochre-600)" : "var(--green-800)" }} />
-            </span>
-            <span style={{ fontSize: "0.76rem", color: "var(--text-secondary)", lineHeight: 1.3 }}>{label}</span>
-        </div>
-    );
-}
-
-/** A replica of the spotting markers and a Big Five bingo row. */
-function SpotPreview() {
-    const big = FIVES.find((f) => f.id === "big") ?? FIVES[0];
-    return (
-        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
-                <MarkerToken gold={false} icon="paw-print" label="A common sighting shows its family icon" />
-                <MarkerToken gold={true} icon="star" label="A rare one shows a gold star" />
-            </div>
-            <div style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-md)", padding: "var(--space-3) var(--space-4)" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "var(--space-2)" }}>
-                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--text-primary)", fontWeight: 700 }}>
-                        {big.label}
-                    </span>
-                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.58rem", letterSpacing: "0.12em", color: "var(--ochre-700)", fontWeight: 700 }}>
-                        <i className="ph-fill ph-trophy" /> Instant prize
-                    </span>
-                </div>
-                <div style={{ display: "flex", gap: "var(--space-2)" }}>
-                    {big.members.map((m) => {
-                        const sp = SPECIES_BY_ID[m];
-                        return (
-                            <span key={m} style={{ position: "relative", flex: 1, aspectRatio: "1", borderRadius: "50%", overflow: "hidden", border: "1.5px solid var(--ochre-500)" }}>
-                                <Image src={sp.photo} alt="" fill sizes="48px" style={{ objectFit: "cover" }} />
-                            </span>
-                        );
-                    })}
-                </div>
-                <p style={{ margin: "var(--space-2) 0 0", fontSize: "0.76rem", color: "var(--green-700)", lineHeight: 1.4 }}>
-                    Spot all five and an instant prize is yours.
-                </p>
-            </div>
-        </div>
-    );
-}
-
-/** A replica of the food supply gauge and a rest-camp resupply note. */
-function SupplyPreview() {
-    return (
-        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
-            <div style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-md)", padding: "var(--space-3) var(--space-4)" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "var(--space-2)" }}>
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-primary)", fontWeight: 700 }}>
-                        <i className="ph-fill ph-fork-knife" style={{ color: "var(--success)" }} /> Food supply
-                    </span>
-                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.58rem", letterSpacing: "0.1em", color: "var(--success)", fontWeight: 700 }}>3 of 4 days</span>
-                </div>
-                <div style={{ display: "flex", gap: 4 }}>
-                    {[0, 1, 2, 3].map((i) => (
-                        <span key={i} style={{ flex: 1, height: 7, borderRadius: 999, background: i < 3 ? "var(--success)" : "var(--surface-sunken)" }} />
-                    ))}
-                </div>
-            </div>
-            <MarkerToken gold={false} icon="house-line" label="Reach a rest camp to resupply and claim a free power-up" />
-        </div>
-    );
-}
-
-/** A compact replica of the prize tiers. */
-function PrizePreview() {
-    return (
-        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
-            {PRIZE_TIERS.map((t) => (
-                <div key={t.place} style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", background: "var(--surface-card)", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-md)", padding: "0.55rem var(--space-4)" }}>
-                    <i className={`ph-fill ph-${t.icon}`} style={{ fontSize: 18, color: "var(--ochre-600)" }} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: "0.84rem", fontWeight: 700 }}>
-                            {t.place} · {t.title}
-                        </div>
-                        <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>
-                            {t.count === 1 ? "1 winner" : `${t.count} winners`} · {t.sponsor}
-                        </div>
-                    </div>
-                </div>
-            ))}
-        </div>
-    );
-}
-
-/** A compact replica of a kit room item. */
-function KitPreview() {
-    return (
-        <div style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-lg)", padding: "var(--space-4)", display: "flex", gap: "var(--space-3)" }}>
-            <span style={{ flex: "none", width: 44, height: 44, borderRadius: "var(--radius-md)", background: "var(--accent-soft)", color: "var(--ochre-700)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>
-                <i className="ph ph-broadcast" />
-            </span>
-            <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "baseline" }}>
-                    <strong style={{ fontSize: "0.92rem" }}>Field radio</strong>
-                    <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, whiteSpace: "nowrap" }}>R300</span>
-                </div>
-                <div style={{ marginTop: 6, background: "var(--green-50)", border: "1px solid var(--green-100)", borderRadius: "var(--radius-sm)", padding: "0.45rem 0.6rem", fontSize: "0.76rem", color: "var(--text-primary)", lineHeight: 1.45 }}>
-                    <span style={{ color: "var(--green-700)", fontFamily: "var(--font-mono)", fontSize: "0.58rem", letterSpacing: "0.12em", textTransform: "uppercase", display: "block", marginBottom: 2 }}>
-                        How it helps the hunt
-                    </span>
-                    Call HQ to hear where other teams have picked up the scent.
-                </div>
-            </div>
-        </div>
-    );
-}
-
-const CARDS = [
-    {
-        title: "Read the clues",
-        body: "Every clue is a real fact about Kruger's rock, rivers, plants and animals. Solve them and the map gets smaller. Here is your first.",
-        visual: <ClueCard clue={CLUE_BY_ID["f01"]} />,
-    },
-    {
-        title: "Track the scent",
-        body: "Move your ranger and they walk there on foot. When they arrive, send the dog to read the ground: cold, faint, warm or fresh. Follow it warmer, one leg at a time.",
-        visual: <ScentPreview />,
-    },
-    {
-        title: "Spot the wildlife",
-        body: "As you work the bush, wild species appear on the map for a short while. Tap one to add it to your log. Spot all five of the Big, Ugly or Small Five and an instant prize is yours, bingo style.",
-        visual: <SpotPreview />,
-    },
-    {
-        title: "Stay supplied",
-        body: "Your ranger carries four days of food. Reach a rest camp to resupply and claim a free power-up, or the bakkie fetches you when it runs out. Power-ups and your spotting log live in your rucksack on the map.",
-        visual: <SupplyPreview />,
-    },
-    {
-        title: "Win real prizes",
-        body: "The closest locked pins win. A Kruger safari with the K9 pack, getaways and gear, 26 winners in all.",
-        visual: <PrizePreview />,
-    },
-    {
-        title: "Fund the dogs",
-        body: "Kit out your hunt if you choose. Every rand goes to the real SAWC K9 unit, and winning never costs a cent.",
-        visual: <KitPreview />,
-    },
+/** The whole how-it-works brief, sized to sit on one screen: no carousel to
+ *  click through and no scrolling to reach the start button. */
+const RULES = [
+    { icon: "magnifying-glass", title: "Read the clues", body: "Every clue is a real fact about Kruger. Solve them and the search area shrinks." },
+    { icon: "paw-print", title: "Track the scent", body: "Move your ranger on foot, then send the dog to read the ground, from cold to fresh." },
+    { icon: "binoculars", title: "Spot the wildlife", body: "Species appear on the map. Tap to log them, and complete a Five for an instant prize." },
+    { icon: "fork-knife", title: "Stay supplied", body: "You carry four days of food. Resupply at a rest camp, or the bakkie fetches you." },
+    { icon: "trophy", title: "Win real prizes", body: "The closest locked pins win. Twenty-six winners, from a Kruger safari to gear." },
+    { icon: "hand-heart", title: "Fund the dogs", body: "Kit is optional. Every rand goes to the real SAWC K9 unit, and winning is free." },
 ];
 
 export default function WelcomePage() {
     const router = useRouter();
-    const [card, setCard] = useState(0);
-    const active = CARDS[card];
 
     return (
         <PhoneStage columnStyle={{ flexDirection: "column" }}>
@@ -216,38 +26,49 @@ export default function WelcomePage() {
                 style={{
                     background: "radial-gradient(120% 100% at 50% 0%, #2C4A39 0%, #182D23 100%)",
                     color: "var(--sand-50)",
-                    padding: "var(--space-7) var(--gutter) var(--space-6)",
+                    padding: "var(--space-6) var(--gutter) var(--space-5)",
                 }}
             >
                 <Logo inverse />
-                <h1 style={{ color: "#fff", fontSize: "var(--text-h1)", margin: "var(--space-5) 0 var(--space-3)" }}>
+                <h1 style={{ color: "#fff", fontSize: "var(--text-h2)", margin: "var(--space-4) 0 var(--space-2)" }}>
                     Welcome to the K9 Unit.
                 </h1>
-                <p style={{ color: "rgba(245,239,226,0.82)", fontSize: "var(--text-lead)", margin: 0 }}>
-                    A poacher is hiding somewhere in Kruger. You and your dog are going to find him.
+                <p style={{ color: "rgba(245,239,226,0.82)", fontSize: "var(--text-base)", margin: 0, lineHeight: 1.5 }}>
+                    A poacher is hiding somewhere in Kruger. You and your dog are going to find him. Here is how it works.
                 </p>
             </div>
 
-            <div style={{ flex: 1, padding: "var(--space-6) var(--gutter)", display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
-                <div key={card} className="kw-rise" style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.7rem", color: "var(--text-accent)" }}>
-                            {String(card + 1).padStart(2, "0")} / {String(CARDS.length).padStart(2, "0")}
+            <div style={{ flex: 1, minHeight: 0, padding: "var(--space-5) var(--gutter) var(--space-4)", display: "flex", flexDirection: "column", justifyContent: "center", gap: "var(--space-3)" }}>
+                {RULES.map((r, i) => (
+                    <div key={r.title} className="kw-rise" style={{ display: "flex", alignItems: "flex-start", gap: "var(--space-3)", animationDelay: `${i * 45}ms` }}>
+                        <span
+                            style={{
+                                flex: "none",
+                                width: 38,
+                                height: 38,
+                                borderRadius: "var(--radius-md)",
+                                background: "var(--accent-soft)",
+                                color: "var(--ochre-700)",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontSize: 20,
+                            }}
+                        >
+                            <i className={`ph-fill ph-${r.icon}`} />
                         </span>
-                        <h3 style={{ margin: 0, fontSize: "var(--text-h4)" }}>{active.title}</h3>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                                <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", color: "var(--text-accent)" }}>{String(i + 1).padStart(2, "0")}</span>
+                                <strong style={{ fontSize: "0.98rem", color: "var(--text-primary)" }}>{r.title}</strong>
+                            </div>
+                            <p style={{ margin: "1px 0 0", fontSize: "0.82rem", color: "var(--text-secondary)", lineHeight: 1.4 }}>{r.body}</p>
+                        </div>
                     </div>
-                    <p style={{ margin: 0, color: "var(--text-secondary)", lineHeight: 1.55 }}>{active.body}</p>
-
-                    <div style={{ position: "relative" }}>
-                        <GameFrame>{active.visual}</GameFrame>
-                        <CarouselArrow dir="left" onClick={() => setCard((c) => (c - 1 + CARDS.length) % CARDS.length)} />
-                        <CarouselArrow dir="right" onClick={() => setCard((c) => (c + 1) % CARDS.length)} />
-                    </div>
-                </div>
-                <CarouselDots index={card} total={CARDS.length} />
+                ))}
             </div>
 
-            <div style={{ padding: "var(--space-5) var(--gutter) var(--space-8)", borderTop: "1px solid var(--border-subtle)" }}>
+            <div style={{ padding: "var(--space-4) var(--gutter) var(--space-7)", borderTop: "1px solid var(--border-subtle)" }}>
                 <Button size="lg" fullWidth onClick={() => router.push("/onboarding")} iconRight={<i className="ph ph-arrow-right" />}>
                     Start tracking
                 </Button>
