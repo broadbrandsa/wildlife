@@ -1068,32 +1068,8 @@ function MapInner() {
                 </div>
             )}
 
-            {/* top-right: the time of day and the round day counter */}
+            {/* top-right: the round day counter above the time of day */}
             <div style={{ position: "absolute", right: "var(--gutter)", top: 12, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
-                <button
-                    onClick={() => setSheet("night")}
-                    className="kw-press"
-                    style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 6,
-                        padding: "0.42rem 0.7rem",
-                        background: "rgba(250,246,236,0.9)",
-                        backdropFilter: "blur(8px)",
-                        WebkitBackdropFilter: "blur(8px)",
-                        border: "1px solid var(--border-subtle)",
-                        borderRadius: "var(--radius-pill)",
-                        boxShadow: "var(--shadow-sm)",
-                        cursor: "pointer",
-                    }}
-                    aria-label={`${PHASE_META[phase].label}, ${formatClock(hour, minute)}. About nights in the Kruger`}
-                >
-                    <i className={`ph-fill ph-${PHASE_META[phase].icon}`} style={{ fontSize: 15, color: night ? "var(--text-secondary)" : "var(--ochre-600)" }} />
-                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.68rem", letterSpacing: "0.08em", fontWeight: 700, color: "var(--text-primary)" }}>
-                        {formatClock(hour, minute)}
-                    </span>
-                    <i className="ph ph-info" style={{ fontSize: 13, color: "var(--text-muted)" }} />
-                </button>
                 <div
                     style={{
                         display: "flex",
@@ -1121,6 +1097,30 @@ function MapInner() {
                         {rangersHunting(day).toLocaleString("en-ZA")} RANGERS TRACKING
                     </span>
                 </div>
+                <button
+                    onClick={() => setSheet("night")}
+                    className="kw-press"
+                    style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        padding: "0.42rem 0.7rem",
+                        background: "rgba(250,246,236,0.9)",
+                        backdropFilter: "blur(8px)",
+                        WebkitBackdropFilter: "blur(8px)",
+                        border: "1px solid var(--border-subtle)",
+                        borderRadius: "var(--radius-pill)",
+                        boxShadow: "var(--shadow-sm)",
+                        cursor: "pointer",
+                    }}
+                    aria-label={`${PHASE_META[phase].label}, ${formatClock(hour, minute)}. About nights in the Kruger`}
+                >
+                    <i className={`ph-fill ph-${PHASE_META[phase].icon}`} style={{ fontSize: 15, color: night ? "var(--text-secondary)" : "var(--ochre-600)" }} />
+                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.68rem", letterSpacing: "0.08em", fontWeight: 700, color: "var(--text-primary)" }}>
+                        {formatClock(hour, minute)}
+                    </span>
+                    <i className="ph ph-info" style={{ fontSize: 13, color: "var(--text-muted)" }} />
+                </button>
             </div>
 
             {/* right dock: anchored below the time and day counter so the two
