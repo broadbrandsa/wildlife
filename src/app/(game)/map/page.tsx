@@ -110,8 +110,8 @@ function NDot() {
  * The rucksack fans its contents out in a right-facing half-moon. Five slots,
  * spaced across a 156-degree arc, positioned around the 104px rucksack box.
  */
-const RUCKSACK_ARC = [-75, -25, 25, 75].map((deg) => {
-    const r = 116;
+const RUCKSACK_ARC = [-80, -40, 0, 40, 80].map((deg) => {
+    const r: number = 116;
     const rad = (deg * Math.PI) / 180;
     const size = 46;
     // Origin is the rucksack button centre: 104 wide, 72 tall.
@@ -1010,7 +1010,7 @@ function MapInner() {
                 lives on the map as the pin, ringed by the food supply, with the
                 walk / track cues shown to the right of the pin. */}
             {ranger && (
-                <div style={{ position: "absolute", left: "var(--gutter)", top: 12, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 0 }}>
+                <div style={{ position: "absolute", left: "var(--gutter)", top: "50%", transform: "translateY(-50%)", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 0, zIndex: 6 }}>
                     {/* the rucksack: tap to open, and your power-ups and spots fan
                         out in a half-moon like tipping the bag open to look inside */}
                     <div style={{ position: "relative" }}>
@@ -1064,7 +1064,12 @@ function MapInner() {
                             )}
                         </button>
                         {rucksackOpen &&
-                            rucksackItems.map((it, i) => (
+                            [
+                                ...rucksackItems,
+                                // Field guides live in the rucksack now (removed from the
+                                // right dock): tap to open the all-zones guide list.
+                                { id: "guides", icon: "book-open-text", label: "Field guides", count: 0, showCount: false, onClick: () => setSheet("guides") },
+                            ].map((it, i) => (
                                 <ArcItem
                                     key={it.id}
                                     icon={it.icon}
@@ -1157,10 +1162,10 @@ function MapInner() {
                 </button>
             </div>
 
-            {/* right dock: anchored below the time chip */}
+            {/* right dock: anchored below the time chip. Guides moved into the
+                rucksack, so only the clue tab hangs here now. */}
             <div style={{ position: "absolute", right: "var(--gutter)", top: 64, display: "flex", flexDirection: "column", gap: 10 }}>
                 <DockTab icon="notebook" label="Clue" dot={newClueToday} sub={clueDockSub} onClick={openClueSheet} />
-                <DockTab icon="book-open-text" label="Guides" onClick={() => setSheet("guides")} />
             </div>
 
             {/* round day counter, plain text on the background behind the map,
@@ -2309,7 +2314,7 @@ function MapInner() {
                             const act = speciesActivity(spot.species.id);
                             return (
                                 <>
-                                    <div style={{ position: "relative", flexShrink: 0, aspectRatio: "2 / 1", background: "var(--sand-100)" }}>
+                                    <div style={{ position: "relative", flexShrink: 0, aspectRatio: "2.2 / 1", background: "var(--sand-100)" }}>
                                         <Image
                                             src={spot.species.photo}
                                             alt={spot.species.name}
@@ -2347,7 +2352,7 @@ function MapInner() {
                                         the footer button below is never cut off */}
                                     <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "var(--space-3) var(--space-5) var(--space-3)" }}>
                                         {(!found || act !== "any") && (
-                                            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: "var(--space-3)" }}>
+                                            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: "var(--space-2)" }}>
                                                 {!found && (
                                                     <Tag tone="neutral" size="sm">
                                                         <i className="ph ph-eye-slash" style={{ marginRight: 4 }} /> Not found
@@ -2361,32 +2366,27 @@ function MapInner() {
                                                 )}
                                             </div>
                                         )}
-                                        <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: 1.55, margin: 0 }}>
+                                        <p style={{ fontSize: "0.82rem", color: "var(--text-secondary)", lineHeight: 1.45, margin: 0 }}>
                                             {spot.species.info}
                                         </p>
                                         {speciesStats(spot.species.id).length > 0 && (
                                             <div style={{ marginTop: "var(--space-3)" }}>
-                                                <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.56rem", letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--text-accent)", marginBottom: 6 }}>
+                                                <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.54rem", letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--text-accent)", marginBottom: 5 }}>
                                                     <i className="ph ph-ruler" style={{ marginRight: 5 }} /> Field stats
                                                 </div>
-                                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5 }}>
                                                     {speciesStats(spot.species.id).map((st) => (
-                                                        <div key={st.label} style={{ background: "var(--surface-sunken)", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-sm)", padding: "0.35rem 0.55rem" }}>
-                                                            <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.5rem", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-muted)" }}>
+                                                        <div key={st.label} style={{ background: "var(--surface-sunken)", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-sm)", padding: "0.3rem 0.5rem" }}>
+                                                            <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.48rem", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-muted)" }}>
                                                                 {st.label}
                                                             </div>
-                                                            <div style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--text-primary)", lineHeight: 1.25, marginTop: 1 }}>
+                                                            <div style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--text-primary)", lineHeight: 1.2, marginTop: 1 }}>
                                                                 {st.value}
                                                             </div>
                                                         </div>
                                                     ))}
                                                 </div>
                                             </div>
-                                        )}
-                                        {five && (
-                                            <p style={{ fontSize: "0.78rem", color: "var(--ochre-700)", fontWeight: 600, lineHeight: 1.45, margin: "var(--space-2) 0 0" }}>
-                                                Spot all five for an instant prize.
-                                            </p>
                                         )}
                                     </div>
                                     {/* pinned footer: always visible at the card's foot */}
