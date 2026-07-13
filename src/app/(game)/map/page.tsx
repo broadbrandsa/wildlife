@@ -18,10 +18,15 @@ import type { Clue, Species, Zone } from "@/data";
 import {
     SCENT_TEXT,
     THIRD_LABEL,
+    BUSH_WISE_DOGS,
+    PARK_AREA_KM2,
     availableClueIds,
     dailyWalkKm,
     distanceKm,
+    freeCluesToCome,
+    hoursUntilNextClue,
     scentDirectionText,
+    searchAreaKm2,
     FOOD_DAYS,
     foodDaysLeft,
     daysRemaining,
@@ -102,58 +107,6 @@ function NDot() {
     );
 }
 
-/** The team icon: one round badge of the ranger with their dog at their feet
- *  (the dog is a background-removed cutout), wrapped by the food-supply ring.
- *  The border turns green when ready to move and red when food is low. Tapping
- *  opens the ranger profile. */
-function TeamIcon({ rangerSrc, dogSrc, alt, ready, danger, foodDays, foodTotal, foodColor, onClick }: { rangerSrc: string; dogSrc?: string; alt: string; ready: boolean; danger: boolean; foodDays: number; foodTotal: number; foodColor: string; onClick: () => void }) {
-    const ICON = 104;
-    const PAD = 8;
-    const WRAP = ICON + PAD * 2;
-    const border = danger ? "var(--clay-500)" : ready ? "var(--success)" : "var(--sand-50)";
-    return (
-        <button
-            onClick={onClick}
-            aria-label={ready ? `${alt}, ready` : alt}
-            className="kw-press"
-            style={{ position: "relative", width: WRAP, height: WRAP, border: "none", background: "transparent", padding: 0, cursor: "pointer" }}
-        >
-            <FoodRing days={foodDays} total={foodTotal} color={foodColor} size={WRAP} />
-            <span
-                style={{
-                    position: "absolute",
-                    top: PAD,
-                    left: PAD,
-                    width: ICON,
-                    height: ICON,
-                    borderRadius: "50%",
-                    overflow: "hidden",
-                    border: `3px solid ${border}`,
-                    background: "var(--sand-100)",
-                    boxShadow: danger ? "var(--shadow-md), 0 0 0 3px var(--clay-100)" : "var(--shadow-md)",
-                    transition: "border-color 200ms var(--ease-out), box-shadow 200ms var(--ease-out)",
-                }}
-            >
-                <Image src={rangerSrc} alt={alt} fill sizes="104px" style={{ objectFit: "cover" }} />
-                {dogSrc && (
-                    // Background-removed dog cutout, standing at the ranger's feet.
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                        src={dogSrc}
-                        alt=""
-                        aria-hidden="true"
-                        onError={(e) => {
-                            e.currentTarget.style.display = "none";
-                        }}
-                        style={{ position: "absolute", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "64%", maxHeight: "52%", objectFit: "contain", objectPosition: "bottom", filter: "drop-shadow(0 2px 3px rgba(17,32,26,0.4))" }}
-                    />
-                )}
-            </span>
-        </button>
-    );
-}
-
-
 /**
  * The rucksack fans its contents out in a right-facing half-moon. Five slots,
  * spaced across a 156-degree arc, positioned around the 104px rucksack box.
@@ -224,74 +177,123 @@ function ArcItem({ icon, count, label, left, top, delay, showCount = true, onCli
     );
 }
 
-/** A compact status chip beside a team icon: a small icon and a tinted label.
- *  Pass onClick to make it a tappable prompt (used for the dog's track cue), and
- *  maxWidth to let a longer label wrap instead of running off to one line. */
-function MiniChip({ icon, label, tone, maxWidth, onClick }: { icon: string; label: string; tone: string; maxWidth?: number; onClick?: () => void }) {
-    const style: React.CSSProperties = {
-        display: maxWidth ? "flex" : "inline-flex",
-        alignItems: maxWidth ? "flex-start" : "center",
-        gap: 4,
-        maxWidth,
-        padding: "5px 8px",
-        borderRadius: 10,
-        background: "rgba(250,246,236,0.9)",
-        backdropFilter: "blur(8px)",
-        WebkitBackdropFilter: "blur(8px)",
-        border: "1px solid var(--border-subtle)",
-        boxShadow: "var(--shadow-sm)",
-    };
-    const inner = (
-        <>
-            <i className={`ph-fill ph-${icon}`} style={{ fontSize: 11, color: tone, flex: "none", marginTop: maxWidth ? 1 : 0 }} />
-            <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.5rem", letterSpacing: "0.06em", fontWeight: 700, textTransform: "uppercase", color: tone, lineHeight: 1.3 }}>
-                {label}
-            </span>
-        </>
-    );
-    if (onClick) {
-        return (
-            <button onClick={onClick} aria-label={label} className="kw-press kw-rise" style={{ ...style, cursor: "pointer" }}>
-                {inner}
-            </button>
-        );
-    }
-    return <div style={style}>{inner}</div>;
-}
+type ZoneMark = "suspect" | "ruled-out" | undefined;
 
-/** The ranger's food supply as a segmented ring that wraps the team icon: one
- *  arc per day, filled arcs in the food colour, empties in the sunken tone. */
-function FoodRing({ days, total, color, size }: { days: number; total: number; color: string; size: number }) {
-    const cx = size / 2;
-    const cy = size / 2;
-    const r = size / 2 - 4;
-    const gapDeg = 12;
-    const segDeg = 360 / total;
-    const polar = (deg: number) => {
-        const rad = ((deg - 90) * Math.PI) / 180;
-        return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
-    };
+/**
+ * Case board card: the body cycles the zone's verdict (open, suspect, ruled
+ * out); the corner affordance opens or unlocks its field guide.
+ */
+function CaseCard({
+    zone,
+    mark,
+    owned,
+    freePick,
+    onCycle,
+    onRead,
+    onUnlock,
+}: {
+    zone: Zone;
+    mark: ZoneMark;
+    owned: boolean;
+    freePick?: boolean;
+    onCycle: () => void;
+    onRead: () => void;
+    onUnlock: () => void;
+}) {
+    const ruledOut = mark === "ruled-out";
     return (
-        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ position: "absolute", inset: 0, pointerEvents: "none" }} aria-hidden="true">
-            {Array.from({ length: total }).map((_, i) => {
-                const a1 = i * segDeg + gapDeg / 2;
-                const a2 = (i + 1) * segDeg - gapDeg / 2;
-                const p1 = polar(a1);
-                const p2 = polar(a2);
-                const large = a2 - a1 > 180 ? 1 : 0;
-                return (
-                    <path
-                        key={i}
-                        d={`M ${p1.x} ${p1.y} A ${r} ${r} 0 ${large} 1 ${p2.x} ${p2.y}`}
-                        fill="none"
-                        stroke={i < days ? color : "var(--surface-sunken)"}
-                        strokeWidth={5}
-                        strokeLinecap="round"
-                        style={{ transition: "stroke 300ms var(--ease-out)" }}
-                    />
-                );
-            })}
-        </svg>
+        <div
+            role="button"
+            tabIndex={0}
+            onClick={onCycle}
+            onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") onCycle();
+            }}
+            aria-label={`Mark ${zone.name}: currently ${mark ?? "open"}`}
+            style={{
+                textAlign: "left",
+                cursor: "pointer",
+                display: "flex",
+                flexDirection: "column",
+                gap: 6,
+                background: owned ? "var(--surface-card)" : "var(--surface-sunken)",
+                border: `1px solid ${mark === "suspect" ? "var(--ochre-500)" : owned ? "var(--border-subtle)" : "var(--border-default)"}`,
+                borderRadius: "var(--radius-md)",
+                padding: "var(--space-3) var(--space-4)",
+                minHeight: 108,
+                opacity: ruledOut ? 0.55 : 1,
+                transition: "all var(--dur-fast) var(--ease-out)",
+            }}
+        >
+            <span style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.7rem", color: "var(--text-accent)" }}>{zone.number}</span>
+                <span
+                    role="button"
+                    tabIndex={0}
+                    aria-label={
+                        owned
+                            ? `Read the ${zone.name} field guide`
+                            : freePick
+                              ? `Claim the ${zone.name} field guide free`
+                              : `Unlock the ${zone.name} field guide for R25`
+                    }
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        (owned ? onRead : onUnlock)();
+                    }}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                            e.stopPropagation();
+                            (owned ? onRead : onUnlock)();
+                        }
+                    }}
+                    style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 4,
+                        fontSize: "0.74rem",
+                        fontWeight: 600,
+                        whiteSpace: "nowrap",
+                        padding: "0.35rem 0.5rem",
+                        margin: "-0.35rem -0.5rem",
+                        borderRadius: "var(--radius-sm)",
+                        color: owned ? "var(--text-link)" : freePick ? "var(--ochre-700)" : "var(--text-muted)",
+                    }}
+                >
+                    {owned ? (
+                        <>
+                            <i className="ph ph-book-open" /> Read
+                        </>
+                    ) : freePick ? (
+                        <>
+                            <i className="ph-fill ph-paw-print" /> Free pick
+                        </>
+                    ) : (
+                        <>
+                            <i className="ph ph-lock-simple" /> R25
+                        </>
+                    )}
+                </span>
+            </span>
+            <span style={{ flex: 1 }}>
+                <span style={{ display: "block", fontSize: "0.9rem", fontWeight: 600, color: owned ? "var(--text-primary)" : "var(--text-secondary)", lineHeight: 1.25, textDecoration: ruledOut ? "line-through" : "none" }}>
+                    {zone.name}
+                </span>
+                <span style={{ display: "block", fontSize: "0.72rem", color: "var(--text-muted)", marginTop: 2, lineHeight: 1.35 }}>{zone.subtitle}</span>
+            </span>
+            <span style={{ minHeight: 18 }}>
+                {mark === "suspect" && (
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: "0.7rem", fontWeight: 700, color: "var(--ochre-700)" }}>
+                        <i className="ph-fill ph-detective" /> Suspect
+                    </span>
+                )}
+                {ruledOut && (
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: "0.7rem", fontWeight: 700, color: "var(--text-muted)" }}>
+                        <i className="ph ph-prohibit" /> Ruled out
+                    </span>
+                )}
+            </span>
+        </div>
     );
 }
 
@@ -401,6 +403,9 @@ function MapInner() {
     const recordReveal = useGameStore((s) => s.recordReveal);
     const zoneMarks = useGameStore((s) => s.zoneMarks);
     const ruleOutZone = useGameStore((s) => s.ruleOutZone);
+    const cycleZoneMark = useGameStore((s) => s.cycleZoneMark);
+    const claimFreeGuide = useGameStore((s) => s.claimFreeGuide);
+    const freeGuideUsed = useGameStore((s) => s.freeGuideUsed);
     const trail = useGameStore((s) => s.trail);
     const sightings = useGameStore((s) => s.sightings);
     const recordSighting = useGameStore((s) => s.recordSighting);
@@ -417,6 +422,12 @@ function MapInner() {
     const [guideZone, setGuideZone] = useState<Zone | null>(null);
     const [lockModal, setLockModal] = useState(false);
     const [sheet, setSheet] = useState<SheetId | null>(null);
+    // Arriving from a checkout or code redemption with ?panel=clue opens the
+    // case file straight away, since clues now live on the map, not a journal tab.
+    useEffect(() => {
+        if (params.get("panel") === "clue") setSheet("clue");
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     // Bakkie mode: pick anywhere on the map, then confirm the ride.
     const [truckMode, setTruckMode] = useState(false);
     const [truckDest, setTruckDest] = useState<{ x: number; y: number } | null>(null);
@@ -917,6 +928,23 @@ function MapInner() {
             )
         ) : undefined;
 
+    // Captions that sit to the right of the pin on the map: the walk time, the
+    // dog's track cue (only once the ranger has arrived), and the low-food
+    // warning. Replaces the old stack under the top-left team badge.
+    const pinChips: { icon: string; label: string; tone: string; onClick?: () => void; warn?: boolean }[] = [];
+    if (pin) {
+        if (rangerWalking) pinChips.push({ icon: "boot", label: `${rangerWalkLabelSec} to walk to new location`, tone: "var(--ochre-700)" });
+        else if (night) pinChips.push({ icon: "campfire", label: "Camped for the night", tone: "var(--ochre-600)" });
+        else if (heldForResupply) pinChips.push({ icon: "fork-knife", label: "Resupplied, move out tomorrow", tone: "var(--success)" });
+
+        if (!night && rangerArrived) {
+            if (scentReadHere) pinChips.push({ icon: "check-circle", label: "Scent read", tone: "var(--success)", onClick: openDogSheet });
+            else pinChips.push({ icon: "paw-print", label: "Track scent", tone: "var(--ochre-700)", onClick: openDogSheet });
+        }
+
+        if (foodLow) pinChips.push({ icon: "warning", label: "Almost out of food. Return to a rest camp.", tone: "var(--clay-600)", warn: true });
+    }
+
     return (
         <div style={{ position: "relative", height: "calc(100% + 5.5rem)", marginBottom: "-5.5rem", background: sky.gradient, transition: "background 1.2s var(--ease-out)" }}>
             <KrugerMap
@@ -947,6 +975,13 @@ function MapInner() {
                 campClaim={campRewardUnclaimed && campReward ? { label: POWERUP_BY_ID[campReward]?.name ?? "power-up", onClaim: claimCampReward } : null}
                 pinRangerSrc={ranger?.photo}
                 pinDogSrc={dog?.cutout}
+                startKm={5}
+                foodDays={foodLeft}
+                foodTotal={FOOD_DAYS}
+                foodColor={foodTone}
+                foodDanger={foodLow}
+                pinChips={truckMode ? [] : pinChips}
+                onPinTap={() => setSheet("ranger")}
             />
 
             {/* time-of-day scrim: tints the whole map toward dawn, dusk or night */}
@@ -975,50 +1010,11 @@ function MapInner() {
                 />
             )}
 
-            {/* the team: one round badge of you and your dog together, ringed by
-                the food supply, with the walk/track cues stacked beneath it and
-                the rucksack below that. */}
+            {/* left rail: the rucksack, spotting log and field radio. The team now
+                lives on the map as the pin, ringed by the food supply, with the
+                walk / track cues shown to the right of the pin. */}
             {ranger && (
                 <div style={{ position: "absolute", left: "var(--gutter)", top: 12, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
-                    <TeamIcon
-                        rangerSrc={ranger.photo}
-                        dogSrc={dog?.cutout}
-                        alt={`${rangerName} and ${dogName}`}
-                        ready={rangerReady}
-                        danger={foodLow}
-                        foodDays={foodLeft}
-                        foodTotal={FOOD_DAYS}
-                        foodColor={foodTone}
-                        onClick={() => setSheet("ranger")}
-                    />
-                    {/* under the badge: the walk / camp caption, the dog's track
-                        cue, and the low-food warning */}
-                    {pin && (
-                        <>
-                            {rangerWalking ? (
-                                <MiniChip icon="boot" label={`${rangerWalkLabelSec} to walk to new location`} tone="var(--ochre-700)" maxWidth={150} />
-                            ) : night ? (
-                                <MiniChip icon="campfire" label="Camped for the night" tone="var(--ochre-600)" maxWidth={150} />
-                            ) : heldForResupply ? (
-                                <MiniChip icon="fork-knife" label="Resupplied · move out tomorrow" tone="var(--success)" maxWidth={150} />
-                            ) : null}
-                            {night ? (
-                                <MiniChip icon="campfire" label="Camped" tone="var(--ochre-600)" />
-                            ) : !rangerArrived ? (
-                                <MiniChip icon="paw-print" label="En route" tone="var(--text-muted)" />
-                            ) : scentReadHere ? (
-                                <MiniChip icon="check-circle" label="Scent read" tone="var(--success)" onClick={openDogSheet} />
-                            ) : (
-                                <MiniChip icon="paw-print" label="Track scent" tone="var(--ochre-700)" onClick={openDogSheet} />
-                            )}
-                            {foodLow && (
-                                <div style={{ display: "flex", alignItems: "flex-start", gap: 6, maxWidth: 150, padding: "0.4rem 0.55rem", borderRadius: 10, background: "var(--clay-100)", border: "1px solid var(--clay-500)", boxShadow: "var(--shadow-sm)" }}>
-                                    <i className="ph-fill ph-warning" style={{ fontSize: 12, color: "var(--clay-600)", marginTop: 1, flex: "none" }} />
-                                    <span style={{ fontSize: "0.68rem", lineHeight: 1.35, color: "var(--clay-600)", fontWeight: 600 }}>Almost out of food. Return to a rest camp to resupply.</span>
-                                </div>
-                            )}
-                        </>
-                    )}
                     {/* the rucksack: tap to open, and your power-ups and spots fan
                         out in a half-moon like tipping the bag open to look inside */}
                     <div style={{ position: "relative", marginTop: 12 }}>
@@ -1629,16 +1625,105 @@ function MapInner() {
 
             {sheet === "clue" && (
                 <Sheet onClose={() => setSheet(null)}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "var(--space-3)" }}>
-                        <Eyebrow>Latest intel</Eyebrow>
-                        <button onClick={() => router.push("/journal")} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-link)", fontSize: "0.8rem", fontWeight: 600, padding: "0.4rem 0" }}>
-                            All clues <i className="ph ph-arrow-right" />
-                        </button>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: "var(--space-3)", fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.12em", color: "var(--text-muted)" }}>
-                        <i className="ph ph-timer" /> {clueCountdown}
-                    </div>
-                    {latest && <ClueCard clue={latest} action={clueAction(latest)} />}
+                    {(() => {
+                        // The full case file: clues in hand and the case board, folded
+                        // in from the old journal page so it all lives in one place.
+                        const inHand = [...available].sort((a, b) => (b.releaseDay ?? 999) - (a.releaseDay ?? 999));
+                        const toCome = freeCluesToCome(day);
+                        const nextHours = hoursUntilNextClue(day);
+                        const areaLeft = searchAreaKm2(zoneMarks);
+                        const freePickAvailable = Boolean(player && BUSH_WISE_DOGS.has(player.dogId) && !freeGuideUsed);
+                        return (
+                            <>
+                                <Eyebrow>Field journal</Eyebrow>
+                                <h2 style={{ fontSize: "var(--text-h3)", margin: "var(--space-2) 0 var(--space-2)" }}>Your clues</h2>
+                                <p style={{ color: "var(--text-secondary)", margin: 0, fontSize: "0.86rem" }}>
+                                    {inHand.length} clue{inHand.length === 1 ? "" : "s"} in hand · {toCome} field clue{toCome === 1 ? "" : "s"} still to come.
+                                </p>
+
+                                {/* Case board: mark zones and open their field guides */}
+                                <div style={{ margin: "var(--space-5) 0 0" }}>
+                                    <Eyebrow rule>Case board</Eyebrow>
+                                    <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.72rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-primary)", fontWeight: 700, margin: "var(--space-3) 0 0" }}>
+                                        Search area: {areaLeft.toLocaleString("en-ZA")} km² of {PARK_AREA_KM2.toLocaleString("en-ZA")}
+                                    </div>
+                                    <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", margin: "var(--space-2) 0 var(--space-3)", lineHeight: 1.5 }}>
+                                        Tap a zone to mark it suspect or rule it out. The book opens its field guide.
+                                        {freePickAvailable && ` ${dogName} knows this bush: the matriarch grants you one more guide free.`}
+                                    </p>
+                                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-2)" }}>
+                                        {ZONES.map((z) => (
+                                            <CaseCard
+                                                key={z.id}
+                                                zone={z}
+                                                mark={zoneMarks[z.id]}
+                                                owned={fieldGuides.includes(z.id)}
+                                                freePick={freePickAvailable}
+                                                onCycle={() => cycleZoneMark(z.id)}
+                                                onRead={() => {
+                                                    setSheet(null);
+                                                    setGuideZone(z);
+                                                }}
+                                                onUnlock={() => {
+                                                    if (freePickAvailable) {
+                                                        claimFreeGuide(z.id);
+                                                        setGuideFlipped(prefersReducedMotion());
+                                                        setGuideCard(z);
+                                                        setSheet(null);
+                                                    } else {
+                                                        router.push(`/checkout/guide-${z.id}`);
+                                                    }
+                                                }}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div style={{ margin: "var(--space-6) 0 var(--space-3)" }}>
+                                    <Eyebrow rule>In hand</Eyebrow>
+                                </div>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
+                                    {inHand.map((c) => (
+                                        <ClueCard key={c.id} clue={c} action={clueAction(c)} />
+                                    ))}
+                                </div>
+
+                                <div style={{ margin: "var(--space-6) 0 var(--space-3)" }}>
+                                    <Eyebrow rule>Still out there</Eyebrow>
+                                </div>
+                                <div
+                                    style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: "var(--space-3)",
+                                        background: "var(--surface-card)",
+                                        border: "1px solid var(--border-subtle)",
+                                        borderRadius: "var(--radius-lg)",
+                                        padding: "var(--space-4)",
+                                        boxShadow: "var(--shadow-xs)",
+                                    }}
+                                >
+                                    <span style={{ flex: "none", width: 40, height: 40, borderRadius: "var(--radius-pill)", background: "var(--surface-sunken)", color: "var(--text-accent)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>
+                                        <i className="ph ph-timer" />
+                                    </span>
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{ fontWeight: 700, fontSize: "0.92rem" }}>
+                                            {toCome === 0
+                                                ? "All field clues are out"
+                                                : nextHours && nextHours > 0
+                                                  ? `Next clue in about ${nextHours} hour${nextHours === 1 ? "" : "s"}`
+                                                  : "A new clue is landing now"}
+                                        </div>
+                                        <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: 2, lineHeight: 1.45 }}>
+                                            {toCome === 0
+                                                ? "You have the full field-clue timeline. Work the kit for extra intel."
+                                                : `${toCome} field clue${toCome === 1 ? "" : "s"} still to come. Each lands on its own day, so keep tracking.`}
+                                        </div>
+                                    </div>
+                                </div>
+                            </>
+                        );
+                    })()}
                 </Sheet>
             )}
 
@@ -1689,34 +1774,84 @@ function MapInner() {
 
             {sheet === "guides" && (
                 <Sheet onClose={() => setSheet(null)}>
-                    <Eyebrow rule>Field guides</Eyebrow>
-                    <p style={{ fontSize: "0.84rem", color: "var(--text-muted)", margin: "var(--space-3) 0 var(--space-4)", lineHeight: 1.5 }}>
-                        {fieldGuides.length === 0
-                            ? "Your first guide unlocks free with your first pin. Drop your pin, then come back here to read the ground."
-                            : "Tap a guide you hold to read its ground. Unlock more zones for R25 each."}
-                    </p>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-2)" }}>
-                        {ZONES.filter((z) => fieldGuides.includes(z.id)).map((z) => (
-                            <button
-                                key={z.id}
-                                onClick={() => {
-                                    setSheet(null);
-                                    setGuideZone(z);
-                                }}
-                                style={{ border: "1px solid var(--border-default)", background: "var(--surface-card)", borderRadius: "var(--radius-pill)", padding: "0.5rem 0.85rem", fontSize: "0.78rem", fontWeight: 600, color: "var(--text-secondary)", cursor: "pointer" }}
-                            >
-                                <i className="ph ph-book-open" style={{ marginRight: 5, fontSize: 12, color: "var(--text-accent)" }} />
-                                {z.name}
-                            </button>
-                        ))}
-                    </div>
-                    {fieldGuides.length < ZONES.length && (
-                        <div style={{ marginTop: "var(--space-5)" }}>
-                            <Button size="lg" fullWidth variant="secondary" onClick={() => router.push("/journal")} iconRight={<i className="ph ph-arrow-right" />}>
-                                Unlock more guides
-                            </Button>
-                        </div>
-                    )}
+                    {(() => {
+                        // Every zone shows at once: the ones you hold read at full
+                        // strength, the rest sit dimmed until you unlock them.
+                        const freePickAvailable = Boolean(player && BUSH_WISE_DOGS.has(player.dogId) && !freeGuideUsed);
+                        const held = ZONES.filter((z) => fieldGuides.includes(z.id)).length;
+                        return (
+                            <>
+                                <Eyebrow rule>Field guides</Eyebrow>
+                                <p style={{ fontSize: "0.84rem", color: "var(--text-muted)", margin: "var(--space-3) 0 var(--space-4)", lineHeight: 1.5 }}>
+                                    {held === 0
+                                        ? "Your first guide unlocks free with your first pin. Drop your pin, then come back here to read the ground."
+                                        : "Guides you hold read in full. The dimmed ones unlock for R25 each."}
+                                    {freePickAvailable && ` ${dogName} knows this bush: one more guide is free.`}
+                                </p>
+                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-2)" }}>
+                                    {ZONES.map((z) => {
+                                        const owned = fieldGuides.includes(z.id);
+                                        return (
+                                            <button
+                                                key={z.id}
+                                                onClick={() => {
+                                                    if (owned) {
+                                                        setSheet(null);
+                                                        setGuideZone(z);
+                                                    } else if (freePickAvailable) {
+                                                        claimFreeGuide(z.id);
+                                                        setGuideFlipped(prefersReducedMotion());
+                                                        setGuideCard(z);
+                                                        setSheet(null);
+                                                    } else {
+                                                        router.push(`/checkout/guide-${z.id}`);
+                                                    }
+                                                }}
+                                                aria-label={owned ? `Read the ${z.name} field guide` : freePickAvailable ? `Claim the ${z.name} field guide free` : `Unlock the ${z.name} field guide for R25`}
+                                                style={{
+                                                    textAlign: "left",
+                                                    display: "flex",
+                                                    flexDirection: "column",
+                                                    gap: 4,
+                                                    background: owned ? "var(--surface-card)" : "var(--surface-sunken)",
+                                                    border: `1px solid ${owned ? "var(--border-subtle)" : "var(--border-default)"}`,
+                                                    borderRadius: "var(--radius-md)",
+                                                    padding: "var(--space-3) var(--space-4)",
+                                                    minHeight: 92,
+                                                    cursor: "pointer",
+                                                    opacity: owned ? 1 : 0.55,
+                                                    transition: "opacity var(--dur-fast) var(--ease-out)",
+                                                }}
+                                            >
+                                                <span style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                                                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.7rem", color: "var(--text-accent)" }}>{z.number}</span>
+                                                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: "0.72rem", fontWeight: 600, whiteSpace: "nowrap", color: owned ? "var(--text-link)" : freePickAvailable ? "var(--ochre-700)" : "var(--text-muted)" }}>
+                                                        {owned ? (
+                                                            <>
+                                                                <i className="ph ph-book-open" /> Read
+                                                            </>
+                                                        ) : freePickAvailable ? (
+                                                            <>
+                                                                <i className="ph-fill ph-paw-print" /> Free pick
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <i className="ph ph-lock-simple" /> R25
+                                                            </>
+                                                        )}
+                                                    </span>
+                                                </span>
+                                                <span style={{ display: "block", fontSize: "0.9rem", fontWeight: 600, color: owned ? "var(--text-primary)" : "var(--text-secondary)", lineHeight: 1.25 }}>
+                                                    {z.name}
+                                                </span>
+                                                <span style={{ display: "block", fontSize: "0.72rem", color: "var(--text-muted)", lineHeight: 1.35 }}>{z.subtitle}</span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </>
+                        );
+                    })()}
                 </Sheet>
             )}
 

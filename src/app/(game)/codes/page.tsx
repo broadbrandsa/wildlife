@@ -153,8 +153,8 @@ export default function CodesPage() {
                             Heard it somewhere? Pass it on. Codes are for everyone.
                         </p>
                         <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)", marginTop: "var(--space-3)" }}>
-                            <Button variant="accent" size="lg" fullWidth onClick={() => router.push("/journal")}>
-                                Add to journal
+                            <Button variant="accent" size="lg" fullWidth onClick={() => router.push("/map?panel=clue")}>
+                                See your clues
                             </Button>
                             <Button variant="ondark" fullWidth onClick={reset}>
                                 Enter another code

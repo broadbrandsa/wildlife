@@ -223,7 +223,7 @@ export default function CheckoutPage() {
                                 >
                                     <i className="ph-fill ph-book-open" style={{ fontSize: 20, color: "var(--teal-700)", marginTop: 2 }} />
                                     <span style={{ fontSize: "0.86rem", color: "var(--text-secondary)", lineHeight: 1.55 }}>
-                                        {item.name} is open. Read it from the chips on the map or from your journal.
+                                        {item.name} is open. Read it from the clue and guide icons on the map.
                                     </span>
                                 </div>
                             </div>
@@ -347,8 +347,8 @@ export default function CheckoutPage() {
                             <Button size="lg" fullWidth onClick={() => router.push("/map")} iconRight={<i className="ph ph-map-trifold" />}>
                                 Back to the hunt
                             </Button>
-                            <Button size="lg" variant="ghost" fullWidth onClick={() => router.push("/journal")}>
-                                View journal
+                            <Button size="lg" variant="ghost" fullWidth onClick={() => router.push("/map?panel=clue")}>
+                                See your clues
                             </Button>
                         </div>
                     </div>
@@ -379,8 +379,8 @@ export default function CheckoutPage() {
                     >
                         <ClueCard clue={clue} />
                         <div style={{ marginTop: "var(--space-3)", display: "flex", justifyContent: "flex-end" }}>
-                            <Button size="sm" variant="secondary" onClick={() => setRevealCard(null)} iconRight={<i className="ph ph-notebook" />}>
-                                Into the journal
+                            <Button size="sm" variant="secondary" onClick={() => setRevealCard(null)} iconRight={<i className="ph ph-check" />}>
+                                Got it
                             </Button>
                         </div>
                     </div>

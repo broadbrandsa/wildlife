@@ -9,7 +9,6 @@ import { PhoneStage } from "@/components/game/PhoneStage";
 
 const TABS = [
     { id: "map", href: "/map", icon: "map-trifold", label: "Hunt" },
-    { id: "journal", href: "/journal", icon: "notebook", label: "Journal" },
     { id: "shop", href: "/shop", icon: "binoculars", label: "Kit" },
     { id: "team", href: "/team", icon: "dog", label: "K9 Unit" },
     { id: "profile", href: "/profile", icon: "user", label: "You" },

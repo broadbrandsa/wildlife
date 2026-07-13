@@ -144,9 +144,21 @@ interface KrugerMapProps {
      *  (except when locked, camped at night, or standing on a rest camp). */
     pinRangerSrc?: string;
     pinDogSrc?: string;
+    /** On mount, zoom in on the pin until the scale bar reads about this many km. */
+    startKm?: number | null;
+    /** Food supply, drawn as a segmented ring around the pin marker. */
+    foodDays?: number;
+    foodTotal?: number;
+    foodColor?: string;
+    /** Low on food: the pin marker gets a warning border. */
+    foodDanger?: boolean;
+    /** Status captions shown to the right of the pin (walk time, track cue, warnings). */
+    pinChips?: { icon: string; label: string; tone: string; onClick?: () => void; warn?: boolean }[];
+    /** Tapping the pin (as opposed to dragging it) opens the ranger status sheet. */
+    onPinTap?: () => void;
 }
 
-export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, target = null, maxScale = 4, showThirds = false, walkRangeKm = null, freeDrag = false, trail = [], markers = [], onSpotMarker, focusSignal = 0, camped = false, atCamp = false, onCampInfo, campLabel = null, campClaim = null, pinRangerSrc, pinDogSrc }: KrugerMapProps) {
+export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, target = null, maxScale = 4, showThirds = false, walkRangeKm = null, freeDrag = false, trail = [], markers = [], onSpotMarker, focusSignal = 0, camped = false, atCamp = false, onCampInfo, campLabel = null, campClaim = null, pinRangerSrc, pinDogSrc, startKm = null, foodDays = 0, foodTotal = 0, foodColor = "var(--success)", foodDanger = false, pinChips = [], onPinTap }: KrugerMapProps) {
     const transformRef = useRef<ReactZoomPanPinchRef | null>(null);
 
     // The ranger's Move action zooms the map in on the pin so the walk radius
@@ -174,6 +186,40 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
         return () => clearTimeout(t);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [focusSignal]);
+
+    // On first mount, start the map zoomed in on the pin so the scale bar reads
+    // about `startKm` (a closer, walkable view than the whole-park default).
+    const didInitZoom = useRef(false);
+    useEffect(() => {
+        if (didInitZoom.current || !startKm || !pin) return;
+        const t = setTimeout(() => {
+            const api = transformRef.current;
+            const wrapper = rootRef.current?.querySelector(".react-transform-wrapper") as HTMLElement | null;
+            const svg = svgRef.current;
+            const pinEl = document.getElementById("kw-pin-focus");
+            const cur = api?.instance?.transformState;
+            if (!api || !wrapper || !svg || !pinEl || !cur) return;
+            const rect = svg.getBoundingClientRect();
+            if (!rect.width) return;
+            // Raw km the scale bar targets at the current zoom, then the scale
+            // that lands it mid-step on startKm so the bar snaps to that value.
+            const rawNow = (MAP_WIDTH_KM / rect.width) * SCALE_TARGET_PX;
+            const idx = SCALE_STEPS.indexOf(startKm);
+            const nextStep = idx >= 0 && idx < SCALE_STEPS.length - 1 ? SCALE_STEPS[idx + 1] : startKm * 2;
+            const aimRaw = (startKm + nextStep) / 2;
+            const target = Math.max(1, Math.min(maxScale, (rawNow * cur.scale) / aimRaw));
+            const wRect = wrapper.getBoundingClientRect();
+            const pRect = pinEl.getBoundingClientRect();
+            const px = pRect.left + pRect.width / 2 - wRect.left;
+            const py = pRect.top + pRect.height / 2 - wRect.top;
+            const ux = (px - cur.positionX) / cur.scale;
+            const uy = (py - cur.positionY) / cur.scale;
+            api.setTransform(wRect.width / 2 - ux * target, wRect.height / 2 - uy * target, target, 0);
+            didInitZoom.current = true;
+        }, 120);
+        return () => clearTimeout(t);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const down = useRef<{ x: number; y: number } | null>(null);
     const svgRef = useRef<SVGSVGElement>(null);
     const barRef = useRef<HTMLSpanElement>(null);
@@ -277,9 +323,15 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
         el.addEventListener("touchmove", stop, { passive: false });
     };
 
+    // Where the finger first touched the pin, so a still tap can be told from a
+    // walk (and open the ranger status sheet instead of moving the pin).
+    const pinDownRef = useRef<{ x: number; y: number } | null>(null);
+
     const onPinPointerDown = (e: React.PointerEvent<HTMLSpanElement>) => {
-        if (!draggable || !pin) return;
-        e.stopPropagation(); // keep the map from panning under the drag
+        if (!pin) return;
+        e.stopPropagation(); // keep the map from panning or placing under the pin
+        pinDownRef.current = { x: e.clientX, y: e.clientY };
+        if (!draggable) return;
         e.preventDefault();
         try {
             e.currentTarget.setPointerCapture(e.pointerId);
@@ -303,10 +355,19 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
     };
 
     const onPinPointerUp = (e: React.PointerEvent<HTMLSpanElement>) => {
-        if (!drag) return;
+        if (!pin) return;
         e.stopPropagation();
-        if (onPlace && (drag.km > 0.3 || drag.camp)) onPlace(drag.x, drag.y);
-        setDrag(null);
+        const start = pinDownRef.current;
+        pinDownRef.current = null;
+        const moved = start ? Math.hypot(e.clientX - start.x, e.clientY - start.y) : 0;
+        if (drag) {
+            if (onPlace && (drag.km > 0.3 || drag.camp)) onPlace(drag.x, drag.y);
+            else if (moved <= 10) onPinTap?.(); // a still tap on the pin, not a walk
+            setDrag(null);
+            return;
+        }
+        // Pin held still (locked, walking, camped): a tap opens the status sheet.
+        if (moved <= 10) onPinTap?.();
     };
 
     const dimmed = (id: ZoneId) => revealZones.length > 0 && !revealZones.includes(id);
@@ -860,16 +921,51 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                                 // size, so it sits smaller on the ground when zoomed.
                                 transform: "translate(-50%, calc(-100% + 2px)) scale(var(--kw-pin-scale, 1))",
                                 transformOrigin: "50% 100%",
-                                pointerEvents: draggable ? "auto" : "none",
+                                pointerEvents: "auto",
                                 touchAction: "none",
-                                cursor: draggable ? (drag ? "grabbing" : "grab") : undefined,
+                                cursor: draggable ? (drag ? "grabbing" : "grab") : "pointer",
                                 padding: 8, // a 46px finger target around the 30px pin
                             }}
                         >
                             {!pin.locked && !camped && !atCamp && pinRangerSrc ? (
-                                // A photo marker of the ranger and dog together, with a
-                                // small tail so it still points at the ground.
+                                // A photo marker of the ranger and dog together, ringed
+                                // by the food supply, with a small tail so it still
+                                // points at the ground.
                                 <span style={{ position: "relative", display: "block", width: 48, height: 55 }}>
+                                    {foodTotal > 0 && (
+                                        <svg
+                                            width={62}
+                                            height={62}
+                                            viewBox="0 0 62 62"
+                                            style={{ position: "absolute", top: -7, left: -7, pointerEvents: "none" }}
+                                            aria-hidden="true"
+                                        >
+                                            {Array.from({ length: foodTotal }).map((_, i) => {
+                                                const segDeg = 360 / foodTotal;
+                                                const gap = 12;
+                                                const a1 = i * segDeg + gap / 2;
+                                                const a2 = (i + 1) * segDeg - gap / 2;
+                                                const r = 28;
+                                                const polar = (deg: number) => {
+                                                    const rad = ((deg - 90) * Math.PI) / 180;
+                                                    return { x: 31 + r * Math.cos(rad), y: 31 + r * Math.sin(rad) };
+                                                };
+                                                const p1 = polar(a1);
+                                                const p2 = polar(a2);
+                                                const large = a2 - a1 > 180 ? 1 : 0;
+                                                return (
+                                                    <path
+                                                        key={i}
+                                                        d={`M ${p1.x} ${p1.y} A ${r} ${r} 0 ${large} 1 ${p2.x} ${p2.y}`}
+                                                        fill="none"
+                                                        stroke={i < foodDays ? foodColor : "rgba(255,255,255,0.4)"}
+                                                        strokeWidth={4}
+                                                        strokeLinecap="round"
+                                                    />
+                                                );
+                                            })}
+                                        </svg>
+                                    )}
                                     <span
                                         style={{
                                             position: "absolute",
@@ -879,8 +975,8 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                                             height: 48,
                                             borderRadius: "50%",
                                             overflow: "hidden",
-                                            border: "2px solid #fff",
-                                            boxShadow: "var(--shadow-md)",
+                                            border: `2px solid ${foodDanger ? "var(--clay-500)" : "#fff"}`,
+                                            boxShadow: foodDanger ? "var(--shadow-md), 0 0 0 2px var(--clay-100)" : "var(--shadow-md)",
                                             background: "var(--sand-100)",
                                         }}
                                     >
@@ -927,6 +1023,71 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                         </span>
                     )}
 
+                    {/* status captions to the right of the pin: the walk time, the
+                        dog's track cue and any warning. Counter-scaled so they hold a
+                        steady on-screen size as the map zooms. */}
+                    {pin && !drag && !campLabel && pinChips.length > 0 && (
+                        <span
+                            style={{
+                                position: "absolute",
+                                left: `${pin.x * 100}%`,
+                                top: `${pin.y * 100}%`,
+                                transform: "translate(calc(28px * var(--kw-pin-scale, 1)), calc(-46px * var(--kw-pin-scale, 1))) scale(var(--kw-pin-scale, 1))",
+                                transformOrigin: "0% 0%",
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "flex-start",
+                                gap: 5,
+                                pointerEvents: "none",
+                            }}
+                        >
+                            {pinChips.map((chip, i) => {
+                                const warnBg = chip.warn;
+                                const inner = (
+                                    <>
+                                        <i className={`ph-fill ph-${chip.icon}`} style={{ fontSize: 11, color: chip.tone, flex: "none", marginTop: chip.warn ? 1 : 0 }} />
+                                        <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.5rem", letterSpacing: "0.06em", fontWeight: 700, textTransform: "uppercase", color: chip.tone, lineHeight: 1.3 }}>
+                                            {chip.label}
+                                        </span>
+                                    </>
+                                );
+                                const style: React.CSSProperties = {
+                                    display: "flex",
+                                    alignItems: chip.warn ? "flex-start" : "center",
+                                    gap: 4,
+                                    maxWidth: 150,
+                                    padding: "5px 8px",
+                                    borderRadius: 10,
+                                    background: warnBg ? "var(--clay-100)" : "rgba(250,246,236,0.92)",
+                                    backdropFilter: "blur(8px)",
+                                    WebkitBackdropFilter: "blur(8px)",
+                                    border: `1px solid ${warnBg ? "var(--clay-500)" : "var(--border-subtle)"}`,
+                                    boxShadow: "var(--shadow-sm)",
+                                    pointerEvents: "auto",
+                                };
+                                return chip.onClick ? (
+                                    <button
+                                        key={i}
+                                        className="kw-press"
+                                        onPointerDown={(e) => e.stopPropagation()}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            chip.onClick?.();
+                                        }}
+                                        aria-label={chip.label}
+                                        style={{ ...style, cursor: "pointer" }}
+                                    >
+                                        {inner}
+                                    </button>
+                                ) : (
+                                    <span key={i} style={style}>
+                                        {inner}
+                                    </span>
+                                );
+                            })}
+                        </span>
+                    )}
+
                     {/* move hint: the ranger can move, so nudge the player to drag
                         the pin. Hidden the moment they grab it (drag becomes set),
                         and while at a camp the camp bubble takes the space instead. */}
@@ -936,7 +1097,7 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                                 position: "absolute",
                                 left: `${pin.x * 100}%`,
                                 top: `${pin.y * 100}%`,
-                                transform: "translate(-50%, calc(-100% - 44px)) scale(var(--kw-pin-scale, 1))",
+                                transform: "translate(-50%, calc(-100% - 44px * var(--kw-pin-scale, 1))) scale(var(--kw-pin-scale, 1))",
                                 transformOrigin: "50% 100%",
                                 pointerEvents: "none",
                             }}
@@ -969,7 +1130,7 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                                 position: "absolute",
                                 left: `${pin.x * 100}%`,
                                 top: `${pin.y * 100}%`,
-                                transform: "translate(-50%, calc(-100% - 44px)) scale(var(--kw-pin-scale, 1))",
+                                transform: "translate(-50%, calc(-100% - 44px * var(--kw-pin-scale, 1))) scale(var(--kw-pin-scale, 1))",
                                 transformOrigin: "50% 100%",
                                 display: "flex",
                                 flexDirection: "column",
@@ -1062,7 +1223,7 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                                 top: `${drag.y * 100}%`,
                                 // counter-scale like the pin, so the chip keeps a
                                 // steady on-screen size however far you zoom in
-                                transform: "translate(-50%, calc(-100% - 46px)) scale(var(--kw-pin-scale, 1))",
+                                transform: "translate(-50%, calc(-100% - 46px * var(--kw-pin-scale, 1))) scale(var(--kw-pin-scale, 1))",
                                 transformOrigin: "50% 100%",
                                 pointerEvents: "none",
                                 display: "inline-flex",
