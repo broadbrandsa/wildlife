@@ -102,43 +102,53 @@ function NDot() {
     );
 }
 
-/** The team icon: one larger badge showing the ranger with their dog at their
- *  feet (the dog is a background-removed cutout). A green ring marks the ranger
- *  ready to move. Tapping opens the ranger profile. */
-function TeamIcon({ rangerSrc, dogSrc, alt, ready, onClick }: { rangerSrc: string; dogSrc?: string; alt: string; ready: boolean; onClick: () => void }) {
+/** The team icon: one round badge of the ranger with their dog at their feet
+ *  (the dog is a background-removed cutout), wrapped by the food-supply ring.
+ *  The border turns green when ready to move and red when food is low. Tapping
+ *  opens the ranger profile. */
+function TeamIcon({ rangerSrc, dogSrc, alt, ready, danger, foodDays, foodTotal, foodColor, onClick }: { rangerSrc: string; dogSrc?: string; alt: string; ready: boolean; danger: boolean; foodDays: number; foodTotal: number; foodColor: string; onClick: () => void }) {
+    const ICON = 104;
+    const PAD = 8;
+    const WRAP = ICON + PAD * 2;
+    const border = danger ? "var(--clay-500)" : ready ? "var(--success)" : "var(--sand-50)";
     return (
         <button
             onClick={onClick}
             aria-label={ready ? `${alt}, ready` : alt}
             className="kw-press"
-            style={{
-                position: "relative",
-                width: 104,
-                height: 104,
-                borderRadius: 24,
-                border: `2px solid ${ready ? "var(--success)" : "var(--sand-50)"}`,
-                background: "var(--sand-100)",
-                boxShadow: ready ? "var(--shadow-md), 0 0 0 3px var(--success-soft)" : "var(--shadow-md)",
-                cursor: "pointer",
-                padding: 0,
-                overflow: "hidden",
-                transition: "box-shadow 200ms var(--ease-out), border-color 200ms var(--ease-out)",
-            }}
+            style={{ position: "relative", width: WRAP, height: WRAP, border: "none", background: "transparent", padding: 0, cursor: "pointer" }}
         >
-            <Image src={rangerSrc} alt={alt} fill sizes="104px" style={{ objectFit: "cover", objectPosition: "center top" }} />
-            {dogSrc && (
-                // Background-removed dog cutout, standing at the ranger's feet.
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                    src={dogSrc}
-                    alt=""
-                    aria-hidden="true"
-                    onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                    }}
-                    style={{ position: "absolute", bottom: -2, left: "50%", transform: "translateX(-50%)", width: "82%", maxHeight: "60%", objectFit: "contain", filter: "drop-shadow(0 2px 3px rgba(17,32,26,0.4))" }}
-                />
-            )}
+            <FoodRing days={foodDays} total={foodTotal} color={foodColor} size={WRAP} />
+            <span
+                style={{
+                    position: "absolute",
+                    top: PAD,
+                    left: PAD,
+                    width: ICON,
+                    height: ICON,
+                    borderRadius: "50%",
+                    overflow: "hidden",
+                    border: `3px solid ${border}`,
+                    background: "var(--sand-100)",
+                    boxShadow: danger ? "var(--shadow-md), 0 0 0 3px var(--clay-100)" : "var(--shadow-md)",
+                    transition: "border-color 200ms var(--ease-out), box-shadow 200ms var(--ease-out)",
+                }}
+            >
+                <Image src={rangerSrc} alt={alt} fill sizes="104px" style={{ objectFit: "cover" }} />
+                {dogSrc && (
+                    // Background-removed dog cutout, standing at the ranger's feet.
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                        src={dogSrc}
+                        alt=""
+                        aria-hidden="true"
+                        onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                        }}
+                        style={{ position: "absolute", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "64%", maxHeight: "52%", objectFit: "contain", objectPosition: "bottom", filter: "drop-shadow(0 2px 3px rgba(17,32,26,0.4))" }}
+                    />
+                )}
+            </span>
         </button>
     );
 }
@@ -146,13 +156,13 @@ function TeamIcon({ rangerSrc, dogSrc, alt, ready, onClick }: { rangerSrc: strin
 
 /**
  * The rucksack fans its contents out in a right-facing half-moon. Five slots,
- * spaced across a 144-degree arc, positioned inside the 52px rucksack box.
+ * spaced across a 156-degree arc, positioned around the 104px rucksack box.
  */
 const RUCKSACK_ARC = [-78, -39, 0, 39, 78].map((deg) => {
-    const r = 96;
+    const r = 116;
     const rad = (deg * Math.PI) / 180;
     const size = 46;
-    return { left: 26 + r * Math.cos(rad) - size / 2, top: 26 + r * Math.sin(rad) - size / 2 };
+    return { left: 52 + r * Math.cos(rad) - size / 2, top: 52 + r * Math.sin(rad) - size / 2 };
 });
 
 /** One tool inside the opened rucksack: an icon token with a count badge, greyed
@@ -215,12 +225,14 @@ function ArcItem({ icon, count, label, left, top, delay, showCount = true, onCli
 }
 
 /** A compact status chip beside a team icon: a small icon and a tinted label.
- *  Pass onClick to make it a tappable prompt (used for the dog's track cue). */
-function MiniChip({ icon, label, tone, onClick }: { icon: string; label: string; tone: string; onClick?: () => void }) {
+ *  Pass onClick to make it a tappable prompt (used for the dog's track cue), and
+ *  maxWidth to let a longer label wrap instead of running off to one line. */
+function MiniChip({ icon, label, tone, maxWidth, onClick }: { icon: string; label: string; tone: string; maxWidth?: number; onClick?: () => void }) {
     const style: React.CSSProperties = {
-        display: "inline-flex",
-        alignItems: "center",
+        display: maxWidth ? "flex" : "inline-flex",
+        alignItems: maxWidth ? "flex-start" : "center",
         gap: 4,
+        maxWidth,
         padding: "5px 8px",
         borderRadius: 10,
         background: "rgba(250,246,236,0.9)",
@@ -231,8 +243,8 @@ function MiniChip({ icon, label, tone, onClick }: { icon: string; label: string;
     };
     const inner = (
         <>
-            <i className={`ph-fill ph-${icon}`} style={{ fontSize: 11, color: tone }} />
-            <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.5rem", letterSpacing: "0.06em", fontWeight: 700, textTransform: "uppercase", color: tone, lineHeight: 1, whiteSpace: "nowrap" }}>
+            <i className={`ph-fill ph-${icon}`} style={{ fontSize: 11, color: tone, flex: "none", marginTop: maxWidth ? 1 : 0 }} />
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.5rem", letterSpacing: "0.06em", fontWeight: 700, textTransform: "uppercase", color: tone, lineHeight: 1.3 }}>
                 {label}
             </span>
         </>
@@ -247,40 +259,39 @@ function MiniChip({ icon, label, tone, onClick }: { icon: string; label: string;
     return <div style={style}>{inner}</div>;
 }
 
-/** The ranger's food supply, shown to the right of the ranger icon as a segmented
- *  gauge. An optional caption sits underneath (the on-patrol countdown, camp note). */
-function FoodBars({ days, total, tone, caption }: { days: number; total: number; tone: string; caption?: string | null }) {
+/** The ranger's food supply as a segmented ring that wraps the team icon: one
+ *  arc per day, filled arcs in the food colour, empties in the sunken tone. */
+function FoodRing({ days, total, color, size }: { days: number; total: number; color: string; size: number }) {
+    const cx = size / 2;
+    const cy = size / 2;
+    const r = size / 2 - 4;
+    const gapDeg = 12;
+    const segDeg = 360 / total;
+    const polar = (deg: number) => {
+        const rad = ((deg - 90) * Math.PI) / 180;
+        return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+    };
     return (
-        <div
-            style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "stretch",
-                gap: 4,
-                width: 142,
-                padding: "5px 9px",
-                borderRadius: 10,
-                background: "rgba(250,246,236,0.9)",
-                backdropFilter: "blur(8px)",
-                WebkitBackdropFilter: "blur(8px)",
-                border: "1px solid var(--border-subtle)",
-                boxShadow: "var(--shadow-sm)",
-            }}
-        >
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <i className="ph-fill ph-fork-knife" style={{ fontSize: 12, color: tone, flex: "none" }} />
-                <span style={{ display: "flex", gap: 3, flex: 1 }}>
-                    {Array.from({ length: total }).map((_, i) => (
-                        <span key={i} style={{ flex: 1, height: 6, borderRadius: 999, background: i < days ? tone : "var(--surface-sunken)", transition: "background 300ms var(--ease-out)" }} />
-                    ))}
-                </span>
-            </div>
-            {caption && (
-                <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.46rem", letterSpacing: "0.05em", fontWeight: 700, textTransform: "uppercase", color: "var(--text-secondary)", lineHeight: 1.35 }}>
-                    {caption}
-                </span>
-            )}
-        </div>
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ position: "absolute", inset: 0, pointerEvents: "none" }} aria-hidden="true">
+            {Array.from({ length: total }).map((_, i) => {
+                const a1 = i * segDeg + gapDeg / 2;
+                const a2 = (i + 1) * segDeg - gapDeg / 2;
+                const p1 = polar(a1);
+                const p2 = polar(a2);
+                const large = a2 - a1 > 180 ? 1 : 0;
+                return (
+                    <path
+                        key={i}
+                        d={`M ${p1.x} ${p1.y} A ${r} ${r} 0 ${large} 1 ${p2.x} ${p2.y}`}
+                        fill="none"
+                        stroke={i < days ? color : "var(--surface-sunken)"}
+                        strokeWidth={5}
+                        strokeLinecap="round"
+                        style={{ transition: "stroke 300ms var(--ease-out)" }}
+                    />
+                );
+            })}
+        </svg>
     );
 }
 
@@ -520,8 +531,10 @@ function MapInner() {
     // The ranger is out on patrol whenever they have not yet reached the new pin.
     const rangerWalking = Boolean(pin && lastMoveAt != null && !rangerArrived && !roundOver);
     // Food gauge colour: green with room to spare, orange at two days, red on
-    // the last day (or while held at camp after a pickup).
+    // the last day. Low: one day or less left (and not just resupplied), which
+    // reddens the team icon and shows the resupply warning.
     const foodTone = foodLeft >= 3 ? "var(--success)" : foodLeft === 2 ? "var(--ochre-500)" : "var(--clay-500)";
+    const foodLow = Boolean(pin && !heldForResupply && foodLeft <= 1);
     // Dusk nudge: light is going and the ranger is rested and could still move.
     const showDuskPrompt = Boolean(pin && !pin.locked && !roundOver && isDusk(hour) && rangerReady);
 
@@ -934,6 +947,8 @@ function MapInner() {
                 onCampInfo={setCampInfo}
                 campLabel={campAtPin?.name ?? null}
                 campClaim={campRewardUnclaimed && campReward ? { label: POWERUP_BY_ID[campReward]?.name ?? "power-up", onClaim: claimCampReward } : null}
+                pinRangerSrc={ranger?.photo}
+                pinDogSrc={dog?.cutout}
             />
 
             {/* time-of-day scrim: tints the whole map toward dawn, dusk or night */}
@@ -962,48 +977,50 @@ function MapInner() {
                 />
             )}
 
-            {/* the team: one badge of you and your dog together, with the food
-                gauge and the dog's track cue stacked beside it, then the rucksack. */}
+            {/* the team: one round badge of you and your dog together, ringed by
+                the food supply, with the walk/track cues stacked beneath it and
+                the rucksack below that. */}
             {ranger && (
-                <div style={{ position: "absolute", left: "var(--gutter)", top: 12, display: "flex", flexDirection: "column", gap: 8 }}>
-                    <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
-                        <TeamIcon
-                            rangerSrc={ranger.photo}
-                            dogSrc={dog?.cutout}
-                            alt={`${rangerName} and ${dogName}`}
-                            ready={rangerReady}
-                            onClick={() => setSheet("ranger")}
-                        />
-                        {/* beside the badge: the food gauge (with the on-patrol / camp
-                            caption) and the dog's track cue */}
-                        {pin && (
-                            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                                <FoodBars
-                                    days={foodLeft}
-                                    total={FOOD_DAYS}
-                                    tone={foodTone}
-                                    caption={
-                                        rangerWalking
-                                            ? `On patrol · new location in ${rangerWalkLabelSec}`
-                                            : night
-                                              ? "Camped for the night"
-                                              : heldForResupply
-                                                ? "Resupplied · move out tomorrow"
-                                                : null
-                                    }
-                                />
-                                {night ? (
-                                    <MiniChip icon="campfire" label="Camped" tone="var(--ochre-600)" />
-                                ) : !rangerArrived ? (
-                                    <MiniChip icon="paw-print" label="En route" tone="var(--text-muted)" />
-                                ) : scentReadHere ? (
-                                    <MiniChip icon="check-circle" label="Scent read" tone="var(--success)" onClick={openDogSheet} />
-                                ) : (
-                                    <MiniChip icon="paw-print" label="Track scent" tone="var(--ochre-700)" onClick={openDogSheet} />
-                                )}
-                            </div>
-                        )}
-                    </div>
+                <div style={{ position: "absolute", left: "var(--gutter)", top: 12, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
+                    <TeamIcon
+                        rangerSrc={ranger.photo}
+                        dogSrc={dog?.cutout}
+                        alt={`${rangerName} and ${dogName}`}
+                        ready={rangerReady}
+                        danger={foodLow}
+                        foodDays={foodLeft}
+                        foodTotal={FOOD_DAYS}
+                        foodColor={foodTone}
+                        onClick={() => setSheet("ranger")}
+                    />
+                    {/* under the badge: the walk / camp caption, the dog's track
+                        cue, and the low-food warning */}
+                    {pin && (
+                        <>
+                            {rangerWalking ? (
+                                <MiniChip icon="boot" label={`${rangerWalkLabelSec} to walk to new location`} tone="var(--ochre-700)" maxWidth={150} />
+                            ) : night ? (
+                                <MiniChip icon="campfire" label="Camped for the night" tone="var(--ochre-600)" maxWidth={150} />
+                            ) : heldForResupply ? (
+                                <MiniChip icon="fork-knife" label="Resupplied · move out tomorrow" tone="var(--success)" maxWidth={150} />
+                            ) : null}
+                            {night ? (
+                                <MiniChip icon="campfire" label="Camped" tone="var(--ochre-600)" />
+                            ) : !rangerArrived ? (
+                                <MiniChip icon="paw-print" label="En route" tone="var(--text-muted)" />
+                            ) : scentReadHere ? (
+                                <MiniChip icon="check-circle" label="Scent read" tone="var(--success)" onClick={openDogSheet} />
+                            ) : (
+                                <MiniChip icon="paw-print" label="Track scent" tone="var(--ochre-700)" onClick={openDogSheet} />
+                            )}
+                            {foodLow && (
+                                <div style={{ display: "flex", alignItems: "flex-start", gap: 6, maxWidth: 150, padding: "0.4rem 0.55rem", borderRadius: 10, background: "var(--clay-100)", border: "1px solid var(--clay-500)", boxShadow: "var(--shadow-sm)" }}>
+                                    <i className="ph-fill ph-warning" style={{ fontSize: 12, color: "var(--clay-600)", marginTop: 1, flex: "none" }} />
+                                    <span style={{ fontSize: "0.68rem", lineHeight: 1.35, color: "var(--clay-600)", fontWeight: 600 }}>Almost out of food. Return to a rest camp to resupply.</span>
+                                </div>
+                            )}
+                        </>
+                    )}
                     {/* the rucksack: tap to open, and your power-ups and spots fan
                         out in a half-moon like tipping the bag open to look inside */}
                     <div style={{ position: "relative", marginTop: 12 }}>
@@ -1014,8 +1031,8 @@ function MapInner() {
                             className="kw-press"
                             style={{
                                 position: "relative",
-                                width: 52,
-                                height: 52,
+                                width: 104,
+                                height: 104,
                                 borderRadius: "50%",
                                 border: `2px solid ${rucksackOpen ? "var(--ochre-500)" : "var(--sand-50)"}`,
                                 background: "var(--accent-soft)",
@@ -1029,24 +1046,24 @@ function MapInner() {
                             }}
                         >
                             {rucksackOpen ? (
-                                <i className="ph-fill ph-x" style={{ fontSize: 22, color: "var(--ochre-700)" }} />
+                                <i className="ph-fill ph-x" style={{ fontSize: 40, color: "var(--ochre-700)" }} />
                             ) : (
-                                <Image src="/rucksack.png" alt="" width={40} height={40} style={{ width: 40, height: 40, objectFit: "contain" }} />
+                                <Image src="/rucksack.png" alt="" width={78} height={78} style={{ width: 78, height: 78, objectFit: "contain" }} />
                             )}
                             {!rucksackOpen && powerupTotal > 0 && (
                                 <span
                                     style={{
                                         position: "absolute",
-                                        top: -3,
-                                        right: -3,
-                                        minWidth: 17,
-                                        height: 17,
+                                        top: 2,
+                                        right: 2,
+                                        minWidth: 24,
+                                        height: 24,
                                         borderRadius: 999,
                                         background: "var(--ochre-500)",
                                         color: "var(--sand-900)",
                                         border: "2px solid var(--sand-50)",
                                         fontFamily: "var(--font-mono)",
-                                        fontSize: "0.58rem",
+                                        fontSize: "0.74rem",
                                         fontWeight: 700,
                                         display: "flex",
                                         alignItems: "center",

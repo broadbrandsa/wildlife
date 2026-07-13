@@ -140,9 +140,13 @@ interface KrugerMapProps {
     campLabel?: string | null;
     /** An unclaimed camp reward: shows a claim box above the pin. */
     campClaim?: { label: string; onClaim: () => void } | null;
+    /** The ranger and dog images: the pin becomes a photo of them together
+     *  (except when locked, camped at night, or standing on a rest camp). */
+    pinRangerSrc?: string;
+    pinDogSrc?: string;
 }
 
-export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, target = null, maxScale = 4, showThirds = false, walkRangeKm = null, freeDrag = false, trail = [], markers = [], onSpotMarker, focusSignal = 0, camped = false, atCamp = false, onCampInfo, campLabel = null, campClaim = null }: KrugerMapProps) {
+export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, target = null, maxScale = 4, showThirds = false, walkRangeKm = null, freeDrag = false, trail = [], markers = [], onSpotMarker, focusSignal = 0, camped = false, atCamp = false, onCampInfo, campLabel = null, campClaim = null, pinRangerSrc, pinDogSrc }: KrugerMapProps) {
     const transformRef = useRef<ReactZoomPanPinchRef | null>(null);
 
     // The ranger's Move action zooms the map in on the pin so the walk radius
@@ -862,27 +866,64 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                                 padding: 8, // a 46px finger target around the 30px pin
                             }}
                         >
-                            {/* teardrop: the sharp corner (bottom-left) swings to the BOTTOM
-                                with rotate(-45deg), so the tip points at the ground it marks */}
-                            <span
-                                style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    width: 30,
-                                    height: 30,
-                                    borderRadius: "50% 50% 50% 2px",
-                                    background: pin.locked ? "var(--green-700)" : camped ? "var(--ochre-600)" : atCamp ? "var(--green-700)" : "var(--clay-500)",
-                                    transform: "rotate(-45deg)",
-                                    boxShadow: "var(--shadow-md)",
-                                    border: "2px solid #fff",
-                                }}
-                            >
-                                <i
-                                    className={`ph-fill ph-${pin.locked ? "lock-simple" : camped ? "campfire" : atCamp ? "house-line" : "paw-print"}`}
-                                    style={{ transform: "rotate(45deg)", color: "#fff", fontSize: 14 }}
-                                />
-                            </span>
+                            {!pin.locked && !camped && !atCamp && pinRangerSrc ? (
+                                // A photo marker of the ranger and dog together, with a
+                                // small tail so it still points at the ground.
+                                <span style={{ position: "relative", display: "block", width: 48, height: 55 }}>
+                                    <span
+                                        style={{
+                                            position: "absolute",
+                                            top: 0,
+                                            left: 0,
+                                            width: 48,
+                                            height: 48,
+                                            borderRadius: "50%",
+                                            overflow: "hidden",
+                                            border: "2px solid #fff",
+                                            boxShadow: "var(--shadow-md)",
+                                            background: "var(--sand-100)",
+                                        }}
+                                    >
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img src={pinRangerSrc} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                                        {pinDogSrc && (
+                                            // eslint-disable-next-line @next/next/no-img-element
+                                            <img
+                                                src={pinDogSrc}
+                                                alt=""
+                                                onError={(e) => {
+                                                    e.currentTarget.style.display = "none";
+                                                }}
+                                                style={{ position: "absolute", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "66%", maxHeight: "52%", objectFit: "contain", objectPosition: "bottom" }}
+                                            />
+                                        )}
+                                    </span>
+                                    {/* pointer tail */}
+                                    <span style={{ position: "absolute", bottom: 0, left: "50%", transform: "translateX(-50%)", width: 0, height: 0, borderLeft: "7px solid transparent", borderRight: "7px solid transparent", borderTop: "9px solid #fff", filter: "drop-shadow(0 2px 1px rgba(17,32,26,0.3))" }} />
+                                </span>
+                            ) : (
+                                // teardrop: the sharp corner swings to the BOTTOM with
+                                // rotate(-45deg), so the tip points at the ground it marks
+                                <span
+                                    style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        width: 30,
+                                        height: 30,
+                                        borderRadius: "50% 50% 50% 2px",
+                                        background: pin.locked ? "var(--green-700)" : camped ? "var(--ochre-600)" : atCamp ? "var(--green-700)" : "var(--clay-500)",
+                                        transform: "rotate(-45deg)",
+                                        boxShadow: "var(--shadow-md)",
+                                        border: "2px solid #fff",
+                                    }}
+                                >
+                                    <i
+                                        className={`ph-fill ph-${pin.locked ? "lock-simple" : camped ? "campfire" : atCamp ? "house-line" : "paw-print"}`}
+                                        style={{ transform: "rotate(45deg)", color: "#fff", fontSize: 14 }}
+                                    />
+                                </span>
+                            )}
                         </span>
                     )}
 
