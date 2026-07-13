@@ -53,16 +53,16 @@ export const PHASE_META: Record<DayPhase, { icon: string; label: string }> = {
  */
 export const PHASE_SKY: Record<DayPhase, { gradient: string; scrim: string | null }> = {
     dawn: {
-        gradient: "radial-gradient(120% 110% at 50% 0%, #5E4C39 0%, #241A12 92%)",
-        scrim: "rgba(255, 196, 128, 0.14)",
+        gradient: "radial-gradient(120% 110% at 50% 0%, #C56A2A 0%, #241A12 92%)",
+        scrim: "rgba(255, 150, 62, 0.20)",
     },
     day: {
         gradient: "radial-gradient(120% 110% at 50% 0%, #2C4A39 0%, #16110A 92%)",
         scrim: null,
     },
     dusk: {
-        gradient: "radial-gradient(120% 110% at 50% 0%, #6E4636 0%, #221319 92%)",
-        scrim: "rgba(240, 138, 78, 0.16)",
+        gradient: "radial-gradient(120% 110% at 50% 0%, #CF5A24 0%, #221319 92%)",
+        scrim: "rgba(247, 120, 40, 0.22)",
     },
     night: {
         gradient: "radial-gradient(120% 110% at 50% 0%, #060708 0%, #000000 60%)",

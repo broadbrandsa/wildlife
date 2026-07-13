@@ -133,13 +133,14 @@ const RUCKSACK_ARC = [-78, -39, 0, 39, 78].map((deg) => {
 });
 
 /** One tool inside the opened rucksack: an icon token with a count badge, greyed
- *  out when empty. Positioned absolutely along the fan. */
-function ArcItem({ icon, count, label, left, top, delay, onClick }: { icon: string; count: number; label: string; left: number; top: number; delay: number; onClick: () => void }) {
-    const has = count > 0;
+ *  out when empty. Positioned absolutely along the fan. Set showCount false for
+ *  items with no tally (the spotting log), which then stay full colour. */
+function ArcItem({ icon, count, label, left, top, delay, showCount = true, onClick }: { icon: string; count: number; label: string; left: number; top: number; delay: number; showCount?: boolean; onClick: () => void }) {
+    const has = showCount ? count > 0 : true;
     return (
         <button
             onClick={onClick}
-            aria-label={`${label}, ${count}`}
+            aria-label={showCount ? `${label}, ${count}` : label}
             className="kw-press kw-rise"
             style={{
                 position: "absolute",
@@ -162,7 +163,7 @@ function ArcItem({ icon, count, label, left, top, delay, onClick }: { icon: stri
             }}
         >
             <i className={`ph-fill ph-${icon}`} style={{ fontSize: 22, color: "var(--ochre-700)" }} />
-            {has && (
+            {showCount && count > 0 && (
                 <span
                     style={{
                         position: "absolute",
@@ -421,12 +422,12 @@ function MapInner() {
     // How many distinct species are in the spotting log (the rucksack's Spots badge).
     const spottedCount = useMemo(() => new Set(sightings.map((s) => s.speciesId)).size, [sightings]);
     // The rucksack's contents, fanned out in order: the four power-ups then your spots.
-    const rucksackItems = [
+    const rucksackItems: { id: string; icon: string; label: string; count: number; showCount?: boolean; onClick: () => void }[] = [
         { id: "ride", icon: "truck", label: "Bakkie ride", count: truckRidesLeft, onClick: () => setSheet("bakkie") },
         { id: "scan", icon: "binoculars", label: "Binocular scan", count: powerups.scan ?? 0, onClick: () => setPowerupSheet("scan") },
         { id: "ration", icon: "fork-knife", label: "Field rations", count: powerups.ration ?? 0, onClick: () => setPowerupSheet("ration") },
         { id: "snack", icon: "cookie", label: "Trail rations", count: powerups.snack ?? 0, onClick: () => setPowerupSheet("snack") },
-        { id: "spots", icon: "paw-print", label: "Spots", count: spottedCount, onClick: () => setSheet("spots") },
+        { id: "spots", icon: "paw-print", label: "Spots", count: spottedCount, showCount: false, onClick: () => setSheet("spots") },
     ];
     // The rucksack's badge: every power-up you are carrying, added together
     // (the spots are a log, not a power-up, so they are left out of the count).
@@ -1030,6 +1031,7 @@ function MapInner() {
                                     left={RUCKSACK_ARC[i].left}
                                     top={RUCKSACK_ARC[i].top}
                                     delay={i * 40}
+                                    showCount={it.showCount}
                                     onClick={() => {
                                         setRucksackOpen(false);
                                         it.onClick();

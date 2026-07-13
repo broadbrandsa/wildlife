@@ -955,18 +955,23 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                                 <span
                                     style={{
                                         display: "inline-flex",
+                                        flexDirection: "column",
                                         alignItems: "center",
-                                        gap: 5,
-                                        padding: "0.2rem 0.55rem",
-                                        borderRadius: "var(--radius-pill)",
+                                        gap: 1,
+                                        padding: "0.28rem 0.6rem",
+                                        borderRadius: "var(--radius-lg)",
                                         background: "var(--sand-50)",
                                         border: "1px solid var(--border-subtle)",
                                         boxShadow: "var(--shadow-sm)",
                                         whiteSpace: "nowrap",
+                                        textAlign: "center",
                                     }}
                                 >
-                                    <i className="ph-fill ph-house-line" style={{ fontSize: 12, color: "var(--green-700)" }} />
-                                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--text-primary)" }}>{campLabel}</span>
+                                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.5rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-muted)" }}>Ranger is at</span>
+                                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontFamily: "var(--font-mono)", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--text-primary)" }}>
+                                        <i className="ph-fill ph-house-line" style={{ fontSize: 11, color: "var(--green-700)" }} />
+                                        {campLabel} rest camp
+                                    </span>
                                 </span>
                             )}
                         </span>
