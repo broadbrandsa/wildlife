@@ -932,7 +932,6 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                         and while at a camp the camp bubble takes the space instead. */}
                     {pin && !drag && !campLabel && draggable && !freeDrag && (
                         <span
-                            className="kw-rise"
                             style={{
                                 position: "absolute",
                                 left: `${pin.x * 100}%`,
@@ -943,6 +942,7 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                             }}
                         >
                             <span
+                                className="kw-rise"
                                 style={{
                                     display: "inline-flex",
                                     alignItems: "center",

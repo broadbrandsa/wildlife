@@ -1031,29 +1031,27 @@ function MapInner() {
                                 position: "relative",
                                 width: 104,
                                 height: 104,
-                                borderRadius: "50%",
-                                border: `2px solid ${rucksackOpen ? "var(--ochre-500)" : "var(--sand-50)"}`,
-                                background: "var(--accent-soft)",
-                                boxShadow: rucksackOpen ? "var(--shadow-md), 0 0 0 3px var(--ochre-100)" : "var(--shadow-md)",
+                                border: "none",
+                                background: "transparent",
+                                padding: 0,
                                 cursor: "pointer",
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
                                 zIndex: 7,
-                                transition: "box-shadow 200ms var(--ease-out), border-color 200ms var(--ease-out)",
                             }}
                         >
                             {rucksackOpen ? (
-                                <i className="ph-fill ph-x" style={{ fontSize: 40, color: "var(--ochre-700)" }} />
+                                <i className="ph-fill ph-x" style={{ fontSize: 44, color: "var(--ochre-700)", filter: "drop-shadow(0 2px 3px rgba(17,32,26,0.45))" }} />
                             ) : (
-                                <Image src="/rucksack.png" alt="" width={78} height={78} style={{ width: 78, height: 78, objectFit: "contain" }} />
+                                <Image src="/rucksack.png" alt="" width={100} height={100} style={{ width: 100, height: 100, objectFit: "contain", filter: "drop-shadow(0 3px 5px rgba(17,32,26,0.4))" }} />
                             )}
                             {!rucksackOpen && powerupTotal > 0 && (
                                 <span
                                     style={{
                                         position: "absolute",
-                                        top: 2,
-                                        right: 2,
+                                        top: 6,
+                                        right: 6,
                                         minWidth: 24,
                                         height: 24,
                                         borderRadius: 999,
@@ -1097,9 +1095,9 @@ function MapInner() {
                         onClick={() => setSheet("spots")}
                         aria-label="Open your spotting log"
                         className="kw-press"
-                        style={{ position: "relative", width: 104, height: 104, borderRadius: "50%", border: "2px solid var(--sand-50)", background: "var(--accent-soft)", boxShadow: "var(--shadow-md)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                        style={{ position: "relative", width: 104, height: 104, border: "none", background: "transparent", padding: 0, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
                     >
-                        <Image src="/species-book.png" alt="" width={78} height={78} style={{ width: 78, height: 78, objectFit: "contain" }} />
+                        <Image src="/species-book.png" alt="" width={100} height={100} style={{ width: 100, height: 100, objectFit: "contain", filter: "drop-shadow(0 3px 5px rgba(17,32,26,0.4))" }} />
                     </button>
 
                     {/* field radio: HQ report */}
@@ -1107,9 +1105,9 @@ function MapInner() {
                         onClick={openRadioSheet}
                         aria-label="Field radio"
                         className="kw-press"
-                        style={{ position: "relative", width: 104, height: 104, borderRadius: "50%", border: "2px solid var(--sand-50)", background: "var(--accent-soft)", boxShadow: "var(--shadow-md)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                        style={{ position: "relative", width: 104, height: 104, border: "none", background: "transparent", padding: 0, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
                     >
-                        <Image src="/radio.png" alt="" width={78} height={78} style={{ width: 78, height: 78, objectFit: "contain" }} />
+                        <Image src="/radio.png" alt="" width={100} height={100} style={{ width: 100, height: 100, objectFit: "contain", filter: "drop-shadow(0 3px 5px rgba(17,32,26,0.4))" }} />
                         {hasRadio && !radioSeen && <NDot />}
                     </button>
                 </div>
