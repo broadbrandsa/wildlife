@@ -68,6 +68,17 @@ const POWERUPS: { id: string; name: string; icon: string; blurb: string }[] = [
 ];
 const POWERUP_BY_ID = Object.fromEntries(POWERUPS.map((p) => [p.id, p]));
 
+/**
+ * Custom card-back artwork. Drop the designer's PNGs at these paths in
+ * /public/cards (see the README there for the exact spec). Until a file is
+ * present each card falls back to the woven back automatically.
+ */
+const CARD_BACK = {
+    species: "/cards/card-back-species.png",
+    clue: "/cards/card-back-clue.png",
+    guide: "/cards/card-back-guide.png",
+};
+
 // A card read from the log carries found: false when the species is still out
 // there; the card then shows its photo in black and white with a Not found pill.
 type SpotItem = { species: Species; isNew: boolean; count: number; bonus?: boolean; found?: boolean };
@@ -2136,6 +2147,7 @@ function MapInner() {
                     backIcon="paw-print"
                     backEyebrow={spot.bonus ? "Bonus spot" : "Spotting log"}
                     backLine={spot.bonus ? "And something else moved out there." : "You have spotted something in the bush."}
+                    backImage={CARD_BACK.species}
                 >
                     <div
                         style={{
@@ -2301,6 +2313,7 @@ function MapInner() {
                     backIcon="notebook"
                     backEyebrow="Field clue"
                     backLine="New intel has come in from the field."
+                    backImage={CARD_BACK.clue}
                 >
                     <div
                         style={{
@@ -2333,6 +2346,7 @@ function MapInner() {
                     backIcon="book-open-text"
                     backEyebrow="Field guide"
                     backLine="New ground, unlocked."
+                    backImage={CARD_BACK.guide}
                 >
                     <GuideCardFront
                         zone={guideCard}
