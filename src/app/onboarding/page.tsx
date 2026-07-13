@@ -139,7 +139,8 @@ export default function OnboardingPage() {
                         <div style={{ position: "relative" }}>
                             <div style={{ position: "relative", width: "100%", aspectRatio: "4 / 5", background: "var(--sand-100)", borderRadius: "var(--radius-xl)", overflow: "hidden", boxShadow: "var(--shadow-sm)" }}>
                                 {/* the chosen ranger stands in the background; the dog
-                                    (a background-removed cutout) stands at their feet */}
+                                    (a background-removed cutout) sits large and centred,
+                                    since the dog is what you are choosing here */}
                                 <Image src={selectedRanger.photo} alt={`${rangerName || "Your ranger"} with ${selectedDog.breed}`} fill sizes="430px" style={{ objectFit: "cover", objectPosition: "center top" }} />
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
@@ -150,7 +151,7 @@ export default function OnboardingPage() {
                                         if (!e.currentTarget.src.endsWith(selectedDog.photo)) e.currentTarget.src = selectedDog.photo;
                                     }}
                                     className="kw-rise"
-                                    style={{ position: "absolute", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "72%", maxHeight: "62%", objectFit: "contain", objectPosition: "bottom", filter: "drop-shadow(0 4px 6px rgba(17,32,26,0.4))" }}
+                                    style={{ position: "absolute", bottom: "3%", left: "4%", width: "92%", maxHeight: "78%", objectFit: "contain", objectPosition: "center bottom", filter: "drop-shadow(0 4px 6px rgba(17,32,26,0.4))" }}
                                 />
                             </div>
                             <CarouselArrow dir="left" onClick={() => stepThrough(setDogIndex, DOGS.length, -1)} />

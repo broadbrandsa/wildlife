@@ -158,7 +158,7 @@ function TeamIcon({ rangerSrc, dogSrc, alt, ready, danger, foodDays, foodTotal, 
  * The rucksack fans its contents out in a right-facing half-moon. Five slots,
  * spaced across a 156-degree arc, positioned around the 104px rucksack box.
  */
-const RUCKSACK_ARC = [-78, -39, 0, 39, 78].map((deg) => {
+const RUCKSACK_ARC = [-75, -25, 25, 75].map((deg) => {
     const r = 116;
     const rad = (deg * Math.PI) / 180;
     const size = 46;
@@ -498,15 +498,13 @@ function MapInner() {
     const campReward = campAtPin ? CAMP_REWARD[campAtPin.id] : null;
     const campRewardUnclaimed = Boolean(campAtPin && campReward && !campsVisited.includes(campAtPin.id));
 
-    // How many distinct species are in the spotting log (the rucksack's Spots badge).
-    const spottedCount = useMemo(() => new Set(sightings.map((s) => s.speciesId)).size, [sightings]);
-    // The rucksack's contents, fanned out in order: the four power-ups then your spots.
+    // The rucksack's contents, fanned out: the four ranger power-ups. (The
+    // spotting log now opens from its own species-book icon on the map.)
     const rucksackItems: { id: string; icon: string; label: string; count: number; showCount?: boolean; onClick: () => void }[] = [
         { id: "ride", icon: "truck", label: "Bakkie ride", count: truckRidesLeft, onClick: () => setSheet("bakkie") },
         { id: "scan", icon: "binoculars", label: "Binocular scan", count: powerups.scan ?? 0, onClick: () => setPowerupSheet("scan") },
         { id: "ration", icon: "fork-knife", label: "Field rations", count: powerups.ration ?? 0, onClick: () => setPowerupSheet("ration") },
         { id: "snack", icon: "cookie", label: "Trail rations", count: powerups.snack ?? 0, onClick: () => setPowerupSheet("snack") },
-        { id: "spots", icon: "paw-print", label: "Spots", count: spottedCount, showCount: false, onClick: () => setSheet("spots") },
     ];
     // The rucksack's badge: every power-up you are carrying, added together
     // (the spots are a log, not a power-up, so they are left out of the count).
@@ -1093,6 +1091,27 @@ function MapInner() {
                                 />
                             ))}
                     </div>
+
+                    {/* species book: opens the spotting log */}
+                    <button
+                        onClick={() => setSheet("spots")}
+                        aria-label="Open your spotting log"
+                        className="kw-press"
+                        style={{ position: "relative", width: 104, height: 104, borderRadius: "50%", border: "2px solid var(--sand-50)", background: "var(--accent-soft)", boxShadow: "var(--shadow-md)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                    >
+                        <Image src="/species-book.png" alt="" width={78} height={78} style={{ width: 78, height: 78, objectFit: "contain" }} />
+                    </button>
+
+                    {/* field radio: HQ report */}
+                    <button
+                        onClick={openRadioSheet}
+                        aria-label="Field radio"
+                        className="kw-press"
+                        style={{ position: "relative", width: 104, height: 104, borderRadius: "50%", border: "2px solid var(--sand-50)", background: "var(--accent-soft)", boxShadow: "var(--shadow-md)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                    >
+                        <Image src="/radio.png" alt="" width={78} height={78} style={{ width: 78, height: 78, objectFit: "contain" }} />
+                        {hasRadio && !radioSeen && <NDot />}
+                    </button>
                 </div>
             )}
 
@@ -1152,7 +1171,6 @@ function MapInner() {
             <div style={{ position: "absolute", right: "var(--gutter)", top: 64, display: "flex", flexDirection: "column", gap: 10 }}>
                 <DockTab icon="notebook" label="Clue" dot={newClueToday} sub={clueDockSub} onClick={openClueSheet} />
                 <DockTab icon="book-open-text" label="Guides" onClick={() => setSheet("guides")} />
-                <DockTab icon="radio" label="Radio" dot={hasRadio && !radioSeen} onClick={openRadioSheet} />
             </div>
 
             {/* round day counter, plain text on the background behind the map,
