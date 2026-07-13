@@ -2148,25 +2148,10 @@ function MapInner() {
                     backEyebrow={spot.bonus ? "Bonus spot" : "Spotting log"}
                     backLine={spot.bonus ? "And something else moved out there." : "You have spotted something in the bush."}
                     backImage={CARD_BACK.species}
+                    // Gold frame marks a rare sighting or a Big, Ugly or Small Five card.
+                    frameAccent={spot.found !== false && (spot.species.rarity === "rare" || FIVE_OF[spot.species.id]) ? "var(--ochre-400)" : undefined}
                 >
-                    <div
-                        style={{
-                            maxHeight: "88dvh",
-                            overflowX: "hidden",
-                            overflowY: "auto",
-                            background: "var(--surface-page)",
-                            borderRadius: "var(--radius-2xl)",
-                            // Gold marks a rare sighting or a Big, Ugly or Small Five card.
-                            // Unfound cards stay neutral.
-                            boxShadow: spot.found !== false && (spot.species.rarity === "rare" || FIVE_OF[spot.species.id])
-                                ? "var(--shadow-xl), 0 0 0 3px var(--ochre-100)"
-                                : "var(--shadow-xl)",
-                            border:
-                                spot.found !== false && (spot.species.rarity === "rare" || FIVE_OF[spot.species.id])
-                                    ? "2px solid var(--ochre-400)"
-                                    : "1px solid var(--border-subtle)",
-                        }}
-                    >
+                    <div>
                         {(() => {
                             const found = spot.found !== false;
                             const five = FIVE_OF[spot.species.id];
@@ -2315,18 +2300,7 @@ function MapInner() {
                     backLine="New intel has come in from the field."
                     backImage={CARD_BACK.clue}
                 >
-                    <div
-                        style={{
-                            maxHeight: "88dvh",
-                            overflowX: "hidden",
-                            overflowY: "auto",
-                            background: "var(--surface-page)",
-                            borderRadius: "var(--radius-2xl)",
-                            border: "1px solid var(--border-subtle)",
-                            boxShadow: "var(--shadow-xl)",
-                            padding: "var(--space-4)",
-                        }}
-                    >
+                    <div style={{ padding: "var(--space-4)" }}>
                         <ClueCard clue={clueCard} action={clueAction(clueCard)} />
                         <div style={{ marginTop: "var(--space-3)", display: "flex", justifyContent: "flex-end" }}>
                             <Button size="sm" variant="secondary" onClick={() => setClueCard(null)} iconRight={<i className="ph ph-map-pin" />}>

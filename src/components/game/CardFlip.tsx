@@ -10,13 +10,15 @@ export function prefersReducedMotion(): boolean {
 }
 
 /**
- * A trading-card flip: children render the front, the back is the branded
- * plate. The front's natural height sizes the card; the back covers it.
+ * A trading-card flip. The card is a fixed 5:7 portrait; children render the
+ * front (scrolling inside if taller than the frame) and the back is the branded
+ * plate at the same size.
  *
- * Pass `backImage` (a PNG in /public) to use custom back artwork: it is scaled
- * to cover the card and clipped to the rounded corners, so deliver it full
- * bleed with square corners. If the image fails to load the woven fallback
- * (gradient, emblem, "tap to reveal") shows instead.
+ * Pass `backImage` (a PNG in /public) to use custom back artwork: at 5:7 it
+ * fills the card exactly and is clipped to the rounded corners, so deliver it
+ * full bleed at 5:7 with square corners. If the image fails to load the woven
+ * fallback (gradient, emblem, "tap to reveal") shows instead. `frameAccent`
+ * tints the front frame (used for the gold rare / Five treatment).
  */
 export function CardFlip({
     flipped,
@@ -25,6 +27,7 @@ export function CardFlip({
     backEyebrow,
     backLine,
     backImage,
+    frameAccent,
     children,
 }: {
     flipped: boolean;
@@ -33,6 +36,7 @@ export function CardFlip({
     backEyebrow: string;
     backLine: string;
     backImage?: string;
+    frameAccent?: string;
     children: React.ReactNode;
 }) {
     const [imgFailed, setImgFailed] = useState(false);
@@ -50,7 +54,24 @@ export function CardFlip({
                     transform: flipped ? "none" : "rotateY(180deg)",
                 }}
             >
-                <div style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}>{children}</div>
+                {/* Front face: a fixed 5:7 portrait card. The front content sizes
+                    the card and scrolls inside when taller than the frame. */}
+                <div
+                    style={{
+                        position: "relative",
+                        width: "100%",
+                        aspectRatio: "5 / 7",
+                        borderRadius: "var(--radius-2xl)",
+                        overflow: "hidden",
+                        background: "var(--surface-page)",
+                        border: frameAccent ? `2px solid ${frameAccent}` : "1px solid var(--border-subtle)",
+                        boxShadow: frameAccent ? "0 0 0 3px var(--ochre-100)" : undefined,
+                        backfaceVisibility: "hidden",
+                        WebkitBackfaceVisibility: "hidden",
+                    }}
+                >
+                    <div style={{ position: "absolute", inset: 0, overflowY: "auto", WebkitOverflowScrolling: "touch" }}>{children}</div>
+                </div>
                 <div
                     role="button"
                     aria-label="Reveal"
@@ -123,6 +144,7 @@ export function DealtCard({
     backEyebrow,
     backLine,
     backImage,
+    frameAccent,
     zIndex = 70,
     maxWidth = 400,
     children,
@@ -134,6 +156,7 @@ export function DealtCard({
     backEyebrow: string;
     backLine: string;
     backImage?: string;
+    frameAccent?: string;
     zIndex?: number;
     maxWidth?: number;
     children: React.ReactNode;
@@ -154,7 +177,7 @@ export function DealtCard({
                 onClick={() => (flipped ? onDismiss() : onFlip())}
             >
                 <div className="kw-card-pop" onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth }}>
-                    <CardFlip flipped={flipped} onFlip={onFlip} backIcon={backIcon} backEyebrow={backEyebrow} backLine={backLine} backImage={backImage}>
+                    <CardFlip flipped={flipped} onFlip={onFlip} backIcon={backIcon} backEyebrow={backEyebrow} backLine={backLine} backImage={backImage} frameAccent={frameAccent}>
                         {children}
                     </CardFlip>
                 </div>

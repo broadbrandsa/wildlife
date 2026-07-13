@@ -12,17 +12,7 @@ import type { Zone } from "@/data";
  */
 export function GuideCardFront({ zone, note, onRead }: { zone: Zone; note: string; onRead: () => void }) {
     return (
-        <div
-            style={{
-                maxHeight: "88dvh",
-                overflowX: "hidden",
-                overflowY: "auto",
-                background: "var(--surface-page)",
-                borderRadius: "var(--radius-2xl)",
-                border: "1px solid var(--border-subtle)",
-                boxShadow: "var(--shadow-xl)",
-            }}
-        >
+        <div>
             <div style={{ position: "relative", aspectRatio: "16 / 10", background: "var(--sand-100)" }}>
                 <Image src={zone.photo} alt={`${zone.name}: ${zone.subtitle}`} fill sizes="400px" style={{ objectFit: "cover" }} />
                 <span style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(24,45,35,0) 55%, rgba(24,45,35,0.45) 100%)" }} />

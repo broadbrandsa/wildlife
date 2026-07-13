@@ -16,37 +16,21 @@ image under all three names.)
 
 ## Designer spec
 
-**Deliver: full-bleed PNG, square corners, sRGB.**
+The cards are a **fixed 5:7 portrait**. The back fills the card exactly at that
+ratio, so there is **no cropping** — design straight to the frame.
 
-- **Canvas: 1200 × 1200 px, square.** This is 3x the largest on-screen size, so
+- **Canvas: 1200 × 1680 px** (5:7 portrait). This is 3x the on-screen size, so
   it stays crisp on high-density phones.
 - **Do NOT round the corners.** The game clips the card to a **40 px rounded
-  corner** at display size (about **10% of the card width**, ~120 px at this
-  1200 px master). Design to the square edge; the rounding is applied for you.
-- **No drop shadow / no outer glow.** The game adds the card shadow.
-- Solid artwork (no transparency needed — it is always clipped to the card).
+  corner** at display size — about **120 px at this 1200 px master**. Design to
+  the square edge; the rounding is applied for you. Keep important detail a few
+  px in from the edge so nothing lands right on the rounded corner.
+- **No drop shadow / no outer glow** — the game adds the card shadow.
+- **sRGB, PNG.** Solid artwork (no transparency needed — it is clipped to the
+  card).
 
-### Why square, and the safe area
+### On-screen reference
 
-On screen a card is **up to 400 px wide** (about 335 px on a typical phone) and
-its **height varies by card type** (the front content sets it: the species card
-is tall and portrait, the clue card is short and wide). The art is scaled to
-**cover** the card and centre-cropped, so a square master crops gracefully to
-any height.
-
-- Keep the **logo, emblem and any text inside a centred safe zone of ~840 px
-  diameter** (the middle ~70%). Anything outside that may be cropped on the
-  shorter cards.
-- Let the **background pattern/texture run to all four edges** so the crop never
-  shows a seam.
-
-### On-screen reference sizes (for mockups)
-
-- Card width: **335 px** (phones) up to **400 px** (max).
-- Corner radius: **40 px** at that width.
-- Heights differ per card and are content-driven, roughly: species ~540 px,
-  guide ~430 px, clue ~260 px at 335 px wide. Treat these as guidance only — the
-  square master + cover handles all of them.
-
-If you would rather supply three exact rectangles (one per card, no cropping),
-tell the developer and the cards can be pinned to fixed sizes instead.
+- Card size: **5:7 portrait**, up to **400 × 560 px** (about **335 × 469 px** on
+  a typical phone). The master (1200 × 1680) scales down to this.
+- Corner radius: **40 px** at 400 px wide (10% of width).
