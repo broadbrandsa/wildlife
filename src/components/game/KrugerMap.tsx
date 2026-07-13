@@ -146,10 +146,6 @@ interface KrugerMapProps {
     pinDogSrc?: string;
     /** On mount, zoom in on the pin until the scale bar reads about this many km. */
     startKm?: number | null;
-    /** Food supply, drawn as a segmented ring around the pin marker. */
-    foodDays?: number;
-    foodTotal?: number;
-    foodColor?: string;
     /** Low on food: the pin marker gets a warning border. */
     foodDanger?: boolean;
     /** Status captions shown to the right of the pin (walk time, track cue, warnings). */
@@ -158,7 +154,7 @@ interface KrugerMapProps {
     onPinTap?: () => void;
 }
 
-export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, target = null, maxScale = 4, showThirds = false, walkRangeKm = null, freeDrag = false, trail = [], markers = [], onSpotMarker, focusSignal = 0, camped = false, atCamp = false, onCampInfo, campLabel = null, campClaim = null, pinRangerSrc, pinDogSrc, startKm = null, foodDays = 0, foodTotal = 0, foodColor = "var(--success)", foodDanger = false, pinChips = [], onPinTap }: KrugerMapProps) {
+export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, target = null, maxScale = 4, showThirds = false, walkRangeKm = null, freeDrag = false, trail = [], markers = [], onSpotMarker, focusSignal = 0, camped = false, atCamp = false, onCampInfo, campLabel = null, campClaim = null, pinRangerSrc, pinDogSrc, startKm = null, foodDanger = false, pinChips = [], onPinTap }: KrugerMapProps) {
     const transformRef = useRef<ReactZoomPanPinchRef | null>(null);
 
     // The ranger's Move action zooms the map in on the pin so the walk radius
@@ -940,44 +936,11 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                             }}
                         >
                             {!pin.locked && !camped && !atCamp && pinRangerSrc ? (
-                                // A photo marker of the ranger and dog together, ringed
-                                // by the food supply, with a small tail so it still
-                                // points at the ground.
+                                // A photo marker of the ranger and dog together, with a
+                                // small tail so it still points at the ground. The food
+                                // supply now reads as a bar at the top of the screen; a
+                                // low supply still tints this marker's border.
                                 <span style={{ position: "relative", display: "block", width: 48, height: 55 }}>
-                                    {foodTotal > 0 && (
-                                        <svg
-                                            width={62}
-                                            height={62}
-                                            viewBox="0 0 62 62"
-                                            style={{ position: "absolute", top: -7, left: -7, pointerEvents: "none" }}
-                                            aria-hidden="true"
-                                        >
-                                            {Array.from({ length: foodTotal }).map((_, i) => {
-                                                const segDeg = 360 / foodTotal;
-                                                const gap = 12;
-                                                const a1 = i * segDeg + gap / 2;
-                                                const a2 = (i + 1) * segDeg - gap / 2;
-                                                const r = 28;
-                                                const polar = (deg: number) => {
-                                                    const rad = ((deg - 90) * Math.PI) / 180;
-                                                    return { x: 31 + r * Math.cos(rad), y: 31 + r * Math.sin(rad) };
-                                                };
-                                                const p1 = polar(a1);
-                                                const p2 = polar(a2);
-                                                const large = a2 - a1 > 180 ? 1 : 0;
-                                                return (
-                                                    <path
-                                                        key={i}
-                                                        d={`M ${p1.x} ${p1.y} A ${r} ${r} 0 ${large} 1 ${p2.x} ${p2.y}`}
-                                                        fill="none"
-                                                        stroke={i < foodDays ? foodColor : "rgba(255,255,255,0.4)"}
-                                                        strokeWidth={4}
-                                                        strokeLinecap="round"
-                                                    />
-                                                );
-                                            })}
-                                        </svg>
-                                    )}
                                     <span
                                         style={{
                                             position: "absolute",

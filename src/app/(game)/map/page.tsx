@@ -944,8 +944,7 @@ function MapInner() {
             if (scentReadHere) pinChips.push({ icon: "check-circle", label: "Scent read", tone: "var(--success)", onClick: openDogSheet });
             else pinChips.push({ icon: "paw-print", label: "Track scent", tone: "var(--ochre-700)", onClick: openDogSheet });
         }
-
-        if (foodLow) pinChips.push({ icon: "warning", label: "Almost out of food. Return to a rest camp.", tone: "var(--clay-600)", warn: true });
+        // Low-food warning now lives in the food bar at the top of the screen.
     }
 
     return (
@@ -979,9 +978,6 @@ function MapInner() {
                 pinRangerSrc={ranger?.photo}
                 pinDogSrc={dog?.cutout}
                 startKm={5}
-                foodDays={foodLeft}
-                foodTotal={FOOD_DAYS}
-                foodColor={foodTone}
                 foodDanger={foodLow}
                 pinChips={truckMode ? [] : pinChips}
                 onPinTap={truckMode ? undefined : () => setSheet("ranger")}
@@ -1175,6 +1171,45 @@ function MapInner() {
                         }}
                     >
                         <i className="ph-fill ph-sparkle" style={{ color: "var(--ochre-400)", flex: "none" }} /> {toast}
+                    </div>
+                </div>
+            )}
+
+            {/* top-left: the food supply, as a straight bar with a short label so
+                it is easy to read at a glance (it used to ring the pin). */}
+            {pin && (
+                <div
+                    style={{
+                        position: "absolute",
+                        left: "var(--gutter)",
+                        top: 12,
+                        zIndex: 6,
+                        width: 188,
+                        padding: "0.5rem 0.7rem",
+                        background: "rgba(250,246,236,0.92)",
+                        backdropFilter: "blur(8px)",
+                        WebkitBackdropFilter: "blur(8px)",
+                        border: `1px solid ${foodLow ? "var(--clay-500)" : "var(--border-subtle)"}`,
+                        borderRadius: 14,
+                        boxShadow: "var(--shadow-sm)",
+                    }}
+                    aria-label={`Food supply: ${heldForResupply ? "resupplied" : `${Math.max(0, foodLeft)} of ${FOOD_DAYS} days`}`}
+                >
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontFamily: "var(--font-mono)", fontSize: "0.56rem", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-secondary)", fontWeight: 700 }}>
+                            <i className="ph-fill ph-fork-knife" style={{ color: foodTone, fontSize: 12 }} /> Food supply
+                        </span>
+                        <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.56rem", letterSpacing: "0.06em", color: foodTone, fontWeight: 700 }}>
+                            {heldForResupply ? "RESUPPLIED" : `${Math.max(0, foodLeft)} / ${FOOD_DAYS}`}
+                        </span>
+                    </div>
+                    <div style={{ display: "flex", gap: 3 }}>
+                        {Array.from({ length: FOOD_DAYS }).map((_, i) => (
+                            <span key={i} style={{ flex: 1, height: 6, borderRadius: 999, background: i < foodLeft ? foodTone : "var(--surface-sunken)", transition: "background 300ms var(--ease-out)" }} />
+                        ))}
+                    </div>
+                    <div style={{ marginTop: 5, fontSize: "0.6rem", lineHeight: 1.3, color: "var(--text-muted)" }}>
+                        {foodLow ? "Almost out. Reach a rest camp to resupply." : "Days of food before you resupply at a rest camp."}
                     </div>
                 </div>
             )}
