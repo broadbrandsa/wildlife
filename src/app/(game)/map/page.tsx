@@ -230,10 +230,11 @@ function FoodBars({ days, total, tone, caption }: { days: number; total: number;
     return (
         <div
             style={{
-                display: "inline-flex",
+                display: "flex",
                 flexDirection: "column",
-                alignItems: "flex-start",
+                alignItems: "stretch",
                 gap: 4,
+                width: 142,
                 padding: "5px 9px",
                 borderRadius: 10,
                 background: "rgba(250,246,236,0.9)",
@@ -244,15 +245,15 @@ function FoodBars({ days, total, tone, caption }: { days: number; total: number;
             }}
         >
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <i className="ph-fill ph-fork-knife" style={{ fontSize: 12, color: tone }} />
-                <span style={{ display: "flex", gap: 3 }}>
+                <i className="ph-fill ph-fork-knife" style={{ fontSize: 12, color: tone, flex: "none" }} />
+                <span style={{ display: "flex", gap: 3, flex: 1 }}>
                     {Array.from({ length: total }).map((_, i) => (
-                        <span key={i} style={{ width: 13, height: 5, borderRadius: 999, background: i < days ? tone : "var(--surface-sunken)" }} />
+                        <span key={i} style={{ flex: 1, height: 6, borderRadius: 999, background: i < days ? tone : "var(--surface-sunken)", transition: "background 300ms var(--ease-out)" }} />
                     ))}
                 </span>
             </div>
             {caption && (
-                <span style={{ maxWidth: 150, fontFamily: "var(--font-mono)", fontSize: "0.46rem", letterSpacing: "0.05em", fontWeight: 700, textTransform: "uppercase", color: "var(--text-secondary)", lineHeight: 1.35 }}>
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.46rem", letterSpacing: "0.05em", fontWeight: 700, textTransform: "uppercase", color: "var(--text-secondary)", lineHeight: 1.35 }}>
                     {caption}
                 </span>
             )}
@@ -497,9 +498,9 @@ function MapInner() {
     const rangerWalkLabelSec = restRemainingLabel(lastMoveAt, nowMs, moveTravelMs, true);
     // The ranger is out on patrol whenever they have not yet reached the new pin.
     const rangerWalking = Boolean(pin && lastMoveAt != null && !rangerArrived && !roundOver);
-    // Food gauge colour: green with room to spare, ochre at two days, clay on
-    // the last day or while held at camp after a pickup.
-    const foodTone = heldForResupply || foodLeft <= 1 ? "var(--clay-500)" : foodLeft === 2 ? "var(--ochre-600)" : "var(--success)";
+    // Food gauge colour: green with room to spare, orange at two days, red on
+    // the last day (or while held at camp after a pickup).
+    const foodTone = foodLeft >= 3 ? "var(--success)" : foodLeft === 2 ? "var(--ochre-500)" : "var(--clay-500)";
     // Dusk nudge: light is going and the ranger is rested and could still move.
     const showDuskPrompt = Boolean(pin && !pin.locked && !roundOver && isDusk(hour) && rangerReady);
 
@@ -693,6 +694,13 @@ function MapInner() {
         const iv = setInterval(() => setNowMs(Date.now()), 1000);
         return () => clearInterval(iv);
     }, []);
+
+    // Start the food clock if a pin exists but was never stamped (older saves
+    // from before the food supply, or any state where it drifted to null).
+    useEffect(() => {
+        if (pin && resupplyDay == null) resupply(day);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pin, resupplyDay, day]);
 
     // Food ran out: the bakkie collects the ranger to the nearest camp and
     // resupplies. Fires once; the pickup sets pickupHoldDay so it cannot repeat.
@@ -929,7 +937,7 @@ function MapInner() {
                 <button
                     aria-label="Close your rucksack"
                     onClick={() => setRucksackOpen(false)}
-                    style={{ position: "absolute", inset: 0, zIndex: 5, border: "none", background: "rgba(17,32,26,0.28)", cursor: "pointer" }}
+                    style={{ position: "absolute", inset: 0, zIndex: 5, border: "none", background: "rgba(17,32,26,0.55)", cursor: "pointer" }}
                 />
             )}
 
@@ -957,7 +965,7 @@ function MapInner() {
                             <FoodBars
                                 days={foodLeft}
                                 total={FOOD_DAYS}
-                                tone={night ? "var(--ochre-600)" : foodTone}
+                                tone={foodTone}
                                 caption={
                                     rangerWalking
                                         ? `On patrol · new location in ${rangerWalkLabelSec}`
@@ -987,7 +995,7 @@ function MapInner() {
                     )}
                     {/* the rucksack: tap to open, and your power-ups and spots fan
                         out in a half-moon like tipping the bag open to look inside */}
-                    <div style={{ position: "relative" }}>
+                    <div style={{ position: "relative", marginTop: 12 }}>
                         <button
                             onClick={() => setRucksackOpen((v) => !v)}
                             aria-label={rucksackOpen ? "Close your rucksack" : `Open your rucksack, ${powerupTotal} power-up${powerupTotal === 1 ? "" : "s"}`}
