@@ -191,11 +191,11 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
         const t = setTimeout(() => {
             const api = transformRef.current;
             const wrapper = rootRef.current?.querySelector(".react-transform-wrapper") as HTMLElement | null;
-            const svg = svgRef.current;
+            const box = interactiveRef.current;
             const pinEl = document.getElementById("kw-pin-focus");
             const cur = api?.instance?.transformState;
-            if (!api || !wrapper || !svg || !pinEl || !cur) return;
-            const rect = svg.getBoundingClientRect();
+            if (!api || !wrapper || !box || !pinEl || !cur) return;
+            const rect = box.getBoundingClientRect();
             if (!rect.width) return;
             // Raw km the scale bar targets at the current zoom, then the scale
             // that lands it mid-step on startKm so the bar snaps to that value.
@@ -223,31 +223,49 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
     const barRef = useRef<HTMLSpanElement>(null);
     const barLabelRef = useRef<HTMLSpanElement>(null);
     const rootRef = useRef<HTMLDivElement>(null);
+    // The transformed artwork layer (holds the overlays). The fixed map SVG reads
+    // this layer's on-screen rect to set its viewBox, so it re-renders crisply at
+    // every zoom while staying pixel-aligned with the (transformed) overlays.
+    const interactiveRef = useRef<HTMLDivElement>(null);
     const zoomRef = useRef(1);
 
     // Recompute the scale bar against the SVG's on-screen width, which already
     // folds in the current pan/zoom. Written imperatively (refs, not state) so
     // it can update every zoom frame without re-rendering the whole map.
     const updateScale = () => {
+        const root = rootRef.current;
+        const box = interactiveRef.current;
+        if (!root || !box) return;
+        const w = root.getBoundingClientRect();
+        const b = box.getBoundingClientRect();
+        if (!b.width || !b.height) return;
+        // Drive the fixed map SVG's viewBox from the transformed artwork layer's
+        // measured rect: show exactly the artwork region that layer occupies in
+        // the viewport. Because it is derived from real rects (not the library's
+        // internal transform), the SVG stays pixel-aligned with the overlays, and
+        // an SVG re-renders sharply at any viewBox (no bitmap upscaling / blur).
         const svg = svgRef.current;
+        if (svg) {
+            const vbx = ((w.left - b.left) / b.width) * VW;
+            const vby = ((w.top - b.top) / b.height) * VH;
+            const vbw = (w.width / b.width) * VW;
+            const vbh = (w.height / b.height) * VH;
+            svg.setAttribute("viewBox", `${vbx} ${vby} ${vbw} ${vbh}`);
+        }
+        // Scale bar: the artwork's on-screen width is the park's width in pixels.
         const bar = barRef.current;
         const label = barLabelRef.current;
-        if (!svg || !bar || !label) return;
-        // The svg's box matches the viewBox aspect exactly (the parent div pins
-        // the ratio), so its on-screen width IS the park's width in pixels.
-        // Bounding rects fold in the pan/zoom CSS transform on every browser;
-        // getScreenCTM does not on iOS Safari, which froze the bar on phones.
-        const rect = svg.getBoundingClientRect();
-        if (!rect.width) return;
-        const kmPerPx = MAP_WIDTH_KM / rect.width;
-        const raw = kmPerPx * SCALE_TARGET_PX;
-        let km = SCALE_STEPS[0];
-        for (const step of SCALE_STEPS) if (step <= raw) km = step;
-        bar.style.width = `${Math.round(km / kmPerPx)}px`;
-        label.textContent = `${km} KM`;
-        // Counter-scale the pin markers so they keep a steady on-screen size:
-        // the deeper the zoom, the smaller the pin sits on the ground.
-        rootRef.current?.style.setProperty("--kw-pin-scale", String(1 / zoomRef.current));
+        if (bar && label) {
+            const kmPerPx = MAP_WIDTH_KM / b.width;
+            const raw = kmPerPx * SCALE_TARGET_PX;
+            let km = SCALE_STEPS[0];
+            for (const step of SCALE_STEPS) if (step <= raw) km = step;
+            bar.style.width = `${Math.round(km / kmPerPx)}px`;
+            label.textContent = `${km} KM`;
+        }
+        // Counter-scale the pin overlays so they keep a steady on-screen size:
+        // the deeper the zoom, the smaller they sit on the ground.
+        root.style.setProperty("--kw-pin-scale", String(1 / zoomRef.current));
     };
 
     useEffect(() => {
@@ -260,14 +278,14 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // Convert a client point to a fraction of the park artwork. The svg's box
-    // matches the viewBox aspect exactly, so the bounding rect maps straight to
-    // viewBox space, and rects fold in the pan/zoom transform on every browser
-    // (getScreenCTM misses ancestor CSS transforms on iOS Safari).
+    // Convert a client point to a fraction of the park artwork. The interactive
+    // layer's box matches the artwork aspect exactly and folds in the pan/zoom
+    // transform, so its bounding rect maps straight to artwork space (rects work
+    // on every browser; getScreenCTM misses ancestor CSS transforms on iOS Safari).
     const clientToFraction = (clientX: number, clientY: number): { x: number; y: number } | null => {
-        const svg = svgRef.current;
-        if (!svg) return null;
-        const rect = svg.getBoundingClientRect();
+        const box = interactiveRef.current;
+        if (!box) return null;
+        const rect = box.getBoundingClientRect();
         if (!rect.width || !rect.height) return null;
         return {
             x: Math.min(Math.max((clientX - rect.left) / rect.width, 0), 1),
@@ -381,30 +399,23 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
 
     return (
         <div ref={rootRef} style={{ position: "relative", width: "100%", height: "100%" }}>
-        <TransformWrapper
-            ref={transformRef}
-            minScale={1}
-            maxScale={maxScale}
-            doubleClick={{ mode: "zoomIn" }}
-            centerOnInit
-            onTransformed={(ref) => {
-                zoomRef.current = ref.state.scale || 1;
-                updateScale();
-            }}
-        >
-            <TransformComponent
-                wrapperStyle={{ width: "100%", height: "100%" }}
-                contentStyle={{ width: "100%", height: "100%", display: "flex", justifyContent: "center" }}
+            {/* The crisp map layer. It sits fixed behind the interactive layer and
+                its viewBox is driven (in updateScale) from that layer's on-screen
+                rect, so the vector map re-renders sharply at any zoom instead of a
+                cached bitmap being upscaled and blurred. */}
+            <svg
+                ref={(el) => {
+                    svgRef.current = el;
+                    // Seed the viewBox once, before first paint. From then on it is
+                    // set imperatively in updateScale; keeping it off the JSX props
+                    // stops a React re-render from resetting it to the full map.
+                    if (el && !el.getAttribute("viewBox")) el.setAttribute("viewBox", `0 0 ${VW} ${VH}`);
+                }}
+                width="100%"
+                height="100%"
+                preserveAspectRatio="none"
+                style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
             >
-                {/* The interactive layer matches the drawing's aspect ratio exactly, so a
-                    normalised tap fraction is a fraction of the PARK ARTWORK. Zone bands,
-                    thirds and distance in lib/game.ts all assume this coordinate space. */}
-                <div
-                    onPointerDown={handlePointerDown}
-                    onPointerUp={handlePointerUp}
-                    style={{ position: "relative", height: "100%", aspectRatio: `${VW} / ${VH}`, touchAction: "none" }}
-                >
-                    <svg ref={svgRef} viewBox={`0 0 ${VW} ${VH}`} width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
                         <defs>
                             <clipPath id="park-clip">
                                 <path d={PARK_PATH} />
@@ -774,6 +785,30 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                         )}
                     </svg>
 
+            <TransformWrapper
+                ref={transformRef}
+                minScale={1}
+                maxScale={maxScale}
+                doubleClick={{ mode: "zoomIn" }}
+                centerOnInit
+                onTransformed={(ref) => {
+                    zoomRef.current = ref.state.scale || 1;
+                    updateScale();
+                }}
+            >
+                <TransformComponent
+                    wrapperStyle={{ width: "100%", height: "100%" }}
+                    contentStyle={{ width: "100%", height: "100%", display: "flex", justifyContent: "center" }}
+                >
+                    {/* The interactive / overlay layer: same aspect as the artwork, so
+                        a tap fraction is a fraction of the PARK ARTWORK. The fixed map
+                        SVG reads this layer's on-screen rect to set its viewBox. */}
+                    <div
+                        ref={interactiveRef}
+                        onPointerDown={handlePointerDown}
+                        onPointerUp={handlePointerUp}
+                        style={{ position: "relative", height: "100%", aspectRatio: `${VW} / ${VH}`, touchAction: "none" }}
+                    >
                     {/* rest-camp info icons: tap to read about each real KNP camp */}
                     {onCampInfo &&
                         REST_CAMPS.map((c) => (
