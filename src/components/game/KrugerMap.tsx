@@ -1020,34 +1020,6 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
             </TransformComponent>
         </TransformWrapper>
 
-            {/* compass, top-right: the map is a north-up projection, so north is always up */}
-            <div
-                style={{
-                    position: "absolute",
-                    top: 12,
-                    right: "var(--gutter)",
-                    width: 40,
-                    height: 40,
-                    borderRadius: "50%",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 1,
-                    background: "rgba(250,246,236,0.9)",
-                    backdropFilter: "blur(8px)",
-                    WebkitBackdropFilter: "blur(8px)",
-                    border: "1px solid var(--border-subtle)",
-                    boxShadow: "var(--shadow-sm)",
-                    pointerEvents: "none",
-                }}
-                aria-label="Compass, north is up"
-            >
-                <i className="ph-fill ph-caret-up" style={{ fontSize: 12, color: "var(--clay-500)", lineHeight: 1 }} />
-                <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.04em", color: "var(--text-primary)", lineHeight: 1 }}>N</span>
-            </div>
-
-
             {/* dynamic scale bar, bottom-left: the km read shrinks as you zoom in */}
             <div
                 style={{
@@ -1085,37 +1057,57 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                 />
             </div>
 
-            {/* live coordinates, bottom-right */}
-            {coordText && (
+            {/* bottom-right: the compass (north-up projection) next to the live
+                coordinates. The compass moved here from the top of the map. */}
+            <div style={{ position: "absolute", right: "var(--gutter)", bottom: 10, display: "flex", alignItems: "center", gap: 6, pointerEvents: "none" }}>
                 <div
                     style={{
-                        position: "absolute",
-                        right: "var(--gutter)",
-                        bottom: 10,
-                        display: "inline-flex",
+                        width: 34,
+                        height: 34,
+                        borderRadius: "50%",
+                        display: "flex",
+                        flexDirection: "column",
                         alignItems: "center",
-                        gap: 5,
-                        padding: "0.35rem 0.5rem",
+                        justifyContent: "center",
+                        gap: 0,
                         background: "rgba(250,246,236,0.9)",
                         backdropFilter: "blur(8px)",
                         WebkitBackdropFilter: "blur(8px)",
                         border: "1px solid var(--border-subtle)",
-                        borderRadius: "var(--radius-sm)",
                         boxShadow: "var(--shadow-sm)",
-                        fontFamily: "var(--font-mono)",
-                        fontSize: "0.56rem",
-                        letterSpacing: "0.08em",
-                        textTransform: "uppercase",
-                        color: "var(--text-primary)",
-                        fontWeight: 700,
-                        whiteSpace: "nowrap",
-                        pointerEvents: "none",
                     }}
+                    aria-label="Compass, north is up"
                 >
-                    <i className="ph ph-crosshair" style={{ color: "var(--text-accent)", fontSize: 11 }} />
-                    {coordLabel} {coordText}
+                    <i className="ph-fill ph-caret-up" style={{ fontSize: 11, color: "var(--clay-500)", lineHeight: 1 }} />
+                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.04em", color: "var(--text-primary)", lineHeight: 1 }}>N</span>
                 </div>
-            )}
+                {coordText && (
+                    <div
+                        style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 5,
+                            padding: "0.35rem 0.5rem",
+                            background: "rgba(250,246,236,0.9)",
+                            backdropFilter: "blur(8px)",
+                            WebkitBackdropFilter: "blur(8px)",
+                            border: "1px solid var(--border-subtle)",
+                            borderRadius: "var(--radius-sm)",
+                            boxShadow: "var(--shadow-sm)",
+                            fontFamily: "var(--font-mono)",
+                            fontSize: "0.56rem",
+                            letterSpacing: "0.08em",
+                            textTransform: "uppercase",
+                            color: "var(--text-primary)",
+                            fontWeight: 700,
+                            whiteSpace: "nowrap",
+                        }}
+                    >
+                        <i className="ph ph-crosshair" style={{ color: "var(--text-accent)", fontSize: 11 }} />
+                        {coordLabel} {coordText}
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

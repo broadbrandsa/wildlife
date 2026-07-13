@@ -191,15 +191,50 @@ function ArcItem({ icon, count, label, left, top, delay, showCount = true, onCli
     );
 }
 
-/** A compact status chip beside a team icon: a small icon and a tinted label. */
-function MiniChip({ icon, label, tone }: { icon: string; label: string; tone: string }) {
+/** A compact status chip beside a team icon: a small icon and a tinted label.
+ *  Pass onClick to make it a tappable prompt (used for the dog's track cue). */
+function MiniChip({ icon, label, tone, onClick }: { icon: string; label: string; tone: string; onClick?: () => void }) {
+    const style: React.CSSProperties = {
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 4,
+        padding: "5px 8px",
+        borderRadius: 10,
+        background: "rgba(250,246,236,0.9)",
+        backdropFilter: "blur(8px)",
+        WebkitBackdropFilter: "blur(8px)",
+        border: "1px solid var(--border-subtle)",
+        boxShadow: "var(--shadow-sm)",
+    };
+    const inner = (
+        <>
+            <i className={`ph-fill ph-${icon}`} style={{ fontSize: 11, color: tone }} />
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.5rem", letterSpacing: "0.06em", fontWeight: 700, textTransform: "uppercase", color: tone, lineHeight: 1, whiteSpace: "nowrap" }}>
+                {label}
+            </span>
+        </>
+    );
+    if (onClick) {
+        return (
+            <button onClick={onClick} aria-label={label} className="kw-press kw-rise" style={{ ...style, cursor: "pointer" }}>
+                {inner}
+            </button>
+        );
+    }
+    return <div style={style}>{inner}</div>;
+}
+
+/** The ranger's food supply, shown to the right of the ranger icon as a segmented
+ *  gauge. An optional caption sits underneath (the on-patrol countdown, camp note). */
+function FoodBars({ days, total, tone, caption }: { days: number; total: number; tone: string; caption?: string | null }) {
     return (
         <div
             style={{
                 display: "inline-flex",
-                alignItems: "center",
+                flexDirection: "column",
+                alignItems: "flex-start",
                 gap: 4,
-                padding: "5px 8px",
+                padding: "5px 9px",
                 borderRadius: 10,
                 background: "rgba(250,246,236,0.9)",
                 backdropFilter: "blur(8px)",
@@ -208,10 +243,19 @@ function MiniChip({ icon, label, tone }: { icon: string; label: string; tone: st
                 boxShadow: "var(--shadow-sm)",
             }}
         >
-            <i className={`ph-fill ph-${icon}`} style={{ fontSize: 11, color: tone }} />
-            <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.5rem", letterSpacing: "0.06em", fontWeight: 700, textTransform: "uppercase", color: tone, lineHeight: 1, whiteSpace: "nowrap" }}>
-                {label}
-            </span>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <i className="ph-fill ph-fork-knife" style={{ fontSize: 12, color: tone }} />
+                <span style={{ display: "flex", gap: 3 }}>
+                    {Array.from({ length: total }).map((_, i) => (
+                        <span key={i} style={{ width: 13, height: 5, borderRadius: 999, background: i < days ? tone : "var(--surface-sunken)" }} />
+                    ))}
+                </span>
+            </div>
+            {caption && (
+                <span style={{ maxWidth: 150, fontFamily: "var(--font-mono)", fontSize: "0.46rem", letterSpacing: "0.05em", fontWeight: 700, textTransform: "uppercase", color: "var(--text-secondary)", lineHeight: 1.35 }}>
+                    {caption}
+                </span>
+            )}
         </div>
     );
 }
@@ -453,10 +497,9 @@ function MapInner() {
     const rangerWalkLabelSec = restRemainingLabel(lastMoveAt, nowMs, moveTravelMs, true);
     // The ranger is out on patrol whenever they have not yet reached the new pin.
     const rangerWalking = Boolean(pin && lastMoveAt != null && !rangerArrived && !roundOver);
-    // Food chip colour and label: green with room to spare, ochre at two days,
-    // clay on the last day or while held at camp after a pickup.
+    // Food gauge colour: green with room to spare, ochre at two days, clay on
+    // the last day or while held at camp after a pickup.
     const foodTone = heldForResupply || foodLeft <= 1 ? "var(--clay-500)" : foodLeft === 2 ? "var(--ochre-600)" : "var(--success)";
-    const foodChipLabel = heldForResupply ? "Resupplied" : `${foodLeft}d food`;
     // Dusk nudge: light is going and the ranger is rested and could still move.
     const showDuskPrompt = Boolean(pin && !pin.locked && !roundOver && isDusk(hour) && rangerReady);
 
@@ -485,8 +528,6 @@ function MapInner() {
     const [revealing, setRevealing] = useState(false);
     // Whether the dog has already read the ground the ranger is standing on.
     const scentReadHere = Boolean(pin && revealKey && revealKey === lastRevealKey);
-    // A fresh spot of ground to read once the ranger arrives: drives the deploy prompt.
-    const freshGroundToRead = Boolean(dogTrackReady && !scentReadHere && !revealing);
 
     const startReveal = () => {
         if (!revealKey || !read) return;
@@ -880,33 +921,6 @@ function MapInner() {
                 />
             )}
 
-            {/* time of day: sun or moon with the clock; opens the Kruger nights note */}
-            <div style={{ position: "absolute", left: "50%", top: 12, transform: "translateX(-50%)" }}>
-                <button
-                    onClick={() => setSheet("night")}
-                    className="kw-press"
-                    style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 6,
-                        padding: "0.42rem 0.75rem",
-                        background: "rgba(250,246,236,0.9)",
-                        backdropFilter: "blur(8px)",
-                        WebkitBackdropFilter: "blur(8px)",
-                        border: "1px solid var(--border-subtle)",
-                        borderRadius: "var(--radius-pill)",
-                        boxShadow: "var(--shadow-sm)",
-                        cursor: "pointer",
-                    }}
-                    aria-label={`${PHASE_META[phase].label}, ${formatClock(hour, minute)}. About nights in the Kruger`}
-                >
-                    <i className={`ph-fill ph-${PHASE_META[phase].icon}`} style={{ fontSize: 15, color: night ? "var(--text-secondary)" : "var(--ochre-600)" }} />
-                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.68rem", letterSpacing: "0.08em", fontWeight: 700, color: "var(--text-primary)" }}>
-                        {formatClock(hour, minute)}
-                    </span>
-                    <i className="ph ph-info" style={{ fontSize: 13, color: "var(--text-muted)" }} />
-                </button>
-            </div>
 
 
             {/* dim the map while the rucksack is open, so its contents stand out;
@@ -925,36 +939,24 @@ function MapInner() {
                 <div style={{ position: "absolute", left: "var(--gutter)", top: 12, display: "flex", flexDirection: "column", gap: 8 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <AvatarButton src={ranger.photo} alt={`${rangerName}, your ranger`} ready={rangerReady} onClick={() => setSheet("ranger")} />
-                        {/* to the right of the ranger: the patrol pill and live
-                            countdown while walking, otherwise the ready or camp bar */}
-                        {pin &&
-                            (rangerWalking ? (
-                                <div
-                                    aria-label={`${rangerName} out on patrol, arrives in ${rangerWalkLabelSec}`}
-                                    style={{
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        alignItems: "center",
-                                        gap: 1,
-                                        padding: "4px 6px",
-                                        borderRadius: 10,
-                                        background: "rgba(250,246,236,0.9)",
-                                        backdropFilter: "blur(8px)",
-                                        WebkitBackdropFilter: "blur(8px)",
-                                        border: "1px solid var(--border-subtle)",
-                                        boxShadow: "var(--shadow-sm)",
-                                    }}
-                                >
-                                    <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontFamily: "var(--font-mono)", fontSize: "0.44rem", letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 700, color: "var(--ochre-700)" }}>
-                                        <i className="ph-fill ph-boot" style={{ fontSize: 9 }} /> On patrol
-                                    </span>
-                                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.48rem", letterSpacing: "0.01em", fontWeight: 700, color: "var(--text-primary)", whiteSpace: "nowrap" }}>{rangerWalkLabelSec}</span>
-                                </div>
-                            ) : night ? (
-                                <MiniChip icon="campfire" label="Camped" tone="var(--ochre-600)" />
-                            ) : (
-                                <MiniChip icon="fork-knife" label={foodChipLabel} tone={foodTone} />
-                            ))}
+                        {/* to the right of the ranger: the food supply gauge, with a
+                            caption underneath while on patrol, camped or resupplying */}
+                        {pin && (
+                            <FoodBars
+                                days={foodLeft}
+                                total={FOOD_DAYS}
+                                tone={night ? "var(--ochre-600)" : foodTone}
+                                caption={
+                                    rangerWalking
+                                        ? `On patrol · new location in ${rangerWalkLabelSec}`
+                                        : night
+                                          ? "Camped for the night"
+                                          : heldForResupply
+                                            ? "Resupplied · move out tomorrow"
+                                            : null
+                                }
+                            />
+                        )}
                     </div>
                     {dog && (
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -967,7 +969,7 @@ function MapInner() {
                                 ) : scentReadHere ? (
                                     <MiniChip icon="check-circle" label="Scent read" tone="var(--success)" />
                                 ) : (
-                                    <MiniChip icon="paw-print" label="Track scent" tone="var(--ochre-700)" />
+                                    <MiniChip icon="paw-print" label="Track scent" tone="var(--ochre-700)" onClick={openDogSheet} />
                                 ))}
                         </div>
                     )}
@@ -1066,29 +1068,64 @@ function MapInner() {
                 </div>
             )}
 
-            {/* top-right, under the compass: round status and prizes */}
-            <div style={{ position: "absolute", right: "var(--gutter)", top: 64, display: "flex", flexDirection: "column", gap: 8 }}>
+            {/* top-right: the time of day and the round day counter */}
+            <div style={{ position: "absolute", right: "var(--gutter)", top: 12, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
                 <button
-                    onClick={() => setSheet("status")}
-                    aria-label="Round status"
+                    onClick={() => setSheet("night")}
                     className="kw-press"
-                    style={{ width: 40, height: 40, borderRadius: "50%", border: "1px solid var(--border-subtle)", background: "rgba(250,246,236,0.9)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", boxShadow: "var(--shadow-sm)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-primary)" }}
+                    style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        padding: "0.42rem 0.7rem",
+                        background: "rgba(250,246,236,0.9)",
+                        backdropFilter: "blur(8px)",
+                        WebkitBackdropFilter: "blur(8px)",
+                        border: "1px solid var(--border-subtle)",
+                        borderRadius: "var(--radius-pill)",
+                        boxShadow: "var(--shadow-sm)",
+                        cursor: "pointer",
+                    }}
+                    aria-label={`${PHASE_META[phase].label}, ${formatClock(hour, minute)}. About nights in the Kruger`}
                 >
-                    <i className="ph ph-calendar-blank" style={{ fontSize: 18 }} />
+                    <i className={`ph-fill ph-${PHASE_META[phase].icon}`} style={{ fontSize: 15, color: night ? "var(--text-secondary)" : "var(--ochre-600)" }} />
+                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.68rem", letterSpacing: "0.08em", fontWeight: 700, color: "var(--text-primary)" }}>
+                        {formatClock(hour, minute)}
+                    </span>
+                    <i className="ph ph-info" style={{ fontSize: 13, color: "var(--text-muted)" }} />
                 </button>
-                <button
-                    onClick={() => router.push("/prizes")}
-                    aria-label="Prizes and how to win"
-                    className="kw-press"
-                    style={{ width: 40, height: 40, borderRadius: "50%", border: "1px solid var(--border-subtle)", background: "rgba(250,246,236,0.9)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", boxShadow: "var(--shadow-sm)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-primary)" }}
+                <div
+                    style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "flex-end",
+                        gap: 1,
+                        padding: "0.4rem 0.6rem",
+                        background: "rgba(250,246,236,0.9)",
+                        backdropFilter: "blur(8px)",
+                        WebkitBackdropFilter: "blur(8px)",
+                        border: "1px solid var(--border-subtle)",
+                        borderRadius: "var(--radius-md)",
+                        boxShadow: "var(--shadow-sm)",
+                        textAlign: "right",
+                    }}
+                    aria-label={`Day ${day} of ${ROUND.durationDays}, ${daysRemaining(day)} days left, ${rangersHunting(day).toLocaleString("en-ZA")} rangers tracking`}
                 >
-                    <i className="ph ph-trophy" style={{ fontSize: 18 }} />
-                </button>
+                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.6rem", letterSpacing: "0.08em", fontWeight: 700, color: "var(--text-primary)" }}>
+                        DAY {day} / {ROUND.durationDays}
+                    </span>
+                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.5rem", letterSpacing: "0.08em", fontWeight: 700, color: "var(--text-muted)" }}>
+                        {daysRemaining(day)} DAYS LEFT
+                    </span>
+                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.5rem", letterSpacing: "0.08em", fontWeight: 700, color: "var(--text-muted)" }}>
+                        {rangersHunting(day).toLocaleString("en-ZA")} RANGERS TRACKING
+                    </span>
+                </div>
             </div>
 
-            {/* right dock: anchored below the compass, status and trophy stack so
-                the two columns can never overlap, whatever the screen height */}
-            <div style={{ position: "absolute", right: "var(--gutter)", top: 168, display: "flex", flexDirection: "column", gap: 10 }}>
+            {/* right dock: anchored below the time and day counter so the two
+                columns can never overlap, whatever the screen height */}
+            <div style={{ position: "absolute", right: "var(--gutter)", top: 132, display: "flex", flexDirection: "column", gap: 10 }}>
                 <DockTab icon="notebook" label="Clue" dot={newClueToday} sub={clueDockSub} onClick={openClueSheet} />
                 <DockTab icon="book-open-text" label="Guides" onClick={() => setSheet("guides")} />
                 <DockTab icon="radio" label="Radio" dot={hasRadio && !radioSeen} onClick={openRadioSheet} />
@@ -1124,40 +1161,6 @@ function MapInner() {
                 </div>
             )}
 
-            {/* deploy-the-dog prompt: the ranger has reached fresh ground, so send
-                the dog to track the scent. Tapping opens the scent-read panel. */}
-            {pin && freshGroundToRead && !truckMode && (
-                <button
-                    onClick={openDogSheet}
-                    className="kw-rise kw-press"
-                    aria-label={`Deploy ${dogName} to track the scent`}
-                    style={{
-                        position: "absolute",
-                        left: "50%",
-                        bottom: 110,
-                        transform: "translateX(-50%)",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 8,
-                        maxWidth: "88%",
-                        padding: "0.6rem 1rem",
-                        background: "var(--green-800)",
-                        color: "var(--sand-50)",
-                        border: "none",
-                        borderRadius: "var(--radius-pill)",
-                        boxShadow: "var(--shadow-lg)",
-                        fontSize: "0.84rem",
-                        fontWeight: 700,
-                        cursor: "pointer",
-                        textAlign: "center",
-                        lineHeight: 1.3,
-                    }}
-                >
-                    <i className="ph-fill ph-paw-print" style={{ fontSize: 17, flex: "none" }} />
-                    Deploy {dogName} to track the scent
-                </button>
-            )}
-
             {/* dusk nudge: move before the ranger makes camp for the night */}
             {showDuskPrompt && !truckMode && (
                 <div
@@ -1165,7 +1168,7 @@ function MapInner() {
                     style={{
                         position: "absolute",
                         left: "50%",
-                        bottom: freshGroundToRead ? 168 : 110,
+                        bottom: 110,
                         transform: "translateX(-50%)",
                         display: "inline-flex",
                         alignItems: "center",
