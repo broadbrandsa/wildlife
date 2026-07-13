@@ -13,6 +13,7 @@ export const DOGS: Dog[] = [
             "Malinois are the SAWC unit's apprehension specialists, fearless under pressure and quick to follow a handler's command.",
         icon: "dog",
         photo: "/Dogs/Storm.png",
+        cutout: "/Dogs/cutout/storm.png",
     },
     {
         id: "scout",
@@ -25,6 +26,7 @@ export const DOGS: Dog[] = [
             "Bloodhounds follow scent trails days old. They are used by the SANParks Kruger unit, so Scout joins you as a guest dog cross-training with SAWC.",
         icon: "paw-print",
         photo: "/Dogs/Scout.png",
+        cutout: "/Dogs/cutout/scout.png",
     },
     {
         id: "banjo",
@@ -37,6 +39,7 @@ export const DOGS: Dog[] = [
             "SAWC's free-running pack was donated by Texan houndsman Joe Braman in 2018, with the relocation funded by the Ivan Carter Wildlife Conservation Alliance. They track off-leash at up to 40 km/h.",
         icon: "dog",
         photo: "/Dogs/Banjo.png",
+        cutout: "/Dogs/cutout/banjo.png",
     },
     {
         id: "dotty",
@@ -49,6 +52,7 @@ export const DOGS: Dog[] = [
             "Dotty is a real SAWC dog: a four-year-old Coonhound and one of the unit's top off-leash hounds, who had a litter of 10 puppies in March 2026.",
         icon: "paw-print",
         photo: "/Dogs/Dotty.png",
+        cutout: "/Dogs/cutout/dotty.png",
     },
     {
         id: "pepper",
@@ -61,6 +65,7 @@ export const DOGS: Dog[] = [
             "Springer Spaniels sniff out horn, ivory and ammunition at park gates. Pepper joins you as a guest detection dog cross-training with SAWC.",
         icon: "paw-print",
         photo: "/Dogs/Pepper.png",
+        cutout: "/Dogs/cutout/pepper.png",
     },
 ];
 

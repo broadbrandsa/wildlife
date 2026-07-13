@@ -102,9 +102,10 @@ function NDot() {
     );
 }
 
-/** Round avatar button for the split ranger / dog team icons. A green border
- *  and ring mark the ranger or dog as ready to use. */
-function AvatarButton({ src, alt, ready, onClick }: { src: string; alt: string; ready: boolean; onClick: () => void }) {
+/** The team icon: one larger badge showing the ranger with their dog at their
+ *  feet (the dog is a background-removed cutout). A green ring marks the ranger
+ *  ready to move. Tapping opens the ranger profile. */
+function TeamIcon({ rangerSrc, dogSrc, alt, ready, onClick }: { rangerSrc: string; dogSrc?: string; alt: string; ready: boolean; onClick: () => void }) {
     return (
         <button
             onClick={onClick}
@@ -112,21 +113,32 @@ function AvatarButton({ src, alt, ready, onClick }: { src: string; alt: string; 
             className="kw-press"
             style={{
                 position: "relative",
-                width: 52,
-                height: 52,
-                borderRadius: "50%",
+                width: 104,
+                height: 104,
+                borderRadius: 24,
                 border: `2px solid ${ready ? "var(--success)" : "var(--sand-50)"}`,
                 background: "var(--sand-100)",
                 boxShadow: ready ? "var(--shadow-md), 0 0 0 3px var(--success-soft)" : "var(--shadow-md)",
                 cursor: "pointer",
                 padding: 0,
-                overflow: "visible",
+                overflow: "hidden",
                 transition: "box-shadow 200ms var(--ease-out), border-color 200ms var(--ease-out)",
             }}
         >
-            <span style={{ position: "absolute", inset: 0, borderRadius: "50%", overflow: "hidden" }}>
-                <Image src={src} alt={alt} fill sizes="52px" style={{ objectFit: "cover" }} />
-            </span>
+            <Image src={rangerSrc} alt={alt} fill sizes="104px" style={{ objectFit: "cover", objectPosition: "center top" }} />
+            {dogSrc && (
+                // Background-removed dog cutout, standing at the ranger's feet.
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                    src={dogSrc}
+                    alt=""
+                    aria-hidden="true"
+                    onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                    }}
+                    style={{ position: "absolute", bottom: -2, left: "50%", transform: "translateX(-50%)", width: "82%", maxHeight: "60%", objectFit: "contain", filter: "drop-shadow(0 2px 3px rgba(17,32,26,0.4))" }}
+                />
+            )}
         </button>
     );
 }
@@ -499,8 +511,6 @@ function MapInner() {
     // The day of an auto-pickup: the ranger holds at the camp and moves out again the next day.
     const heldForResupply = pickupHoldDay != null && pickupHoldDay === day;
     const rangerReady = Boolean(pin && !pin.locked && !night && !roundOver && rangerArrived && !heldForResupply);
-    // The dog tracks the ground wherever the ranger stands, once they arrive.
-    const dogTrackReady = Boolean(pin && !night && !roundOver && rangerArrived);
     // The ranger can move when arrived; the very first pin drops with no pin yet.
     const canMove = !pin ? true : rangerReady;
     const walkKm = dailyWalkKm(player?.dogId);
@@ -952,46 +962,48 @@ function MapInner() {
                 />
             )}
 
-            {/* the team, split: you, your dog and the rucksack. The ranger and dog
-                each carry a rest bar and turn green-ringed when ready to use. */}
+            {/* the team: one badge of you and your dog together, with the food
+                gauge and the dog's track cue stacked beside it, then the rucksack. */}
             {ranger && (
                 <div style={{ position: "absolute", left: "var(--gutter)", top: 12, display: "flex", flexDirection: "column", gap: 8 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <AvatarButton src={ranger.photo} alt={`${rangerName}, your ranger`} ready={rangerReady} onClick={() => setSheet("ranger")} />
-                        {/* to the right of the ranger: the food supply gauge, with a
-                            caption underneath while on patrol, camped or resupplying */}
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+                        <TeamIcon
+                            rangerSrc={ranger.photo}
+                            dogSrc={dog?.cutout}
+                            alt={`${rangerName} and ${dogName}`}
+                            ready={rangerReady}
+                            onClick={() => setSheet("ranger")}
+                        />
+                        {/* beside the badge: the food gauge (with the on-patrol / camp
+                            caption) and the dog's track cue */}
                         {pin && (
-                            <FoodBars
-                                days={foodLeft}
-                                total={FOOD_DAYS}
-                                tone={foodTone}
-                                caption={
-                                    rangerWalking
-                                        ? `On patrol · new location in ${rangerWalkLabelSec}`
-                                        : night
-                                          ? "Camped for the night"
-                                          : heldForResupply
-                                            ? "Resupplied · move out tomorrow"
-                                            : null
-                                }
-                            />
-                        )}
-                    </div>
-                    {dog && (
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                            <AvatarButton src={dog.photo} alt={`${dogName}, your dog`} ready={dogTrackReady} onClick={openDogSheet} />
-                            {pin &&
-                                (night ? (
+                            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                                <FoodBars
+                                    days={foodLeft}
+                                    total={FOOD_DAYS}
+                                    tone={foodTone}
+                                    caption={
+                                        rangerWalking
+                                            ? `On patrol · new location in ${rangerWalkLabelSec}`
+                                            : night
+                                              ? "Camped for the night"
+                                              : heldForResupply
+                                                ? "Resupplied · move out tomorrow"
+                                                : null
+                                    }
+                                />
+                                {night ? (
                                     <MiniChip icon="campfire" label="Camped" tone="var(--ochre-600)" />
                                 ) : !rangerArrived ? (
                                     <MiniChip icon="paw-print" label="En route" tone="var(--text-muted)" />
                                 ) : scentReadHere ? (
-                                    <MiniChip icon="check-circle" label="Scent read" tone="var(--success)" />
+                                    <MiniChip icon="check-circle" label="Scent read" tone="var(--success)" onClick={openDogSheet} />
                                 ) : (
                                     <MiniChip icon="paw-print" label="Track scent" tone="var(--ochre-700)" onClick={openDogSheet} />
-                                ))}
-                        </div>
-                    )}
+                                )}
+                            </div>
+                        )}
+                    </div>
                     {/* the rucksack: tap to open, and your power-ups and spots fan
                         out in a half-moon like tipping the bag open to look inside */}
                     <div style={{ position: "relative", marginTop: 12 }}>

@@ -48,6 +48,8 @@ export interface Dog {
     didYouKnow: string;
     icon: string;
     photo: string;
+    /** Background-removed cutout (public/Dogs/cutout) for overlaying on the ranger. */
+    cutout: string;
 }
 
 export type RangerId = "grace" | "sabata" | "vince" | "rubaina" | "shakier";
