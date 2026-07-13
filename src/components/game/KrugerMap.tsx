@@ -886,6 +886,40 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
                         </span>
                     )}
 
+                    {/* move hint: the ranger can move, so nudge the player to drag
+                        the pin. Hidden the moment they grab it (drag becomes set),
+                        and while at a camp the camp bubble takes the space instead. */}
+                    {pin && !drag && !campLabel && draggable && !freeDrag && (
+                        <span
+                            className="kw-rise"
+                            style={{
+                                position: "absolute",
+                                left: `${pin.x * 100}%`,
+                                top: `${pin.y * 100}%`,
+                                transform: "translate(-50%, calc(-100% - 44px)) scale(var(--kw-pin-scale, 1))",
+                                transformOrigin: "50% 100%",
+                                pointerEvents: "none",
+                            }}
+                        >
+                            <span
+                                style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: 5,
+                                    padding: "0.28rem 0.6rem",
+                                    borderRadius: "var(--radius-pill)",
+                                    background: "var(--sand-50)",
+                                    border: "1px solid var(--border-subtle)",
+                                    boxShadow: "var(--shadow-md)",
+                                    whiteSpace: "nowrap",
+                                }}
+                            >
+                                <i className="ph-fill ph-hand-tap" style={{ fontSize: 13, color: "var(--ochre-600)" }} />
+                                <span style={{ fontFamily: "var(--font-sans)", fontSize: "0.72rem", fontWeight: 700, color: "var(--text-primary)" }}>Drag to move your pin</span>
+                            </span>
+                        </span>
+                    )}
+
                     {/* camp bubble: when the pin has snapped onto a rest camp, name
                         it above the pin, with a claim box for its free power-up */}
                     {pin && !drag && campLabel && (
