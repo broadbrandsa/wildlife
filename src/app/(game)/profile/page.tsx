@@ -196,7 +196,7 @@ export default function ProfilePage() {
                         )}
                     </div>
                     <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", margin: "var(--space-3) 0 0", lineHeight: 1.5 }}>
-                        Simulate the time of day. From 20:00 the ranger makes camp and cannot move until dawn. Moving the clock lands the ranger and rests the dog, so both are ready to work again.
+                        Simulate the time of day. From 20:00 the ranger makes camp and cannot move until dawn. Moving the clock forward lands the ranger on the new ground, ready to send the dog to track and to move again.
                     </p>
 
                     <div style={{ marginTop: "var(--space-4)" }}>

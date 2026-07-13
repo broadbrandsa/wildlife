@@ -218,8 +218,10 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
             didInitZoom.current = true;
         }, 120);
         return () => clearTimeout(t);
+        // Depend on `pin` so a first-time player (no pin at mount) still gets the
+        // 5 km zoom the first time they drop a pin; the ref keeps it to once.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [pin]);
     const down = useRef<{ x: number; y: number } | null>(null);
     const svgRef = useRef<SVGSVGElement>(null);
     const barRef = useRef<HTMLSpanElement>(null);
@@ -330,6 +332,7 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
     const onPinPointerDown = (e: React.PointerEvent<HTMLSpanElement>) => {
         if (!pin) return;
         e.stopPropagation(); // keep the map from panning or placing under the pin
+        down.current = null; // invalidate any stale map-tap start so a pin press can't place
         pinDownRef.current = { x: e.clientX, y: e.clientY };
         if (!draggable) return;
         e.preventDefault();
@@ -361,9 +364,11 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
         pinDownRef.current = null;
         const moved = start ? Math.hypot(e.clientX - start.x, e.clientY - start.y) : 0;
         if (drag) {
-            // A real relocation walks the pin; anything that stays put (the pin
-            // never left its spot) is a tap that opens the ranger status sheet.
-            if (onPlace && (drag.km > 0.3 || drag.camp)) onPlace(drag.x, drag.y);
+            // A real relocation walks the pin; anything that stays put is a tap
+            // that opens the ranger status sheet. Require both a real ground
+            // distance AND a real finger movement: zoomed right in, 0.3 km is
+            // only a few px, so a still-tap wobble must not read as a walk.
+            if (onPlace && moved > 10 && (drag.km > 0.3 || drag.camp)) onPlace(drag.x, drag.y);
             else onPinTap?.();
             setDrag(null);
             return;

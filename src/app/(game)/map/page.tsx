@@ -8,7 +8,6 @@ import { Button, Eyebrow, Tag } from "@/components/ds";
 import { DealtCard, prefersReducedMotion } from "@/components/game/CardFlip";
 import { ClueCard } from "@/components/game/ClueCard";
 import { GuideCardFront } from "@/components/game/GuideCard";
-import { ImpactHighlight, useCampaignTotal } from "@/components/game/impact";
 import { KrugerMap } from "@/components/game/KrugerMap";
 import { formatLatLng } from "@/components/game/map-geometry";
 import { Overlay } from "@/components/game/Overlay";
@@ -46,7 +45,7 @@ import { RARITY_META, SPOTTER_DOGS, rollSpot } from "@/lib/spotting";
 import { FAMILY_ICON, FAMILY_LABEL, makeMarker, spawnDelayMs } from "@/lib/markers";
 import type { SpotMarker } from "@/lib/markers";
 import type { ScentTier } from "@/lib/game";
-import { NEAR_TARGET_KM, rangersHunting, rangersNearTarget } from "@/lib/community";
+import { rangersHunting } from "@/lib/community";
 import { CAMP_HOUR, PHASE_META, PHASE_SKY, formatClock, isDusk, isNight, phaseForHour } from "@/lib/daytime";
 import { useClock } from "@/hooks/use-clock";
 import { useCurrentDay, useGameStore } from "@/store/game";
@@ -58,7 +57,7 @@ const TIER_META: Record<ScentTier, { label: string; tone: "neutral" | "teal" | "
     hot: { label: "Fresh sign", tone: "clay", icon: "paw-print" },
 };
 
-type SheetId = "status" | "ranger" | "dog" | "clue" | "guides" | "bakkie" | "night" | "spots" | "radio";
+type SheetId = "ranger" | "dog" | "clue" | "guides" | "bakkie" | "night" | "spots" | "radio";
 
 /**
  * Ranger power-ups: consumable tools shown as count-badged icons on the map.
@@ -417,7 +416,6 @@ function MapInner() {
     const usePowerup = useGameStore((s) => s.usePowerup);
     const visitCamp = useGameStore((s) => s.visitCamp);
     const arriveNow = useGameStore((s) => s.arriveNow);
-    const campaignTotal = useCampaignTotal();
 
     const [dismissed, setDismissed] = useState(false);
     const [guideZone, setGuideZone] = useState<Zone | null>(null);
@@ -547,9 +545,6 @@ function MapInner() {
     const foodLow = Boolean(pin && !heldForResupply && foodLeft <= 1);
     // Dusk nudge: light is going and the ranger is rested and could still move.
     const showDuskPrompt = Boolean(pin && !pin.locked && !roundOver && isDusk(hour) && rangerReady);
-
-    // Ops-room pressure line: the same shared report for every player.
-    const near = rangersNearTarget(day);
 
     // The dog reads the ground wherever the ranger currently stands.
     const read = useMemo(
@@ -982,7 +977,7 @@ function MapInner() {
                 foodColor={foodTone}
                 foodDanger={foodLow}
                 pinChips={truckMode ? [] : pinChips}
-                onPinTap={() => setSheet("ranger")}
+                onPinTap={truckMode ? undefined : () => setSheet("ranger")}
             />
 
             {/* time-of-day scrim: tints the whole map toward dawn, dusk or night */}
@@ -1310,40 +1305,6 @@ function MapInner() {
             )}
 
             {/* ------- popups ------- */}
-
-            {sheet === "status" && (
-                <Sheet onClose={() => setSheet(null)}>
-                    <Eyebrow rule>The hunt</Eyebrow>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem var(--space-5)", margin: "var(--space-4) 0", fontFamily: "var(--font-mono)", fontSize: "0.72rem", letterSpacing: "0.06em", color: "var(--text-secondary)" }}>
-                        <span>
-                            <i className="ph ph-calendar-blank" /> DAY {day} / {ROUND.durationDays}
-                        </span>
-                        <span>
-                            <i className="ph ph-hourglass-medium" /> {daysRemaining(day)} DAYS LEFT
-                        </span>
-                        <span>
-                            <i className="ph ph-users-three" /> {rangersHunting(day).toLocaleString("en-ZA")} RANGERS TRACKING
-                        </span>
-                    </div>
-                    <div
-                        style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "0.55rem 0.7rem", background: "var(--ochre-100)", border: "1px solid var(--ochre-200)", borderRadius: "var(--radius-sm)", fontFamily: "var(--font-mono)", fontSize: "0.64rem", letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--ochre-700)", marginBottom: "var(--space-4)" }}
-                    >
-                        <i className="ph-fill ph-broadcast" style={{ fontSize: 14, marginTop: 1 }} />
-                        <span>
-                            Ops room: {near.count} ranger{near.count === 1 ? "" : "s"} within {NEAR_TARGET_KM} km of the suspect ·{" "}
-                            {near.locked === 0 ? "none" : near.locked} locked in
-                        </span>
-                    </div>
-                    <ImpactHighlight amount={campaignTotal} onOpen={() => router.push("/impact")} />
-                    {roundOver && (
-                        <div style={{ marginTop: "var(--space-4)" }}>
-                            <Button size="lg" fullWidth onClick={() => router.push("/debrief")} iconRight={<i className="ph ph-flag-checkered" />}>
-                                See the debrief
-                            </Button>
-                        </div>
-                    )}
-                </Sheet>
-            )}
 
             {sheet === "ranger" && (
                 <Sheet onClose={() => setSheet(null)}>
