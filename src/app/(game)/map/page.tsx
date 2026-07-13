@@ -947,13 +947,13 @@ function MapInner() {
                 <div style={{ position: "absolute", left: "var(--gutter)", top: 12, display: "flex", flexDirection: "column", gap: 8 }}>
                     {/* round day counter, plain text above the ranger and food bars */}
                     <div style={{ display: "flex", flexDirection: "column", gap: 1 }} aria-label={`Day ${day} of ${ROUND.durationDays}, ${daysRemaining(day)} days left, ${rangersHunting(day).toLocaleString("en-ZA")} rangers tracking`}>
-                        <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.6rem", letterSpacing: "0.08em", fontWeight: 700, color: "var(--text-primary)", textShadow: "0 1px 2px rgba(245,239,226,0.85)" }}>
+                        <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.6rem", letterSpacing: "0.08em", fontWeight: 700, color: "var(--sand-50)", textShadow: "0 1px 3px rgba(17,32,26,0.7)" }}>
                             DAY {day} / {ROUND.durationDays}
                         </span>
-                        <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.5rem", letterSpacing: "0.08em", fontWeight: 700, color: "var(--text-secondary)", textShadow: "0 1px 2px rgba(245,239,226,0.85)" }}>
+                        <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.5rem", letterSpacing: "0.08em", fontWeight: 700, color: "rgba(245,239,226,0.85)", textShadow: "0 1px 3px rgba(17,32,26,0.7)" }}>
                             {daysRemaining(day)} DAYS LEFT
                         </span>
-                        <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.5rem", letterSpacing: "0.08em", fontWeight: 700, color: "var(--text-secondary)", textShadow: "0 1px 2px rgba(245,239,226,0.85)" }}>
+                        <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.5rem", letterSpacing: "0.08em", fontWeight: 700, color: "rgba(245,239,226,0.85)", textShadow: "0 1px 3px rgba(17,32,26,0.7)" }}>
                             {rangersHunting(day).toLocaleString("en-ZA")} RANGERS TRACKING
                         </span>
                     </div>
