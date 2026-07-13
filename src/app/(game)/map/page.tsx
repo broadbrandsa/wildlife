@@ -1016,7 +1016,11 @@ function MapInner() {
                                 transition: "box-shadow 200ms var(--ease-out), border-color 200ms var(--ease-out)",
                             }}
                         >
-                            <i className={`ph-fill ph-${rucksackOpen ? "x" : "backpack"}`} style={{ fontSize: rucksackOpen ? 22 : 26, color: "var(--ochre-700)" }} />
+                            {rucksackOpen ? (
+                                <i className="ph-fill ph-x" style={{ fontSize: 22, color: "var(--ochre-700)" }} />
+                            ) : (
+                                <Image src="/rucksack.png" alt="" width={40} height={40} style={{ width: 40, height: 40, objectFit: "contain" }} />
+                            )}
                             {!rucksackOpen && powerupTotal > 0 && (
                                 <span
                                     style={{
