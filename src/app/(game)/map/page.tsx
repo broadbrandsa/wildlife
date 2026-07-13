@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { type CSSProperties, Suspense, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button, Eyebrow, Tag } from "@/components/ds";
 import { DealtCard, prefersReducedMotion } from "@/components/game/CardFlip";
@@ -31,7 +31,6 @@ import {
     daysRemaining,
     isRested,
     isRoundOver,
-    nextClueCountdown,
     nextClueLabel,
     poacherThird,
     restProgress,
@@ -57,7 +56,7 @@ const TIER_META: Record<ScentTier, { label: string; tone: "neutral" | "teal" | "
     hot: { label: "Fresh sign", tone: "clay", icon: "paw-print" },
 };
 
-type SheetId = "ranger" | "dog" | "clue" | "guides" | "bakkie" | "night" | "spots" | "radio";
+type SheetId = "ranger" | "dog" | "guides" | "bakkie" | "night" | "spots" | "radio";
 
 /**
  * Ranger power-ups: consumable tools shown as count-badged icons on the map.
@@ -87,25 +86,6 @@ const CARD_BACK = {
 // there; the card then shows its photo in black and white with a Not found pill.
 type SpotItem = { species: Species; isNew: boolean; count: number; bonus?: boolean; found?: boolean };
 
-/** Small clay notification dot pinned to a corner of its parent. */
-function NDot() {
-    return (
-        <span
-            style={{
-                position: "absolute",
-                top: -2,
-                right: -2,
-                width: 13,
-                height: 13,
-                borderRadius: "50%",
-                background: "var(--clay-500)",
-                border: "2px solid var(--sand-50)",
-                boxShadow: "var(--shadow-sm)",
-            }}
-        />
-    );
-}
-
 /**
  * The rucksack fans its contents out in a right-facing half-moon. Five slots,
  * spaced across a 156-degree arc, positioned around the 104px rucksack box.
@@ -122,6 +102,25 @@ const arcPositions = (angles: number[]) =>
     });
 const RUCKSACK_ARC_TOP = arcPositions([-34, 34]);
 const RUCKSACK_ARC_POWERS = arcPositions([-75, -25, 25, 75]);
+
+/** Shared card behind each left-rail illustration: same look and radius as the
+ *  food-supply box at the top of the screen. */
+const railBoxStyle: CSSProperties = {
+    position: "relative",
+    width: 104,
+    height: 72,
+    background: "rgba(250,246,236,0.92)",
+    backdropFilter: "blur(8px)",
+    WebkitBackdropFilter: "blur(8px)",
+    border: "1px solid var(--border-subtle)",
+    borderRadius: 14,
+    boxShadow: "var(--shadow-sm)",
+    padding: 0,
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+};
 
 /** One tool inside the opened rucksack: an icon token with a count badge, greyed
  *  out when empty. Positioned absolutely along the fan. Set showCount false for
@@ -302,50 +301,6 @@ function CaseCard({
     );
 }
 
-/** Custom side-dock tab: a rounded plate hanging off the right edge of the map. */
-function DockTab({ icon, label, dot, sub, onClick }: { icon: string; label: string; dot?: boolean; sub?: string | null; onClick: () => void }) {
-    return (
-        <button
-            onClick={onClick}
-            aria-label={sub ? `${label}, next clue in ${sub}` : label}
-            className="kw-press"
-            style={{
-                position: "relative",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 3,
-                width: 58,
-                padding: "0.6rem 0 0.5rem",
-                background: "rgba(250,246,236,0.94)",
-                backdropFilter: "blur(8px)",
-                WebkitBackdropFilter: "blur(8px)",
-                border: "1px solid var(--border-subtle)",
-                borderRadius: 14,
-                boxShadow: "var(--shadow-md)",
-                cursor: "pointer",
-            }}
-        >
-            {dot && (
-                <span style={{ position: "absolute", top: 4, right: 6 }}>
-                    <span style={{ position: "relative", display: "block", width: 13, height: 13 }}>
-                        <NDot />
-                    </span>
-                </span>
-            )}
-            <i className={`ph-fill ph-${icon}`} style={{ fontSize: 21, color: "var(--ochre-700)" }} />
-            <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.5rem", letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text-muted)" }}>
-                {label}
-            </span>
-            {sub && (
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 2, marginTop: 1, fontFamily: "var(--font-mono)", fontSize: "0.5rem", letterSpacing: "0.04em", fontWeight: 700, color: "var(--ochre-700)", whiteSpace: "nowrap" }}>
-                    <i className="ph ph-timer" style={{ fontSize: 9 }} /> {sub}
-                </span>
-            )}
-        </button>
-    );
-}
-
 /** Bottom sheet shared by every popup on the map. Portalled above the shell. */
 function Sheet({ onClose, children }: { onClose: () => void; children: React.ReactNode }) {
     return (
@@ -427,9 +382,9 @@ function MapInner() {
     const [lockModal, setLockModal] = useState(false);
     const [sheet, setSheet] = useState<SheetId | null>(null);
     // Arriving from a checkout or code redemption with ?panel=clue opens the
-    // case file straight away, since clues now live on the map, not a journal tab.
+    // radio straight away, since clues now come through and live in the radio.
     useEffect(() => {
-        if (params.get("panel") === "clue") setSheet("clue");
+        if (params.get("panel") === "clue") setSheet("radio");
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     // Bakkie mode: pick anywhere on the map, then confirm the ride.
@@ -452,8 +407,6 @@ function MapInner() {
     const [nowMs, setNowMs] = useState(() => Date.now());
     // Bumped by the ranger's Move action to zoom the map in on the pin.
     const [focusSignal, setFocusSignal] = useState(0);
-    // Whether the field radio's HQ report has been opened this session (dock dot).
-    const [radioSeen, setRadioSeen] = useState(false);
     // The rest camp whose info card is open (tapped its map icon).
     const [campInfo, setCampInfo] = useState<string | null>(null);
     // A short-lived toast (power-up used, camp reward earned).
@@ -492,14 +445,6 @@ function MapInner() {
         const ids = availableClueIds(cluesUnlocked, day);
         return CLUES.filter((c) => ids.has(c.id));
     }, [cluesUnlocked, day]);
-
-    // Latest / most specific clue to surface behind the clue dock tab.
-    const latest = useMemo(() => {
-        const dated = available
-            .filter((c) => c.releaseDay != null)
-            .sort((a, b) => (b.releaseDay ?? 0) - (a.releaseDay ?? 0));
-        return dated[0] ?? available[available.length - 1] ?? CLUE_BY_ID["f01"];
-    }, [available]);
 
     const dog = player ? DOG_BY_ID[player.dogId] : null;
     const ranger = player ? RANGER_BY_ID[player.rangerId] : null;
@@ -619,11 +564,11 @@ function MapInner() {
         trail.reduce((sum, p, i) => (i > 0 && p.day === day && p.via === "walk" ? sum + distanceKm(trail[i - 1], p) : sum), 0),
     );
 
-    const newClueToday = CLUES.some((c) => c.source === "free" && c.releaseDay === day) && cluesSeenDay !== day;
-    // Live countdown to the next free clue, shown on the Clue dock chip (nowMs
-    // ticks it). The dot signals a fresh clue today; this always counts to the
-    // next one, and shows nothing once every clue is out.
-    const clueDockSub = nextClueCountdown(day, nowMs);
+    // Daily park reports (free clues) come in through the radio. The badge counts
+    // the reports released since the player last opened the radio, so it pulses
+    // until they tune in. Extra HQ and sponsor clues are read there too.
+    const clueSeenDay = cluesSeenDay ?? 0;
+    const newClueCount = CLUES.filter((c) => c.source === "free" && c.releaseDay != null && c.releaseDay <= day && c.releaseDay > clueSeenDay).length;
 
     // Spotting a species: record it, check the bingo lists, and deal the reveal
     // card face-down for the flip. Shared by tapping a live marker and (until
@@ -810,7 +755,7 @@ function MapInner() {
     };
 
     const openRadioSheet = () => {
-        setRadioSeen(true);
+        markCluesSeen(day); // tuning in acknowledges the day's park report
         setSheet("radio");
     };
 
@@ -898,19 +843,7 @@ function MapInner() {
         setPowerupSheet(null);
     };
 
-    const openClueSheet = () => {
-        // A clue seen for the first time on its release day deals onto the
-        // screen as a card; after that the dock opens the plain clue sheet.
-        if (newClueToday && latest) {
-            markCluesSeen(day);
-            setClueFlipped(prefersReducedMotion());
-            setClueCard(latest);
-        } else {
-            setSheet("clue");
-        }
-    };
-
-    // Footer action for elimination clues, shared by the clue sheet and the
+    // Footer action for elimination clues, shared by the clue list and the
     // dealt clue card: one tap marks the zone on the case board.
     const clueAction = (c: Clue) =>
         c.kind === "elimination" ? (
@@ -1036,24 +969,12 @@ function MapInner() {
                             aria-label={!rucksackOpen ? `Open your rucksack, ${powerupTotal} power-up${powerupTotal === 1 ? "" : "s"}` : powersOpen ? "Back to your rucksack" : "Close your rucksack"}
                             aria-expanded={rucksackOpen}
                             className="kw-press"
-                            style={{
-                                position: "relative",
-                                width: 104,
-                                height: 72,
-                                border: "none",
-                                background: "transparent",
-                                padding: 0,
-                                cursor: "pointer",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                zIndex: 7,
-                            }}
+                            style={{ ...railBoxStyle, zIndex: 7 }}
                         >
                             {rucksackOpen ? (
-                                <i className={`ph-fill ph-${powersOpen ? "arrow-left" : "x"}`} style={{ fontSize: 44, color: "var(--ochre-700)", filter: "drop-shadow(0 2px 3px rgba(17,32,26,0.45))" }} />
+                                <i className={`ph-fill ph-${powersOpen ? "arrow-left" : "x"}`} style={{ fontSize: 40, color: "var(--ochre-700)" }} />
                             ) : (
-                                <Image src="/rucksack.png" alt="" width={100} height={72} style={{ width: 100, height: 72, objectFit: "contain", filter: "drop-shadow(0 3px 5px rgba(17,32,26,0.4))" }} />
+                                <Image src="/rucksack.png" alt="" width={92} height={62} style={{ width: 92, height: 62, objectFit: "contain" }} />
                             )}
                             {!rucksackOpen && powerupTotal > 0 && (
                                 <span
@@ -1129,24 +1050,43 @@ function MapInner() {
                     </div>
 
                     {/* species book: opens the spotting log */}
-                    <button
-                        onClick={() => setSheet("spots")}
-                        aria-label="Open your spotting log"
-                        className="kw-press"
-                        style={{ position: "relative", width: 104, height: 72, border: "none", background: "transparent", padding: 0, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
-                    >
-                        <Image src="/species-book.png" alt="" width={100} height={72} style={{ width: 100, height: 72, objectFit: "contain", filter: "drop-shadow(0 3px 5px rgba(17,32,26,0.4))" }} />
+                    <button onClick={() => setSheet("spots")} aria-label="Open your spotting log" className="kw-press" style={railBoxStyle}>
+                        <Image src="/species-book.png" alt="" width={92} height={62} style={{ width: 92, height: 62, objectFit: "contain" }} />
                     </button>
 
-                    {/* field radio: HQ report */}
+                    {/* field radio: the day's park report and all your clues live here.
+                        Pulses with a count when a fresh report is waiting. */}
                     <button
                         onClick={openRadioSheet}
-                        aria-label="Field radio"
-                        className="kw-press"
-                        style={{ position: "relative", width: 104, height: 72, border: "none", background: "transparent", padding: 0, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                        aria-label={newClueCount > 0 ? `Field radio, ${newClueCount} new clue${newClueCount === 1 ? "" : "s"}` : "Field radio"}
+                        className={`kw-press${newClueCount > 0 ? " kw-pulse" : ""}`}
+                        style={railBoxStyle}
                     >
-                        <Image src="/radio.png" alt="" width={100} height={72} style={{ width: 100, height: 72, objectFit: "contain", filter: "drop-shadow(0 3px 5px rgba(17,32,26,0.4))" }} />
-                        {hasRadio && !radioSeen && <NDot />}
+                        <Image src="/radio.png" alt="" width={92} height={62} style={{ width: 92, height: 62, objectFit: "contain" }} />
+                        {newClueCount > 0 && (
+                            <span
+                                style={{
+                                    position: "absolute",
+                                    top: 6,
+                                    right: 6,
+                                    minWidth: 24,
+                                    height: 24,
+                                    borderRadius: 999,
+                                    background: "var(--ochre-500)",
+                                    color: "var(--sand-900)",
+                                    border: "2px solid var(--sand-50)",
+                                    fontFamily: "var(--font-mono)",
+                                    fontSize: "0.74rem",
+                                    fontWeight: 700,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    boxShadow: "var(--shadow-sm)",
+                                }}
+                            >
+                                {newClueCount}
+                            </span>
+                        )}
                     </button>
                 </div>
             )}
@@ -1242,11 +1182,8 @@ function MapInner() {
                 </button>
             </div>
 
-            {/* right dock: anchored below the time chip. Guides moved into the
-                rucksack, so only the clue tab hangs here now. */}
-            <div style={{ position: "absolute", right: "var(--gutter)", top: 64, display: "flex", flexDirection: "column", gap: 10 }}>
-                <DockTab icon="notebook" label="Clue" dot={newClueToday} sub={clueDockSub} onClick={openClueSheet} />
-            </div>
+            {/* Clues now live in the radio (daily park reports), so the right-side
+                clue dock is gone. */}
 
             {/* round day counter, plain text on the background behind the map,
                 bottom-right above the coordinates */}
@@ -1670,11 +1607,12 @@ function MapInner() {
                 </Sheet>
             )}
 
-            {sheet === "clue" && (
+            {sheet === "radio" && (
                 <Sheet onClose={() => setSheet(null)}>
                     {(() => {
-                        // The full case file: clues in hand and the case board, folded
-                        // in from the old journal page so it all lives in one place.
+                        // The radio is the clue hub now: the daily park reports come in
+                        // here, plus HQ operations intel, extra HQ check-ins and
+                        // sponsor stations, and the case board to work it all.
                         const inHand = [...available].sort((a, b) => (b.releaseDay ?? 999) - (a.releaseDay ?? 999));
                         const toCome = freeCluesToCome(day);
                         const nextHours = hoursUntilNextClue(day);
@@ -1682,14 +1620,67 @@ function MapInner() {
                         const freePickAvailable = Boolean(player && BUSH_WISE_DOGS.has(player.dogId) && !freeGuideUsed);
                         return (
                             <>
-                                <Eyebrow>Field journal</Eyebrow>
-                                <h2 style={{ fontSize: "var(--text-h3)", margin: "var(--space-2) 0 var(--space-2)" }}>Your clues</h2>
-                                <p style={{ color: "var(--text-secondary)", margin: 0, fontSize: "0.86rem" }}>
-                                    {inHand.length} clue{inHand.length === 1 ? "" : "s"} in hand · {toCome} field clue{toCome === 1 ? "" : "s"} still to come.
+                                <Eyebrow rule>Field radio</Eyebrow>
+                                <p style={{ color: "var(--text-secondary)", margin: "var(--space-2) 0 0", fontSize: "0.86rem", lineHeight: 1.5 }}>
+                                    Your morning park report comes in here. {inHand.length} check-in{inHand.length === 1 ? "" : "s"} received{toCome > 0 ? `, ${toCome} still to come` : ""}.
                                 </p>
 
-                                {/* Case board: mark zones and open their field guides */}
-                                <div style={{ margin: "var(--space-5) 0 0" }}>
+                                {/* HQ operations room: directional intel from the field radio */}
+                                {hasRadio && (
+                                    <div style={{ marginTop: "var(--space-4)", background: "var(--ochre-100)", border: "1px solid var(--ochre-200)", borderRadius: "var(--radius-lg)", padding: "var(--space-4)" }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--ochre-700)" }}>
+                                            <i className="ph-fill ph-broadcast" /> HQ operations room
+                                        </div>
+                                        <p style={{ margin: "var(--space-3) 0 0", fontFamily: "var(--font-serif)", fontSize: "1.05rem", lineHeight: 1.55, color: "var(--sand-900)" }}>
+                                            Other teams have picked up the freshest scent in {THIRD_LABEL[targetThird]} of the park. Work that end of the ground.
+                                        </p>
+                                    </div>
+                                )}
+
+                                {/* the daily check-ins: every clue that has come through */}
+                                <div style={{ margin: "var(--space-5) 0 var(--space-3)" }}>
+                                    <Eyebrow rule>Check-ins received</Eyebrow>
+                                </div>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
+                                    {inHand.length === 0 ? (
+                                        <p style={{ fontSize: "0.84rem", color: "var(--text-muted)", margin: 0 }}>No reports yet. Your first comes through once you drop your pin.</p>
+                                    ) : (
+                                        inHand.map((c) => <ClueCard key={c.id} clue={c} action={clueAction(c)} />)
+                                    )}
+                                </div>
+
+                                {/* next report timer */}
+                                <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", marginTop: "var(--space-4)", background: "var(--surface-card)", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-lg)", padding: "var(--space-4)", boxShadow: "var(--shadow-xs)" }}>
+                                    <span style={{ flex: "none", width: 40, height: 40, borderRadius: "var(--radius-pill)", background: "var(--surface-sunken)", color: "var(--text-accent)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>
+                                        <i className="ph ph-timer" />
+                                    </span>
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{ fontWeight: 700, fontSize: "0.92rem" }}>
+                                            {toCome === 0 ? "All park reports are in" : nextHours && nextHours > 0 ? `Next report in about ${nextHours} hour${nextHours === 1 ? "" : "s"}` : "A new report is landing now"}
+                                        </div>
+                                        <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: 2, lineHeight: 1.45 }}>
+                                            {toCome === 0 ? "You have the full report timeline. Work the kit for extra intel." : `${toCome} report${toCome === 1 ? "" : "s"} still to come, one each morning.`}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* radio actions: extra HQ check-in and sponsor stations */}
+                                <div style={{ marginTop: "var(--space-5)", paddingTop: "var(--space-4)", borderTop: "1px dashed var(--border-default)", display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+                                    <Button size="md" onClick={() => router.push("/shop")} iconRight={<i className="ph ph-broadcast" />}>
+                                        Buy an HQ check-in for an extra clue
+                                    </Button>
+                                    <Button size="md" variant="secondary" onClick={() => router.push("/codes")} iconRight={<i className="ph ph-radio" />}>
+                                        Tune to another station
+                                    </Button>
+                                    {!hasRadio && (
+                                        <Button size="md" variant="secondary" onClick={() => router.push("/checkout/field-radio")} iconRight={<i className="ph ph-arrow-right" />}>
+                                            Get the field radio for HQ intel
+                                        </Button>
+                                    )}
+                                </div>
+
+                                {/* case board: mark zones and open their field guides */}
+                                <div style={{ margin: "var(--space-6) 0 0" }}>
                                     <Eyebrow rule>Case board</Eyebrow>
                                     <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.72rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-primary)", fontWeight: 700, margin: "var(--space-3) 0 0" }}>
                                         Search area: {areaLeft.toLocaleString("en-ZA")} km² of {PARK_AREA_KM2.toLocaleString("en-ZA")}
@@ -1725,97 +1716,9 @@ function MapInner() {
                                         ))}
                                     </div>
                                 </div>
-
-                                <div style={{ margin: "var(--space-6) 0 var(--space-3)" }}>
-                                    <Eyebrow rule>In hand</Eyebrow>
-                                </div>
-                                <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
-                                    {inHand.map((c) => (
-                                        <ClueCard key={c.id} clue={c} action={clueAction(c)} />
-                                    ))}
-                                </div>
-
-                                <div style={{ margin: "var(--space-6) 0 var(--space-3)" }}>
-                                    <Eyebrow rule>Still out there</Eyebrow>
-                                </div>
-                                <div
-                                    style={{
-                                        display: "flex",
-                                        alignItems: "center",
-                                        gap: "var(--space-3)",
-                                        background: "var(--surface-card)",
-                                        border: "1px solid var(--border-subtle)",
-                                        borderRadius: "var(--radius-lg)",
-                                        padding: "var(--space-4)",
-                                        boxShadow: "var(--shadow-xs)",
-                                    }}
-                                >
-                                    <span style={{ flex: "none", width: 40, height: 40, borderRadius: "var(--radius-pill)", background: "var(--surface-sunken)", color: "var(--text-accent)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>
-                                        <i className="ph ph-timer" />
-                                    </span>
-                                    <div style={{ flex: 1 }}>
-                                        <div style={{ fontWeight: 700, fontSize: "0.92rem" }}>
-                                            {toCome === 0
-                                                ? "All field clues are out"
-                                                : nextHours && nextHours > 0
-                                                  ? `Next clue in about ${nextHours} hour${nextHours === 1 ? "" : "s"}`
-                                                  : "A new clue is landing now"}
-                                        </div>
-                                        <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: 2, lineHeight: 1.45 }}>
-                                            {toCome === 0
-                                                ? "You have the full field-clue timeline. Work the kit for extra intel."
-                                                : `${toCome} field clue${toCome === 1 ? "" : "s"} still to come. Each lands on its own day, so keep tracking.`}
-                                        </div>
-                                    </div>
-                                </div>
                             </>
                         );
                     })()}
-                </Sheet>
-            )}
-
-            {sheet === "radio" && (
-                <Sheet onClose={() => setSheet(null)}>
-                    <Eyebrow rule>Field radio</Eyebrow>
-                    {hasRadio ? (
-                        <div
-                            style={{
-                                marginTop: "var(--space-4)",
-                                background: "var(--ochre-100)",
-                                border: "1px solid var(--ochre-200)",
-                                borderRadius: "var(--radius-lg)",
-                                padding: "var(--space-4)",
-                            }}
-                        >
-                            <div style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--ochre-700)" }}>
-                                <i className="ph-fill ph-broadcast" /> HQ operations room
-                            </div>
-                            <p style={{ margin: "var(--space-3) 0 0", fontFamily: "var(--font-serif)", fontSize: "1.05rem", lineHeight: 1.55, color: "var(--sand-900)" }}>
-                                Other teams have picked up the freshest scent in {THIRD_LABEL[targetThird]} of the park. Work that end of the ground.
-                            </p>
-                        </div>
-                    ) : (
-                        <div style={{ marginTop: "var(--space-4)" }}>
-                            <p style={{ fontSize: "0.88rem", color: "var(--text-secondary)", lineHeight: 1.55 }}>
-                                You need a field radio to reach the K9 operations room and hear where other teams have picked up the scent.
-                            </p>
-                            <div style={{ marginTop: "var(--space-4)" }}>
-                                <Button size="lg" fullWidth onClick={() => router.push("/checkout/field-radio")} iconRight={<i className="ph ph-broadcast" />}>
-                                    Get the field radio
-                                </Button>
-                            </div>
-                        </div>
-                    )}
-
-                    <div style={{ marginTop: "var(--space-5)", paddingTop: "var(--space-4)", borderTop: "1px dashed var(--border-default)" }}>
-                        <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--text-accent)" }}>Intel intercept</div>
-                        <p style={{ fontSize: "0.84rem", color: "var(--text-muted)", lineHeight: 1.5, margin: "var(--space-2) 0 var(--space-3)" }}>
-                            Have an intel code from a sponsor or partner? Redeem it for a bonus clue.
-                        </p>
-                        <Button size="md" variant="secondary" onClick={() => router.push("/codes")} iconRight={<i className="ph ph-arrow-right" />}>
-                            Enter an intel code
-                        </Button>
-                    </div>
                 </Sheet>
             )}
 

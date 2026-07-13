@@ -137,12 +137,27 @@ ol {
     animation: kw-marker-pulse 2s var(--ease-out) infinite;
 }
 
+/* Draws the eye to the radio when a fresh park report is waiting. */
+@keyframes kw-pulse {
+    0%,
+    100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.07);
+    }
+}
+.kw-pulse {
+    animation: kw-pulse 1.5s var(--ease-out) infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
     .kw-rise,
     .kw-pin-drop,
     .kw-spin,
     .kw-card-pop,
-    .kw-marker-ring {
+    .kw-marker-ring,
+    .kw-pulse {
         animation: none;
     }
     /* Markers still need to disappear, so keep them fully opaque and let the
