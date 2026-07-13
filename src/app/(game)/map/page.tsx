@@ -2202,7 +2202,7 @@ function MapInner() {
                     // Gold frame marks a rare sighting or a Big, Ugly or Small Five card.
                     frameAccent={spot.found !== false && (spot.species.rarity === "rare" || FIVE_OF[spot.species.id]) ? "var(--ochre-400)" : undefined}
                 >
-                    <div>
+                    <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
                         {(() => {
                             const found = spot.found !== false;
                             const five = FIVE_OF[spot.species.id];
@@ -2214,7 +2214,7 @@ function MapInner() {
                             const act = speciesActivity(spot.species.id);
                             return (
                                 <>
-                                    <div style={{ position: "relative", aspectRatio: "16 / 9", background: "var(--sand-100)" }}>
+                                    <div style={{ position: "relative", flexShrink: 0, aspectRatio: "16 / 9", background: "var(--sand-100)" }}>
                                         <Image
                                             src={spot.species.photo}
                                             alt={spot.species.name}
@@ -2247,8 +2247,10 @@ function MapInner() {
                                         </div>
                                     </div>
                                     {/* rarity accent stripe */}
-                                    <div style={{ height: 4, background: accent }} />
-                                    <div style={{ padding: "var(--space-4) var(--space-5) var(--space-5)" }}>
+                                    <div style={{ height: 4, flexShrink: 0, background: accent }} />
+                                    {/* scrollable middle: description and stats scroll here so
+                                        the footer button below is never cut off */}
+                                    <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "var(--space-4) var(--space-5) var(--space-4)" }}>
                                         {(!found || act !== "any") && (
                                             <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: "var(--space-3)" }}>
                                                 {!found && (
@@ -2293,7 +2295,9 @@ function MapInner() {
                                                     : `Part of ${five}. Spot all five to win an instant prize.`}
                                             </p>
                                         )}
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-3)", marginTop: "var(--space-4)", paddingTop: "var(--space-3)", borderTop: "1px dashed var(--border-default)" }}>
+                                    </div>
+                                    {/* pinned footer: always visible at the card's foot */}
+                                    <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-3)", padding: "var(--space-3) var(--space-5) var(--space-4)", borderTop: "1px dashed var(--border-default)", background: "var(--surface-page)" }}>
                                 <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.6rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-muted)", lineHeight: 1.5 }}>
                                     {spot.found === false ? (
                                         <>
@@ -2332,7 +2336,6 @@ function MapInner() {
                                     </Button>
                                 )}
                             </div>
-                                    </div>
                                 </>
                             );
                         })()}
