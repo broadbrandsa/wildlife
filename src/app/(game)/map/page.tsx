@@ -115,7 +115,8 @@ const RUCKSACK_ARC = [-75, -25, 25, 75].map((deg) => {
     const r = 116;
     const rad = (deg * Math.PI) / 180;
     const size = 46;
-    return { left: 52 + r * Math.cos(rad) - size / 2, top: 52 + r * Math.sin(rad) - size / 2 };
+    // Origin is the rucksack button centre: 104 wide, 72 tall.
+    return { left: 52 + r * Math.cos(rad) - size / 2, top: 36 + r * Math.sin(rad) - size / 2 };
 });
 
 /** One tool inside the opened rucksack: an icon token with a count badge, greyed
@@ -1014,10 +1015,10 @@ function MapInner() {
                 lives on the map as the pin, ringed by the food supply, with the
                 walk / track cues shown to the right of the pin. */}
             {ranger && (
-                <div style={{ position: "absolute", left: "var(--gutter)", top: 12, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
+                <div style={{ position: "absolute", left: "var(--gutter)", top: 12, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 0 }}>
                     {/* the rucksack: tap to open, and your power-ups and spots fan
                         out in a half-moon like tipping the bag open to look inside */}
-                    <div style={{ position: "relative", marginTop: 12 }}>
+                    <div style={{ position: "relative" }}>
                         <button
                             onClick={() => setRucksackOpen((v) => !v)}
                             aria-label={rucksackOpen ? "Close your rucksack" : `Open your rucksack, ${powerupTotal} power-up${powerupTotal === 1 ? "" : "s"}`}
@@ -1026,7 +1027,7 @@ function MapInner() {
                             style={{
                                 position: "relative",
                                 width: 104,
-                                height: 104,
+                                height: 72,
                                 border: "none",
                                 background: "transparent",
                                 padding: 0,
@@ -1040,7 +1041,7 @@ function MapInner() {
                             {rucksackOpen ? (
                                 <i className="ph-fill ph-x" style={{ fontSize: 44, color: "var(--ochre-700)", filter: "drop-shadow(0 2px 3px rgba(17,32,26,0.45))" }} />
                             ) : (
-                                <Image src="/rucksack.png" alt="" width={100} height={100} style={{ width: 100, height: 100, objectFit: "contain", filter: "drop-shadow(0 3px 5px rgba(17,32,26,0.4))" }} />
+                                <Image src="/rucksack.png" alt="" width={100} height={72} style={{ width: 100, height: 72, objectFit: "contain", filter: "drop-shadow(0 3px 5px rgba(17,32,26,0.4))" }} />
                             )}
                             {!rucksackOpen && powerupTotal > 0 && (
                                 <span
@@ -1091,9 +1092,9 @@ function MapInner() {
                         onClick={() => setSheet("spots")}
                         aria-label="Open your spotting log"
                         className="kw-press"
-                        style={{ position: "relative", width: 104, height: 104, border: "none", background: "transparent", padding: 0, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                        style={{ position: "relative", width: 104, height: 72, border: "none", background: "transparent", padding: 0, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
                     >
-                        <Image src="/species-book.png" alt="" width={100} height={100} style={{ width: 100, height: 100, objectFit: "contain", filter: "drop-shadow(0 3px 5px rgba(17,32,26,0.4))" }} />
+                        <Image src="/species-book.png" alt="" width={100} height={72} style={{ width: 100, height: 72, objectFit: "contain", filter: "drop-shadow(0 3px 5px rgba(17,32,26,0.4))" }} />
                     </button>
 
                     {/* field radio: HQ report */}
@@ -1101,9 +1102,9 @@ function MapInner() {
                         onClick={openRadioSheet}
                         aria-label="Field radio"
                         className="kw-press"
-                        style={{ position: "relative", width: 104, height: 104, border: "none", background: "transparent", padding: 0, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                        style={{ position: "relative", width: 104, height: 72, border: "none", background: "transparent", padding: 0, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
                     >
-                        <Image src="/radio.png" alt="" width={100} height={100} style={{ width: 100, height: 100, objectFit: "contain", filter: "drop-shadow(0 3px 5px rgba(17,32,26,0.4))" }} />
+                        <Image src="/radio.png" alt="" width={100} height={72} style={{ width: 100, height: 72, objectFit: "contain", filter: "drop-shadow(0 3px 5px rgba(17,32,26,0.4))" }} />
                         {hasRadio && !radioSeen && <NDot />}
                     </button>
                 </div>

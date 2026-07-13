@@ -361,13 +361,15 @@ export function KrugerMap({ pin, onPlace, revealZones = [], showLabels = true, t
         pinDownRef.current = null;
         const moved = start ? Math.hypot(e.clientX - start.x, e.clientY - start.y) : 0;
         if (drag) {
+            // A real relocation walks the pin; anything that stays put (the pin
+            // never left its spot) is a tap that opens the ranger status sheet.
             if (onPlace && (drag.km > 0.3 || drag.camp)) onPlace(drag.x, drag.y);
-            else if (moved <= 10) onPinTap?.(); // a still tap on the pin, not a walk
+            else onPinTap?.();
             setDrag(null);
             return;
         }
         // Pin held still (locked, walking, camped): a tap opens the status sheet.
-        if (moved <= 10) onPinTap?.();
+        if (moved <= 14) onPinTap?.();
     };
 
     const dimmed = (id: ZoneId) => revealZones.length > 0 && !revealZones.includes(id);
