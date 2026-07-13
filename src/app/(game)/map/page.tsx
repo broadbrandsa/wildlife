@@ -110,13 +110,18 @@ function NDot() {
  * The rucksack fans its contents out in a right-facing half-moon. Five slots,
  * spaced across a 156-degree arc, positioned around the 104px rucksack box.
  */
-const RUCKSACK_ARC = [-80, -40, 0, 40, 80].map((deg) => {
-    const r: number = 116;
-    const rad = (deg * Math.PI) / 180;
-    const size = 46;
-    // Origin is the rucksack button centre: 104 wide, 72 tall.
-    return { left: 52 + r * Math.cos(rad) - size / 2, top: 36 + r * Math.sin(rad) - size / 2 };
-});
+// Fan positions around the rucksack button (origin at its centre: 104 wide,
+// 72 tall). The rucksack opens to two icons (super powers + guides); tapping
+// super powers swaps in the four power-ups.
+const arcPositions = (angles: number[]) =>
+    angles.map((deg) => {
+        const r = 116;
+        const rad = (deg * Math.PI) / 180;
+        const size = 46;
+        return { left: 52 + r * Math.cos(rad) - size / 2, top: 36 + r * Math.sin(rad) - size / 2 };
+    });
+const RUCKSACK_ARC_TOP = arcPositions([-34, 34]);
+const RUCKSACK_ARC_POWERS = arcPositions([-75, -25, 25, 75]);
 
 /** One tool inside the opened rucksack: an icon token with a count badge, greyed
  *  out when empty. Positioned absolutely along the fan. Set showCount false for
@@ -458,6 +463,8 @@ function MapInner() {
     const [powerupSheet, setPowerupSheet] = useState<string | null>(null);
     // The rucksack: tap to fan the power-ups and spots out in a half-moon.
     const [rucksackOpen, setRucksackOpen] = useState(false);
+    // Second level of the rucksack: the super-powers icon expands to the four power-ups.
+    const [powersOpen, setPowersOpen] = useState(false);
     // Food resupply popup at a rest camp, and the once-per-arrival guard for it.
     const [foodPrompt, setFoodPrompt] = useState(false);
     const foodPromptRef = useRef<string | null>(null);
@@ -1001,7 +1008,10 @@ function MapInner() {
             {rucksackOpen && (
                 <button
                     aria-label="Close your rucksack"
-                    onClick={() => setRucksackOpen(false)}
+                    onClick={() => {
+                        setRucksackOpen(false);
+                        setPowersOpen(false);
+                    }}
                     style={{ position: "absolute", inset: 0, zIndex: 5, border: "none", background: "rgba(17,32,26,0.55)", cursor: "pointer" }}
                 />
             )}
@@ -1015,8 +1025,19 @@ function MapInner() {
                         out in a half-moon like tipping the bag open to look inside */}
                     <div style={{ position: "relative" }}>
                         <button
-                            onClick={() => setRucksackOpen((v) => !v)}
-                            aria-label={rucksackOpen ? "Close your rucksack" : `Open your rucksack, ${powerupTotal} power-up${powerupTotal === 1 ? "" : "s"}`}
+                            onClick={() => {
+                                // Closed -> open (top level). Viewing power-ups -> back a
+                                // level. Top level -> close.
+                                if (!rucksackOpen) {
+                                    setRucksackOpen(true);
+                                    setPowersOpen(false);
+                                } else if (powersOpen) {
+                                    setPowersOpen(false);
+                                } else {
+                                    setRucksackOpen(false);
+                                }
+                            }}
+                            aria-label={!rucksackOpen ? `Open your rucksack, ${powerupTotal} power-up${powerupTotal === 1 ? "" : "s"}` : powersOpen ? "Back to your rucksack" : "Close your rucksack"}
                             aria-expanded={rucksackOpen}
                             className="kw-press"
                             style={{
@@ -1034,7 +1055,7 @@ function MapInner() {
                             }}
                         >
                             {rucksackOpen ? (
-                                <i className="ph-fill ph-x" style={{ fontSize: 44, color: "var(--ochre-700)", filter: "drop-shadow(0 2px 3px rgba(17,32,26,0.45))" }} />
+                                <i className={`ph-fill ph-${powersOpen ? "arrow-left" : "x"}`} style={{ fontSize: 44, color: "var(--ochre-700)", filter: "drop-shadow(0 2px 3px rgba(17,32,26,0.45))" }} />
                             ) : (
                                 <Image src="/rucksack.png" alt="" width={100} height={72} style={{ width: 100, height: 72, objectFit: "contain", filter: "drop-shadow(0 3px 5px rgba(17,32,26,0.4))" }} />
                             )}
@@ -1063,24 +1084,48 @@ function MapInner() {
                                 </span>
                             )}
                         </button>
+                        {/* top level: one super-powers icon (expands to the four
+                            power-ups) plus the field guides */}
                         {rucksackOpen &&
+                            !powersOpen &&
                             [
-                                ...rucksackItems,
-                                // Field guides live in the rucksack now (removed from the
-                                // right dock): tap to open the all-zones guide list.
-                                { id: "guides", icon: "book-open-text", label: "Field guides", count: 0, showCount: false, onClick: () => setSheet("guides") },
+                                { id: "powers", icon: "lightning", label: "Super powers", count: powerupTotal, showCount: true, onClick: () => setPowersOpen(true), keepOpen: true },
+                                { id: "guides", icon: "book-open-text", label: "Field guides", count: 0, showCount: false, onClick: () => setSheet("guides"), keepOpen: false },
                             ].map((it, i) => (
                                 <ArcItem
                                     key={it.id}
                                     icon={it.icon}
                                     count={it.count}
                                     label={it.label}
-                                    left={RUCKSACK_ARC[i].left}
-                                    top={RUCKSACK_ARC[i].top}
+                                    left={RUCKSACK_ARC_TOP[i].left}
+                                    top={RUCKSACK_ARC_TOP[i].top}
+                                    delay={i * 40}
+                                    showCount={it.showCount}
+                                    onClick={() => {
+                                        if (!it.keepOpen) {
+                                            setRucksackOpen(false);
+                                            setPowersOpen(false);
+                                        }
+                                        it.onClick();
+                                    }}
+                                />
+                            ))}
+                        {/* second level: the four power-ups */}
+                        {rucksackOpen &&
+                            powersOpen &&
+                            rucksackItems.map((it, i) => (
+                                <ArcItem
+                                    key={it.id}
+                                    icon={it.icon}
+                                    count={it.count}
+                                    label={it.label}
+                                    left={RUCKSACK_ARC_POWERS[i].left}
+                                    top={RUCKSACK_ARC_POWERS[i].top}
                                     delay={i * 40}
                                     showCount={it.showCount}
                                     onClick={() => {
                                         setRucksackOpen(false);
+                                        setPowersOpen(false);
                                         it.onClick();
                                     }}
                                 />
