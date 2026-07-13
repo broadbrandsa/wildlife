@@ -10,13 +10,13 @@ export function prefersReducedMotion(): boolean {
 }
 
 /**
- * A trading-card flip. The card is a fixed 5:7 portrait; children render the
- * front (scrolling inside if taller than the frame) and the back is the branded
- * plate at the same size.
+ * A trading-card flip. The card is a fixed 2.5 x 3.5 (standard playing card)
+ * portrait; children render the front (scrolling inside if taller than the
+ * frame) and the back is the branded plate at the same size.
  *
- * Pass `backImage` (a PNG in /public) to use custom back artwork: at 5:7 it
+ * Pass `backImage` (a PNG in /public) to use custom back artwork: at 2.5:3.5 it
  * fills the card exactly and is clipped to the rounded corners, so deliver it
- * full bleed at 5:7 with square corners. If the image fails to load the woven
+ * full bleed at 2.5:3.5 with square corners. If the image fails to load the woven
  * fallback (gradient, emblem, "tap to reveal") shows instead. `frameAccent`
  * tints the front frame (used for the gold rare / Five treatment).
  */
@@ -60,7 +60,7 @@ export function CardFlip({
                     style={{
                         position: "relative",
                         width: "100%",
-                        aspectRatio: "5 / 7",
+                        aspectRatio: "2.5 / 3.5",
                         borderRadius: "var(--radius-2xl)",
                         overflow: "hidden",
                         background: "var(--surface-page)",

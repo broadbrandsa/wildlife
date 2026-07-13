@@ -16,11 +16,14 @@ image under all three names.)
 
 ## Designer spec
 
-The cards are a **fixed 5:7 portrait**. The back fills the card exactly at that
-ratio, so there is **no cropping** — design straight to the frame.
+The cards are a **standard playing-card portrait, 2.5 × 3.5** (the poker-card
+ratio, 0.714). The back fills the card exactly at that ratio, so there is **no
+cropping** — design straight to the frame.
 
-- **Canvas: 1200 × 1680 px** (5:7 portrait). This is 3x the on-screen size, so
-  it stays crisp on high-density phones.
+- **Canvas: 1200 × 1680 px** (2.5 × 3.5). This is 3x the on-screen size, so it
+  stays crisp on high-density phones. (Equivalent to a 2.5" × 3.5" card at
+  480 DPI; the print-standard 750 × 1050 @ 300 DPI is the same ratio if you
+  prefer to work at print size.)
 - **Do NOT round the corners.** The game clips the card to a **40 px rounded
   corner** at display size — about **120 px at this 1200 px master**. Design to
   the square edge; the rounding is applied for you. Keep important detail a few
@@ -31,6 +34,6 @@ ratio, so there is **no cropping** — design straight to the frame.
 
 ### On-screen reference
 
-- Card size: **5:7 portrait**, up to **400 × 560 px** (about **335 × 469 px** on
-  a typical phone). The master (1200 × 1680) scales down to this.
+- Card size: **2.5 × 3.5 portrait**, up to **400 × 560 px** (about **335 × 469
+  px** on a typical phone). The master (1200 × 1680) scales down to this.
 - Corner radius: **40 px** at 400 px wide (10% of width).
