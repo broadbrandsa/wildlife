@@ -100,7 +100,6 @@ const arcPositions = (angles: number[]) =>
         const size = 46;
         return { left: 52 + r * Math.cos(rad) - size / 2, top: 36 + r * Math.sin(rad) - size / 2 };
     });
-const RUCKSACK_ARC_TOP = arcPositions([-34, 34]);
 const RUCKSACK_ARC_POWERS = arcPositions([-75, -25, 25, 75]);
 
 /** Shared card behind each left-rail illustration: same look and radius as the
@@ -949,7 +948,7 @@ function MapInner() {
                 lives on the map as the pin, ringed by the food supply, with the
                 walk / track cues shown to the right of the pin. */}
             {ranger && (
-                <div style={{ position: "absolute", left: "var(--gutter)", top: "50%", transform: "translateY(-50%)", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 0, zIndex: 6 }}>
+                <div style={{ position: "absolute", left: "var(--gutter)", top: "50%", transform: "translateY(-50%)", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "var(--space-3)", zIndex: 6 }}>
                     {/* the rucksack: tap to open, and your power-ups and spots fan
                         out in a half-moon like tipping the bag open to look inside */}
                     <div style={{ position: "relative" }}>
@@ -1001,32 +1000,57 @@ function MapInner() {
                                 </span>
                             )}
                         </button>
-                        {/* top level: one super-powers icon (expands to the four
-                            power-ups) plus the field guides */}
-                        {rucksackOpen &&
-                            !powersOpen &&
-                            [
-                                { id: "powers", icon: "lightning", label: "Super powers", count: powerupTotal, showCount: true, onClick: () => setPowersOpen(true), keepOpen: true },
-                                { id: "guides", icon: "book-open-text", label: "Field guides", count: 0, showCount: false, onClick: () => setSheet("guides"), keepOpen: false },
-                            ].map((it, i) => (
-                                <ArcItem
-                                    key={it.id}
-                                    icon={it.icon}
-                                    count={it.count}
-                                    label={it.label}
-                                    left={RUCKSACK_ARC_TOP[i].left}
-                                    top={RUCKSACK_ARC_TOP[i].top}
-                                    delay={i * 40}
-                                    showCount={it.showCount}
-                                    onClick={() => {
-                                        if (!it.keepOpen) {
-                                            setRucksackOpen(false);
-                                            setPowersOpen(false);
-                                        }
-                                        it.onClick();
-                                    }}
-                                />
-                            ))}
+                        {/* top level: a horizontal menu of two labelled cards, super
+                            powers (expands to the four power-ups) and field guides */}
+                        {rucksackOpen && !powersOpen && (
+                            <div className="kw-rise" style={{ position: "absolute", left: 116, top: "50%", transform: "translateY(-50%)", display: "flex", gap: "var(--space-2)", zIndex: 7 }}>
+                                {[
+                                    { id: "powers", icon: "lightning", label: "Super powers", count: powerupTotal, showCount: true, onClick: () => setPowersOpen(true), keepOpen: true },
+                                    { id: "guides", icon: "book-open-text", label: "Field guides", count: 0, showCount: false, onClick: () => setSheet("guides"), keepOpen: false },
+                                ].map((it) => (
+                                    <button
+                                        key={it.id}
+                                        onClick={() => {
+                                            if (!it.keepOpen) {
+                                                setRucksackOpen(false);
+                                                setPowersOpen(false);
+                                            }
+                                            it.onClick();
+                                        }}
+                                        aria-label={it.showCount ? `${it.label}, ${it.count}` : it.label}
+                                        className="kw-press"
+                                        style={{ ...railBoxStyle, width: 98, height: 72, flexDirection: "column", gap: 5, padding: "6px" }}
+                                    >
+                                        <i className={`ph-fill ph-${it.icon}`} style={{ fontSize: 24, color: "var(--ochre-700)" }} />
+                                        <span style={{ fontFamily: "var(--font-sans)", fontSize: "0.72rem", fontWeight: 600, color: "var(--text-primary)", lineHeight: 1.15, textAlign: "center" }}>{it.label}</span>
+                                        {it.showCount && it.count > 0 && (
+                                            <span
+                                                style={{
+                                                    position: "absolute",
+                                                    top: 5,
+                                                    right: 5,
+                                                    minWidth: 20,
+                                                    height: 20,
+                                                    borderRadius: 999,
+                                                    background: "var(--ochre-500)",
+                                                    color: "var(--sand-900)",
+                                                    border: "2px solid var(--sand-50)",
+                                                    fontFamily: "var(--font-mono)",
+                                                    fontSize: "0.6rem",
+                                                    fontWeight: 700,
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    justifyContent: "center",
+                                                    boxShadow: "var(--shadow-sm)",
+                                                }}
+                                            >
+                                                {it.count}
+                                            </span>
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                         {/* second level: the four power-ups */}
                         {rucksackOpen &&
                             powersOpen &&
